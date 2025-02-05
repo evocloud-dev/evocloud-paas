@@ -41,6 +41,15 @@ resource "google_compute_address" "talos_vip" {
 }
 
 #--------------------------------------------------
+# Ingress Load balancer IP Pool
+#--------------------------------------------------
+resource "google_compute_address" "ingress_lb_ip" {
+  name         = "${var.cluster_name}-talos-ingress-lb"
+  subnetwork   = var.admin_subnet_name
+  address_type = "INTERNAL"
+}
+
+#--------------------------------------------------
 # Loadbalancer VMs
 #--------------------------------------------------
 # random_integer resource is needed to be able to assign different zones to google_compute_instance
