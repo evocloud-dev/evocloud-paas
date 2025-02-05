@@ -1,5 +1,5 @@
 <!-- BEGIN_TF_DOCS -->
-# Terraform compose module - server-dmz-rdp
+# Terraform compose module - server-admin-idam
 
 ## Requirements
 
