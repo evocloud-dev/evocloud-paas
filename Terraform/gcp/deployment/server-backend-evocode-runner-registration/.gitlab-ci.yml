@@ -1,0 +1,86 @@
+---
+workflow:
+  name: EvoCode PaaS Deployment - EvoCode Runner Registration
+  #rules:
+  #  - if: $CI_
+
+image:
+  name:  alpine/terragrunt:1.4.7 #1.4.7 is the Terraform version
+  entrypoint:
+    - '/usr/bin/env'
+    - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+
+variables:
+  tf_root_dir: ${CI_PROJECT_DIR}/Terraform
+  gcp_sa_json_file: $tf_root_dir/creds/gcp_cloud_sa.json
+  gcp_public_key: /etc/pki/tls/gcp-evocloud.pub
+  gcp_pem_key: /etc/pki/tls/gcp-evocloud.pem
+  terragrunt_deploy_module: $tf_root_dir/gcp/deployment/server-backend-evocode-runner-registration
+
+before_script:
+  - mkdir -p {$tf_root_dir/creds,/etc/pki/tls}
+  - echo $GCP_SA_CREDS | base64 -d > $gcp_sa_json_file
+  - export GOOGLE_APPLICATION_CREDENTIALS=$gcp_sa_json_file
+  - echo $GCP_EVOCLOUD_PUB | base64 -d > $gcp_public_key
+  - echo $GCP_EVOCLOUD_PEM | base64 -d > $gcp_pem_key
+  - export TERRAGRUNT_PARALLELISM=5
+  - terragrunt --version
+  - terraform --version
+
+stages:
+  - init_stage
+  - validate
+  - plan
+  - deploy
+  - cleanup
+
+terragrunt:init:
+  stage: init_stage
+  needs: []
+  script:
+    - terragrunt init --terragrunt-working-dir $terragrunt_deploy_module
+  allow_failure: false
+
+terragrunt:validate:
+  stage: validate
+  needs: []
+  script:
+    - |
+      echo "Running terragrunt validate..."
+      terragrunt hclfmt --terragrunt-working-dir $terragrunt_deploy_module
+      terragrunt validate --terragrunt-working-dir $terragrunt_deploy_module
+  allow_failure: false
+
+terragrunt:plan:
+  stage: plan
+  needs: []
+  script:
+    - |
+      echo "Running terragrunt plan..."
+      terragrunt plan --terragrunt-working-dir $terragrunt_deploy_module
+  allow_failure: false
+  #artifacts:
+  #paths:
+  #- tf_exec_plan
+  #expire_in: 8h
+
+terragrunt:deploy:
+  stage: deploy
+  needs:
+    - job: terragrunt:plan
+  script:
+    - |
+      echo "Running terraform apply..."
+      terragrunt apply --terragrunt-working-dir $terragrunt_deploy_module --terragrunt-non-interactive -auto-approve
+  allow_failure: false
+  when: manual
+
+terragrunt:cleanup:
+  stage: cleanup
+  needs: []
+  script:
+    - |
+      echo "Running terragrunt destroy..."
+      terragrunt destroy --terragrunt-working-dir $terragrunt_deploy_module --terragrunt-non-interactive -auto-approve
+  allow_failure: false
+  when: manual
