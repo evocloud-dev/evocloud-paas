@@ -76,21 +76,6 @@ resource "google_compute_address" "deployer_server_eip" {
 }
 
 #--------------------------------------------------
-# Ansible Inventory for DEPLOYER Server VM
-#--------------------------------------------------
-resource "local_file" "deployer_ansible_inventory" {
-  depends_on  = [google_compute_instance.deployer_server]
-
-  filename    = "${var.AUTOMATION_FOLDER}/gcp_host_deployer_server.ini"
-  directory_permission = "0775"
-  file_permission      = "0775"
-  content     = <<-EOF
-    [deployer_server]
-    ansible_ssh_host=${google_compute_instance.deployer_server.network_interface[0].network_ip}
-  EOF
-}
-
-#--------------------------------------------------
 # Staging Deployment Artifacts
 #--------------------------------------------------
 resource "terraform_data" "staging_automation_code" {
