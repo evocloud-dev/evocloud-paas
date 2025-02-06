@@ -61,44 +61,10 @@ resource "google_compute_address" "rdp_server_eip" {
   address_type = "EXTERNAL"
 }
 
-#--------------------------------------------------
-# Ansible Inventory for RDP Server VM
-#--------------------------------------------------
-resource "local_file" "rdp_ansible_inventory" {
-  depends_on  = [google_compute_instance.rdp_server]
-
-  filename    = "/opt/ansible-inventories/gcp_host_rdp_server.ini"
-  directory_permission = "0775"
-  file_permission      = "0775"
-  content     = <<-EOF
-    [rdp_server]
-    ${google_compute_instance.rdp_server.network_interface[0].network_ip}
-  EOF
-}
-
-#--------------------------------------------------
-# Staging Ansible Inventory File
-#--------------------------------------------------
-resource "null_resource" "staging_ansible_inventory" {
-  depends_on = [local_file.rdp_ansible_inventory]
-
-  connection {
-    host        = var.deployer_server_eip
-    type        = "ssh"
-    user        = var.CLOUD_USER
-    private_key = file(var.PRIVATE_KEY_PAIR)
-  }
-
-  provisioner "file" {
-    source        = "/opt/ansible-inventories/gcp_host_rdp_server.ini"
-    destination   = "/home/${var.CLOUD_USER}/gcp_host_rdp_server.ini"
-  }
-}
 
 #--------------------------------------------------
 # Ansible Configuration Management Code
 #--------------------------------------------------
-
 #replacing null_resource with terraform_data
 #https://developer.hashicorp.com/terraform/language/resources/terraform-data
 resource "terraform_data" "trigger_redeploy" {

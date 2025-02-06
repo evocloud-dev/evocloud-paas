@@ -28,8 +28,6 @@
 |----------------------------------------------------------------------------------------------------------------------------------------------------|-------------|
 | [google_compute_instance.*](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_instance)                       | resource    |
 | [terraform_data.*](https://developer.hashicorp.com/terraform/language/resources/terraform-data)                                                    | resource    |
-| [null_resource.*](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource)                                                    | resource    |
-| [local_file.*](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file)                                                    | resource    |
 
 ## Inputs
 
