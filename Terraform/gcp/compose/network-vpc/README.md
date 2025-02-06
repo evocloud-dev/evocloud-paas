@@ -34,9 +34,9 @@
 
 ## Outputs
 
-| Name | Description   |
-|------|---------------|
-| <a name="output_main_vpc_id"></a> [main_vpc_id](#output\_rdp_server_private_ip) | Main VPC ID.  |
+| Name                                                                        | Description  |
+|-----------------------------------------------------------------------------|--------------|
+| <a name="output_main_vpc_id"></a> [main_vpc_id](#output\_main_vpc_id)       | Main VPC ID  |
 | <a name="output_main_vpc_name"></a> [main_vpc_name](#output\_main_vpc_name) | Main VPC Name |
 
 ## Authors
