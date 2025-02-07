@@ -1,0 +1,44 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+#This playbook installs Podman container engine
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-podman ##################"
+
+- name: Checking for existing Podman service...
+  ansible.builtin.service:
+    name: podman.service
+    state: restarted
+  register: podman_check
+  changed_when: false
+  ignore_errors: true
+  become: true
+
+- when: podman_check.failed
+  block:
+    #By default, the Linux kernel does not allow IPv4 packets to be routed between interfaces;
+    # And it needs to be allowed for most Kubernetes cluster networking implementations to work.
+    - name: Enabling IPv4/IPv6 packet forwarding...
+      ansible.posix.sysctl:
+        name: '{{ item }}'
+        value: '{{ sysctl_configs[item] }}'
+        sysctl_set: true
+        state: present
+        reload: true
+      loop: '{{ sysctl_configs | flatten }}'
+      become: true
+
+    - name: Installing Podman...
+      ansible.builtin.dnf:
+        name: '{{ podman_pkgs | default(["podman"]) }}'
+        state: latest
+      become: true
+
+    - name: Starting Podman service...
+      ansible.builtin.service:
+        name: podman.service
+        state: started
+        enabled: yes
+      become: true

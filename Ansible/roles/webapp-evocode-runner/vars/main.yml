@@ -1,0 +1,15 @@
+---
+#Must be the same version as the gitlab-ee server
+# https://gitlab.com/gitlab-org/gitlab-runner/-/releases
+# https://s3.dualstack.us-east-1.amazonaws.com/gitlab-runner-downloads/latest/index.html
+
+#Gitlab Runner packages: https://s3.dualstack.us-east-1.amazonaws.com/gitlab-runner-downloads/latest/index.html
+##wget https://s3.dualstack.us-east-1.amazonaws.com/gitlab-runner-downloads/latest/binaries/gitlab-runner-linux-amd64
+##wget https://s3.dualstack.us-east-1.amazonaws.com/gitlab-runner-downloads/latest/binaries/gitlab-runner-helper/gitlab-runner-helper.x86_64
+evocode_runner_version: 17.5.3
+
+evocode_runner_force_update: false
+
+evocode_runner_install_dir: '/usr/local/bin'
+
+evocode_runner_ci_user: 'gitlab-runner'
