@@ -1,0 +1,35 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+#This playbook will deploy Terragrunt Binary
+#
+#References:
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-terragrunt ##################"
+
+- name: Checking if Terragrunt binary is already installed...
+  ansible.builtin.stat:
+    path: /usr/local/bin/terragrunt
+  changed_when: false
+  register: terragrunt_binary
+  become: true
+
+- when: not terragrunt_binary.stat.exists or (terragrunt_force_update | bool)
+  block:
+    - name: Downloading Terragrunt binary...
+      ansible.builtin.get_url:
+        url: '{{ terragrunt_download_url }}'
+        dest: '{{ terragrunt_install_dir }}'
+        mode: 0755
+        checksum: '{{ terragrunt_checksum }}'
+      become: true
+
+    - name: Creating symlink for terragrunt binary...
+      ansible.builtin.file:
+        src: '{{ terragrunt_install_dir }}/terragrunt_{{ os_arch }}'
+        dest: '{{ terragrunt_install_dir }}/terragrunt'
+        state: link
+        force: '{{ terragrunt_force_update }}'
+      become: true

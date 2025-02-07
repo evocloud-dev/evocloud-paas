@@ -1,0 +1,49 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+#This playbook will deploy nerdctl, a CLI utility for Containerd
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-nerdctl ##################"
+
+- name: Checking for existing nerdctl installation...
+  ansible.builtin.stat:
+    path: '{{ nerdctl_install_dir }}/nerdctl'
+  changed_when: false
+  become: true
+  register: nerdctl_binary
+
+- name: Uninstalling nerdctl...
+  ansible.builtin.file:
+    path: '{{ nerdctl_install_dir }}/nerdctl'
+    state: absent
+  become: true
+  when: (nerdctl_binary.stat.exists) and (nerdctl_force_update | bool)
+
+- when: (not nerdctl_binary.stat.exists) or (nerdctl_force_update | bool)
+  block:
+    - name: Verifying nerdctl SHA256 Checksum...
+      ansible.builtin.get_url:
+        url: '{{ nerdctl_download_url }}'
+        dest: '/tmp'
+        mode: '0644'
+        checksum: '{{ nerdctl_checksum }}'
+      become: true
+
+    - name: Installing nerdctl...
+      ansible.builtin.unarchive:
+        src: '/tmp/nerdctl-{{ nerdctl_ver }}-linux-amd64.tar.gz'
+        dest: '{{ nerdctl_install_dir }}'
+        mode: '0755'
+        remote_src: yes
+      become: true
+
+  always:
+    - name: Removing nerdctl detritius...
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '/tmp/nerdctl-{{ nerdctl_ver }}-linux-amd64.tar.gz'
+      become: true

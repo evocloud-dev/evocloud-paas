@@ -1,0 +1,28 @@
+---
+#--------------------------------------------------
+# This role will configure the deployer server
+#--------------------------------------------------
+- hosts: all
+  gather_facts: false
+
+  roles:
+    - app-clamav
+    - app-terraform
+    - app-packer
+    - app-vault
+    - app-terragrunt
+    - app-roxctl
+    - app-kubectl
+    - app-helm
+    - app-cilium-cli
+    - app-hubble-cli
+    - app-flux-cli
+    - app-ansible
+    - app-k3sup
+    - app-trivy
+    - app-kubelint
+    - app-nerdctl
+    - app-openjdk
+    - app-maven #depends on app-openjdk
+    - app-gradle #depends on app-openjdk
+    - app-fail2ban

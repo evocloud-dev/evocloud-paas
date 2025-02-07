@@ -1,0 +1,52 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-packer ##################"
+
+- name: Checking for existing Packer installation...
+  ansible.builtin.stat:
+    path: '{{ packer_binary_dir }}'
+  changed_when: False
+  register: packer_binary
+  become: True
+
+- when: not packer_binary.stat.exists or (packer_force_update | bool)
+  block:
+    - name: Downloading Packer package...
+      ansible.builtin.get_url:
+        url: '{{ packer_download_url }}'
+        dest: /tmp/{{ packer_zip }}
+        mode: 0644
+        checksum: '{{ packer_checksum }}'
+      become: true
+
+    - name: Creating directory for Packer...
+      ansible.builtin.file:
+        path: '{{ packer_binary_dir }}'
+        state: directory
+        mode: 0755
+      become: true
+
+    - name: Unarching Packer package...
+      ansible.builtin.unarchive:
+        remote_src: yes
+        src: /tmp/{{ packer_zip }}
+        dest: '{{ packer_binary_dir }}'
+      become: true
+
+    - name: Symlink for Packer binary...
+      ansible.builtin.file:
+        src: '{{ packer_binary_dir }}/packer'
+        dest: '{{ packer_install_dir }}/packer'
+        state: link
+        force: '{{ packer_force_update }}'
+      become: true
+
+  always:
+    - name: Removing Packer detritus...
+      ansible.builtin.file:
+        path: /tmp/{{ packer_zip }}
+        state: absent
+      become: true

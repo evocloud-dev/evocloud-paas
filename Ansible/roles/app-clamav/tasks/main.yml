@@ -1,0 +1,69 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-clamav ##################"
+
+#Installs ClamAV Anti-virus Security Tool
+- name: Installing ClamAV packages...
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  loop: "{{ required_packages }}"
+  register: packages_install
+  until: packages_install is succeeded
+  retries: 3
+  become: true
+
+- name: Running freshclam after ClamAV packages installed...
+  ansible.builtin.command: freshclam
+  when: packages_install.changed
+  register: freshclam_result
+  failed_when:
+    - freshclam_result is failed
+    - freshclam_result.stderr.find('locked by another process') != -1
+  become: true
+
+- name: Configuring ClamAV...
+  ansible.builtin.lineinfile:
+    path: "{{ clamav_daemon_config_path }}"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line | default('') }}"
+    state: "{{ item.state | default('present') }}"
+    mode: 0644
+    create: yes
+  with_items: "{{ clamav_daemon_configuration_changes }}"
+  become: true
+
+- name: Setting-up Freshclam service...
+  ansible.builtin.template:
+    src: clamd-freshclam.service.j2
+    dest: /lib/systemd/system/clamd-freshclam.service
+    mode: 0644
+  become: true
+
+- name: Forcing systemd daemon to reload...
+  ansible.builtin.systemd:
+    daemon_reload: true
+  become: true
+
+#- name: Configuring Freshclam...
+# ansible.builtin.lineinfile:
+#    path: "{{ clamav_freshclam_daemon_config_path }}"
+#    regexp: '{{ item.regexp }}'
+#    line: "{{ item.line | default('') }}"
+#    state: "{{ item.state | default('present') }}"
+#  with_items: "{{ clamav_freshclam_configuration_changes }}"
+#  when: clamav_freshclam_configuration_changes is defined
+
+- name: Ensuring ClamAV and Freshclam components start at boot...
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  loop:
+    - '{{ clamav_daemon }}'
+    - '{{ clamav_freshclam_daemon }}'
+  become: true

@@ -1,0 +1,16 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+#This playbook will deploy Trivy
+#References: https://aquasecurity.github.io/trivy/v0.18.3/installation/
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-trivy ##################"
+
+- name: Installing Trivy...
+  ansible.builtin.dnf:
+    name: "{{ trivy_download_url }}"
+    state: present
+    disable_gpg_check: yes
+  become: true

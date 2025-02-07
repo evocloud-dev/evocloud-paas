@@ -1,0 +1,22 @@
+---
+required_packages:
+  - clamav
+  - clamav-update
+  - clamav-scanner-systemd
+  - clamav-data
+
+clamav_daemon: 'clamd@scan'
+
+clamav_freshclam_daemon: 'clamd-freshclam'
+
+clamav_daemon_localsocket: /var/run/clamd.scan/clamd.sock
+
+clamav_daemon_config_path: /etc/clamd.d/scan.conf
+
+clamav_freshclam_daemon_config_path: /etc/freshclam.conf
+
+clamav_daemon_configuration_changes:
+  - regexp: '^.*Example$'
+    state: absent
+  - regexp: '^.*LocalSocket .*$'
+    line: 'LocalSocket {{ clamav_daemon_localsocket }}'

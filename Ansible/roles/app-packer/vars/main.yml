@@ -1,0 +1,21 @@
+---
+packer_version: '1.8.6'
+
+os_arch: linux_amd64
+
+packer_mirror: https://releases.hashicorp.com/packer
+
+packer_install_dir: /usr/local/bin
+
+packer_force_update: false
+
+# https://releases.hashicorp.com/packer/1.8.6/packer_1.8.6_SHA256SUMS
+packer_checksum: sha256:57d0411e578aea62918d36ed186951139d5d49d44b76e5666d1fbf2427b385ae
+
+packer_zip: 'packer_{{ packer_version }}_{{ os_arch }}.zip'
+
+# https://releases.hashicorp.com/packer/1.8.6/packer_1.8.6_linux_amd64.zip
+packer_download_url: '{{ packer_mirror }}/{{ packer_version }}/{{ packer_zip }}'
+
+packer_binary_dir: '{{ packer_install_dir }}/packer_{{ packer_version }}'
+

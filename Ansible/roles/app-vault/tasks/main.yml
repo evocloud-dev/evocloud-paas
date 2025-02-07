@@ -1,0 +1,43 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+#This playbook will deploy Hashicorp Vault Client Binary
+#
+#References: https://releases.hashicorp.com/vault/
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-vault ##################"
+
+- name: Checking if Vault binary is already installed...
+  ansible.builtin.stat:
+    path: '{{ vault_install_dir }}/vault'
+  changed_when: false
+  become: true
+  register: vault_binary
+  
+- when: not vault_binary.stat.exists or (vault_force_update | bool)
+  block:
+    - name: Verifying Hashicorp Vault SHA256 Checksum...
+      ansible.builtin.get_url:
+        url: '{{ vault_download_url }}'
+        dest: '/tmp'
+        mode: '0644'
+        checksum: '{{ vault_checksum }}'
+      become: true
+
+    - name: Downloading and extracting Hashicorp Vault CLI Binary
+      ansible.builtin.unarchive:
+        src: '/tmp/vault_{{ vault_ver }}_linux_amd64.zip'
+        dest: '{{ vault_install_dir }}'
+        remote_src: yes
+      become: true
+
+  always:
+    - name: Removing Hashicorp Vault detritius...
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '/tmp/vault_{{ vault_ver }}_linux_amd64.zip'
+      become: true
