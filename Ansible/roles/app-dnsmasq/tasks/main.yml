@@ -1,0 +1,74 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+#This playbook deploys dnsmasq as the alternative to resolv.conf local name resolution
+#This module is only needed by Google Cloud Compute Servers to properly direct dns queries to idam
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-dnsmasq ##################"
+
+- name: Installing Dnsmasq packages...
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+    #download_only: true
+    #download_dir: /tmp
+  loop: "{{ dnsmasq_packages }}"
+  register: packages_install
+  until: packages_install is succeeded
+  retries: 3
+  become: true
+
+- name: Configuring Dnsmasq to use althernative resolv.conf...
+  ansible.builtin.lineinfile:
+    path: "/etc/dnsmasq.conf"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line | default('') }}"
+    state: "{{ item.state | default('present') }}"
+    mode: 0644
+    create: yes
+  with_items: "{{ dnsmasq_configuration_changes }}"
+  become: true
+
+- name: Setting-up nameservers...
+  ansible.builtin.template:
+    src: resolv.dmasq.j2
+    dest: /etc/resolv.dmasq
+    mode: 0644
+  become: true
+
+- name: Checking if resolv.conf is empty
+  ansible.builtin.stat:
+    path: '{{ resolv_conf_path }}'
+  register: resolv_conf_content
+  become: true
+
+- when: resolv_conf_content.stat.size > 0
+  block:
+    - name: Removing resolv.conf
+      ansible.builtin.file:
+        path: '{{ resolv_conf_path }}'
+        state: absent
+      become: true
+      ignore_errors: true
+
+    - name: Creating empty resolv.conf
+      ansible.builtin.file:
+        path: '{{ resolv_conf_path }}'
+        state: touch
+      become: true
+
+    - name: Ensuring resolv.conf is immutable.
+      ansible.builtin.file:
+        path: '{{ resolv_conf_path }}'
+        attr: +i
+      become: true
+
+- name: Restarting and enabling Dnsmasq service...
+  ansible.builtin.systemd:
+    name: dnsmasq
+    state: restarted
+    enabled: yes
+  become: true

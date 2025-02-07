@@ -1,0 +1,17 @@
+---
+#--------------------------------------------------
+# This role will configure the idam replica server
+#--------------------------------------------------
+
+- hosts: all
+  gather_facts: false
+  strategy: free
+  vars:
+    creds_store: "{{ lookup('file', ansible_secret) | from_yaml }}"
+
+  roles:
+    - app-dnsmasq #Needed by GCP Compute Instances
+    - config-freeipa-client
+    - config-freeipa-certs
+    - server-freeipa-replica
+    - app-fail2ban

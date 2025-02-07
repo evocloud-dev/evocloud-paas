@@ -1,0 +1,5 @@
+{{ ansible_managed | comment }}
+search {{ domain_tld }}
+nameserver {{ idam_server_ip }}
+nameserver {{ idam_replica_ip }}
+nameserver {{ metadata_ns_ip }}
