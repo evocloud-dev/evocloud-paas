@@ -1,6 +1,5 @@
 Terraform Automation IaC
 =========
-[![Build Status](https://travis-ci.org/andrewrothstein/ansible-terraform.svg?branch=master)](https://travis-ci.org/andrewrothstein/ansible-terraform)
 
 Installs [Terraform](https://www.terraform.io/)/)
 
@@ -23,12 +22,7 @@ Example Playbook
     - app-terraform
 ```
 
-License
--------
-
-Powered by [Geant Technology, LLC](https://www.geanttechnology.com)
-
-Author Information
+Authors
 ------------------
 
-Arnaud Some <arnaud.some@geanttechnology.net>
+Created by the [EvoCloud Engineering Team](https://evocloud.dev). Copyright (C) 2025 EvoCloud, Inc.

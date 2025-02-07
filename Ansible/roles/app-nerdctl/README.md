@@ -1,6 +1,5 @@
 NerdCTL
 =========
-![Build Status](https://github.com/andrewrothstein/ansible-nerdctl/actions/workflows/build.yml/badge.svg)
 
 Installs [nerdctl](https://github.com/containerd/nerdctl/)
 
@@ -23,12 +22,7 @@ Example Playbook
     - app-nerdctl
 ```
 
-License
--------
-
-Powered by [Geant Technology, LLC](https://www.geanttech.com)
-
-Author Information
+Authors
 ------------------
 
-Arnaud Some <arnaud.some@geanttech.com>
+Created by the [EvoCloud Engineering Team](https://evocloud.dev). Copyright (C) 2025 EvoCloud, Inc.
