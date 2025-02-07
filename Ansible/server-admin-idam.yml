@@ -1,0 +1,26 @@
+---
+#--------------------------------------------------
+# This role will configure the idam server
+#--------------------------------------------------
+
+#- hosts: all
+#  strategy: linear
+#  gather_facts: false
+#  tasks:
+    #https://github.com/mitogen-hq/mitogen/issues/753
+#    - name: Hack for mitogen StrictHostKeyChecking support.
+#      ansible.builtin.setup:
+#        filter:
+#          - 'ansible_distribution'
+#          - 'ansible_machine_id'
+
+- hosts: all
+  gather_facts: false
+  strategy: free
+  vars:
+    creds_store: "{{ lookup('file', ansible_secret) | from_yaml }}"
+
+  roles:
+    - server-freeipa
+    - config-freeipa-certs
+    - app-fail2ban
