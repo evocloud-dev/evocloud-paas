@@ -1,0 +1,14 @@
+---
+domain_tld: ''
+server_ip: ''
+
+#Subject Alternate Names. List of IPs to add to the SAN Field
+san_ips:
+  - '{{ server_ip }}'
+
+
+#Leave this variable empty if you do not have Subject Alternate Names in DNS format
+san_fqdn_list: '' #This can be an empty variable or a list of FQDNs for the -D option in ipa-getcert request
+
+cert_dir: '/etc/pki/host_certs'
+freeipa_admin_passwd: "{{ creds_store.freeipa_admin_passwd }}"

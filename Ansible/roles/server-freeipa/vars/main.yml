@@ -1,0 +1,35 @@
+---
+server_timezone: ""
+server_ip: ""
+domain_tld: ""
+idam_short_hostname: ""
+directory_manager_passwd: "{{ creds_store.directory_manager_passwd }}"
+freeipa_admin_passwd: "{{ creds_store.freeipa_admin_passwd }}"
+
+freeipa_module: '@idm:DL1'
+
+freeipa_packages:
+  - freeipa-server
+  - ipa-server-dns
+  - bind-dyndb-ldap
+
+freeipa_services:
+  - http
+  - https
+  - dns
+  - ssh
+  - freeipa-ldap
+  - freeipa-ldaps
+  - kerberos
+  - kpasswd
+  - ntp
+
+freeipa_groups:
+  - sudo_wheel
+  - sys_adm
+  - sec_adm
+  - dev_adm
+  - ops_adm
+  - gitlab_adm
+  - gitlab_usr
+  - devops_usr

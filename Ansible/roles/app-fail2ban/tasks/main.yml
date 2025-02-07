@@ -1,0 +1,45 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+#This playbook deploys Fail2ban
+#References: https://www.howtoforge.com/how-to-install-fail2ban-on-rocky-linux/
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-fail2ban ##################"
+
+- name: Installing Fail2ban packages...
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+    #download_only: true
+    #download_dir: /tmp
+  loop: "{{ fail2ban_packages }}"
+  register: packages_install
+  until: packages_install is succeeded
+  retries: 3
+  become: true
+
+- name: Configuring fail2ban on Firewalld...
+  ansible.builtin.command: "/usr/bin/mv {{ fail2ban_conf_dir }}/jail.d/00-firewalld.conf {{ fail2ban_conf_dir }}/jail.d/00-firewalld.local"
+  args:
+    creates: '{{ fail2ban_conf_dir }}/jail.d/00-firewalld.local'
+  become: true
+
+- name: Configuring fail2ban on sshd...
+  ansible.builtin.copy:
+    dest: "{{ fail2ban_conf_dir }}/jail.d/00-sshd.local"
+    content: |
+      # Overrides the default global configuration
+      [sshd]
+      bantime = 1d
+      maxretry = 5
+  become: true
+
+- name: Restarting and enabling Fail2ban service...
+  ansible.builtin.systemd:
+    name: fail2ban
+    state: restarted
+    enabled: yes
+  become: true

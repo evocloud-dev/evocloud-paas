@@ -1,0 +1,99 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+#This playbook will request certificates for a VM host from the FreeIPA Server
+#
+#References:
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: config-freeipa-certs ##################"
+
+- name: Fetching server FQDN...
+  ansible.builtin.command: "/usr/bin/hostname -f"
+  register: server_fqdn
+  become: true
+  
+- name: Setting facts for VM short hostname...
+  ansible.builtin.set_fact:
+    hostname: "{{ server_fqdn.stdout.split('.')[0] }}"
+  become: true
+  
+# Generating server keys and certs #######
+- name: Verifying if certs already exist...
+  ansible.builtin.stat:
+    path: "{{ cert_dir }}/{{ hostname }}.crt"
+  register: cert_check
+  become: true
+  
+- when: not cert_check.stat.exists
+  block:
+    - name: Creating certs folder...
+      ansible.builtin.file:
+        name: "{{ cert_dir }}"
+        state: directory
+        mode: 0775
+      become: true
+      
+    - name: Initializing Kerberos token with kinit...
+      ansible.builtin.shell: "/bin/kinit admin <<< {{ freeipa_admin_passwd }}"
+      become: true
+
+    #- name: Getting a new kerberos keytab...
+    #  ansible.builtin.shell: |
+    #    /usr/sbin/ipa-getkeytab -s {{ idam_short_hostname }}.{{ domain_tld }} -p host/{{ server_fqdn.stdout }} -k /etc/krb5.keytab
+    #  become: true
+
+    #When the content of the keytab is not read certs generation fails
+    #- name: Reading Kerberos keytab...
+    #  ansible.builtin.shell: klist -k /etc/krb5.keytab
+    #  become: true
+
+    - name: Creating server certs and keys...
+      ansible.builtin.command: >
+        /usr/bin/ipa-getcert request
+        -f {{ cert_dir }}/{{ hostname }}.crt
+        -k {{ cert_dir }}/{{ hostname }}.key
+        -K HTTP/{{ server_fqdn.stdout }}
+        -N CN={{ server_fqdn.stdout }},O={{ domain_tld | upper }}
+        -D {{ server_fqdn.stdout }}
+        {% if san_fqdn_list|length > 0 %}
+        {% for san_fqdn in san_fqdn_list.split(',') %}
+        -D {{ san_fqdn }}
+        {% endfor %}
+        {% endif %}
+        {% for san_ip in san_ips %}
+        -A {{ san_ip }}
+        {% endfor %}
+      become: true
+      register: cert_request_output
+
+    - name: Creating Diffie Hellman keys...
+      ansible.builtin.command: "/usr/bin/openssl dhparam -out dhparam.pem 2048"
+      args:
+        chdir: "{{ cert_dir }}"
+      become: true
+    
+    - name: Copying CA cert into required directories...
+      ansible.builtin.copy:
+        src: /etc/ipa/ca.crt
+        dest: "{{ item }}"
+        remote_src: yes
+      loop:
+        - /etc/pki/ca-trust/source/anchors/
+        - "{{ cert_dir }}"
+      become: true
+      
+    - name: Updating OS Certificate store...
+      shell: "/usr/bin/update-ca-trust"
+      become: true
+
+    - name: Updating generated certs permissions...
+      ansible.builtin.file:
+        path: '{{ item }}'
+        mode: '0644'
+        owner: 'root'
+      loop:
+        - "{{ cert_dir }}/{{ hostname }}.crt"
+        - "{{ cert_dir }}/{{ hostname }}.key"
+      become: true

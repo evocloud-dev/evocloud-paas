@@ -1,0 +1,269 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+#--------------------------------------------------
+# FreeIPA Server Configuration
+#--------------------------------------------------
+
+#This playbook will deploy a FreeIPA Identity Management Server
+#References: https://computingforgeeks.com/how-to-install-and-configure-freeipa-server-on-rhel-centos-8/
+#https://github.com/freeipa/ansible-freeipa
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: server-freeipa ##################"
+
+- name: Set a fact value for server_fqdn...
+  ansible.builtin.set_fact:
+    freeipa_server_fqdn: "{{ idam_short_hostname }}.{{ domain_tld }}"
+
+- name: Setting up hostname with FQDN...
+  ansible.builtin.command: "/usr/bin/hostnamectl set-hostname {{ freeipa_server_fqdn }}"
+  become: true
+
+- name: Setting up FQDN and IP in /etc/hosts...
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ server_ip }} {{ freeipa_server_fqdn }}"
+  become: true
+
+- name: Setting up server timezone...
+  ansible.builtin.command: "/usr/bin/timedatectl set-timezone {{ server_timezone }}"
+  become: true
+
+- name: Installing module for FreeIPA...
+  ansible.builtin.dnf:
+    name: "{{ freeipa_module }}"
+    state: present
+    update_cache: yes
+    #download_only: true
+    #download_dir: /tmp/freeipa-packages
+  register: freeipa_module_succeeded
+  until: freeipa_module_succeeded is succeeded
+  retries: 3
+  become: true
+
+- name: Installing FreeIPA server packages...
+  ansible.builtin.package:
+    name: "{{ freeipa_packages }}"
+  become: true
+
+- name: Ensuring firewall ports are opened...
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    permanent: yes
+    immediate: yes
+    state: enabled
+  loop: "{{ freeipa_services }}"
+  become: true
+
+# --idstart=1000 and --idmax=6000 could be added later if need be.
+- name: Initializing and configuring FreeIPA server... #This task takes 16 minutes to run. Needs optimization if possible
+  ansible.builtin.command: >
+    ipa-server-install 
+    --setup-dns 
+    --setup-kra 
+    --realm {{ domain_tld.upper() }} 
+    --ds-password {{ directory_manager_passwd }} 
+    --admin-password {{ freeipa_admin_passwd }} 
+    --no-forwarders 
+    --hostname {{ freeipa_server_fqdn }} 
+    --unattended
+  args:
+    creates: /opt/freeipa_installed
+  register: freeipa_init_succeeded
+  become: true
+
+- name: Creating freeipa_installed file after successful initialization...
+  ansible.builtin.file:
+    path: "/opt/freeipa_installed"
+    state: touch
+  when: freeipa_init_succeeded.rc == 0
+  become: true
+
+#FreeIPA extra configuration for improved security, auditing, and usability
+- name: Adding new groups to FreeIPA server...
+  community.general.ipa_group:
+    name: "{{ item }}"
+    state: present
+    ipa_host: "{{ freeipa_server_fqdn }}"
+    ipa_user: admin
+    ipa_pass: "{{ freeipa_admin_passwd }}"
+  loop: "{{ freeipa_groups }}"
+  become: true
+
+- name: Creating rules to manage FreeIPA sudo rules...
+  community.general.ipa_sudorule:
+    name: sudo_wheel_nopasswd
+    cmdcategory: all
+    description: Allow users in the sudo_wheel group to run commands with sudo without password
+    hostcategory: all
+    sudoopt:
+      - '!authenticate'
+    usergroup:
+      - sudo_wheel
+    ipa_host: "{{ freeipa_server_fqdn }}"
+    ipa_user: admin
+    ipa_pass: "{{ freeipa_admin_passwd }}"
+  become: true
+  ignore_errors: true
+
+- name: Configuring FreeIPA password policy for global_policy group...
+  community.general.ipa_pwpolicy:
+    maxpwdlife: '90'
+    minpwdlife: '1'
+    historylength: '8'
+    minclasses: '3'
+    minlength: '16'
+    maxfailcount: '6'
+    failinterval: '60'
+    lockouttime: '900'
+    ipa_host: "{{ freeipa_server_fqdn }}"
+    ipa_user: admin
+    ipa_pass: "{{ freeipa_admin_passwd }}"
+  become: true
+
+- name: Enabling audit logging on FreeIPA server...
+  ansible.builtin.shell: |
+    /usr/bin/ldapmodify -D "cn=Directory Manager" -w {{ directory_manager_passwd }} -x  << EOF
+    dn: cn=config
+    changetype: modify
+    replace: nsslapd-auditlog-logging-enabled
+    nsslapd-auditlog-logging-enabled: on
+    -
+    replace:nsslapd-auditlog-mode
+    nsslapd-auditlog-mode: 600
+    -
+    replace:nsslapd-auditlog-maxlogsize
+    nsslapd-auditlog-maxlogsize: 100
+    -
+    replace:nsslapd-auditlog-logrotationtime
+    nsslapd-auditlog-logrotationtime: 1
+    -
+    replace:nsslapd-auditlog-logrotationtimeunit
+    nsslapd-auditlog-logrotationtimeunit: day
+    EOF
+  args:
+    creates: /opt/freeipa_audit_log
+  register: freeipa_audit_log_created
+  become: true
+
+- name: Creating freeipa_audit_log file after enabling logging
+  ansible.builtin.file:
+    path: "/opt/freeipa_audit_log"
+    state: touch
+  when: freeipa_audit_log_created.rc == 0
+  become: true
+
+#Reverse DNS Entry
+- name: Fetching the server IP...
+  ansible.builtin.shell: "/usr/bin/hostname -I | awk '{print $1}'"
+  register: fetched_ip
+  become: true
+
+- name: Printing IP for host to register...
+  ansible.builtin.debug:
+    msg: "{{ fetched_ip.stdout | trim }}"
+
+- name: Get the reverse IP value...
+  ansible.builtin.set_fact:
+    reverse_server_ip: "{{ fetched_ip.stdout.split('.') }}"
+
+- name: Adding dns zone for reverse dns entry...
+  community.general.ipa_dnszone:
+    zone_name: "{{ reverse_server_ip.2 }}.{{ reverse_server_ip.1 }}.{{ reverse_server_ip.0 }}.in-addr.arpa"
+    ipa_host: "{{ freeipa_server_fqdn }}"
+    ipa_user: "admin"
+    ipa_pass: "{{ freeipa_admin_passwd }}"
+    state: present
+    dynamicupdate: true
+    ipa_timeout: 30
+    validate_certs: no
+  become: true
+
+- name: Creating PTR record for a reverse DNS record...
+  community.general.ipa_dnsrecord:
+    record_type: "PTR"
+    zone_name: "{{ reverse_server_ip.2 }}.{{ reverse_server_ip.1 }}.{{ reverse_server_ip.0 }}.in-addr.arpa"
+    record_name: "{{ reverse_server_ip.3 | trim }}"
+    record_value: "{{ freeipa_server_fqdn }}."
+    state: present
+    ipa_host: "{{ freeipa_server_fqdn }}"
+    ipa_user: admin
+    ipa_pass: "{{ freeipa_admin_passwd }}"
+    ipa_timeout: 30
+    validate_certs: no
+  become: true
+
+#Tunning SSSD and Clearing Cache
+- name: Clearing SSSD service...
+  ansible.builtin.command: "/usr/sbin/sss_cache -E"
+  become: true
+
+- name: Stopping SSSD service...
+  ansible.builtin.systemd:
+    name: sssd
+    state: stopped
+  become: true
+
+- name: Configuring SSSD Kerberos renewal interval...
+  ansible.builtin.lineinfile:
+    path: /etc/sssd/sssd.conf
+    regexp: '{{ item.exp }} '
+    insertafter: '^\[domain/{{ domain_tld }}\].*'
+    line: "{{ item.line }}"
+    group: root
+    owner: root
+    mode: 0600
+  loop:
+    - line: "krb5_renew_interval = 3600"
+      exp: "^krb5_renew_interval "
+    - line: "krb5_renewable_lifetime = 60d"
+      exp: "^krb5_renewable_lifetime "
+  become: true
+
+- name: Starting SSSD service...
+  ansible.builtin.systemd:
+    name: sssd
+    state: started
+  become: true
+
+#Enabling IPA as an ACME provider
+- name: Enabling ACME support...
+  ansible.builtin.command: "/usr/sbin/ipa-acme-manage enable"
+  become: true
+
+- name: Check if TSIG key is already configured...
+  ansible.builtin.command: grep -q "cert-manager-acme" /etc/named/ipa-ext.conf
+  ignore_errors: true
+  register: grep_tsig_result
+  become: true
+
+- name: Generating TSIG key for cert-manager-acme to use...
+  ansible.builtin.command: "/usr/sbin/tsig-keygen -a hmac-sha512 cert-manager-acme"
+  register: tsig_acme_key
+  become: true
+  when: grep_tsig_result.rc != 0
+
+- ansible.builtin.debug:
+    msg: "{{ tsig_acme_key.stdout }}"
+
+- name: Extract secret value
+  set_fact:
+    tsig_secret_value: "{{ tsig_acme_key.stdout | regex_search('secret \"([^\"]+)\";', '\\1') }}"
+
+- ansible.builtin.debug:
+    msg: "{{ tsig_secret_value }}"
+
+- name: Append TSIG key to named configuration
+  ansible.builtin.lineinfile:
+    path: /etc/named/ipa-ext.conf
+    line: "{{ tsig_key.stdout }}"
+    create: yes
+  become: true
+
+- name: Starting DNS service...
+  ansible.builtin.systemd:
+    name: named-pkcs11.service
+    state: restarted
+  become: true
