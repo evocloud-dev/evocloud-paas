@@ -1,7 +1,7 @@
-ClamAV
+Dnsmasq
 =========
 
-Installs [ClamAV](https://www.clamav.net/)
+Installs [Dnsmasq](https://dnsmasq.org/)
 
 Dependencies
 ------------
@@ -19,7 +19,7 @@ Example Playbook
 ```yml
 - hosts: servers
   roles:
-    - app-clamav
+    - app-dnsmasq
 ```
 
 Authors

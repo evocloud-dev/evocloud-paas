@@ -1,7 +1,4 @@
 ---
-# Copyright (C) 2024 GEANT TECHNOLOGY LLC
-# GTTECH-License-Identifier: GPL-3.0-or-later
-
 - ansible.builtin.debug:
     msg: "################# STARTING ANSIBLE ROLE: app-ansible ##################"
 

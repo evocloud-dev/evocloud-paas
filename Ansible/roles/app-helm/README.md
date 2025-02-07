@@ -1,6 +1,5 @@
 Helm CLI
 =========
-[![Build Status](https://travis-ci.org/andrewrothstein/ansible-terraform.svg?branch=master)](https://travis-ci.org/andrewrothstein/ansible-terraform)
 
 Installs [Helm](https://helm.sh/docs/intro/install/)/)
 
@@ -23,12 +22,7 @@ Example Playbook
     - app-helm
 ```
 
-License
--------
-
-Powered by [Geant Technology, LLC](https://www.geanttech.com)
-
-Author Information
+Authors
 ------------------
 
-Arnaud Some <arnaud.some@geanttech.com>
+Created by the [EvoCloud Engineering Team](https://evocloud.dev). Copyright (C) 2025 EvoCloud, Inc.
