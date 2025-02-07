@@ -1,0 +1,59 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-terraform ##################"
+
+- name: Checking for existing terraform installation...
+  ansible.builtin.stat:
+    path: '{{ terraform_binary_dir }}'
+  changed_when: False
+  register: terraform_binary
+  become: True
+  
+- when: not terraform_binary.stat.exists or (terraform_force_update | bool)
+  block:
+    - name: Downloading terraform package...
+      ansible.builtin.get_url:
+        url: '{{ terraform_download_url }}'
+        dest: /tmp/{{ terraform_zip }}
+        mode: 0644
+        checksum: '{{ terraform_checksum }}'
+      become: true
+      
+    - name: Creating directory for terraform...
+      ansible.builtin.file:
+        path: '{{ terraform_binary_dir }}'
+        state: directory
+        mode: 0755
+      become: true
+      
+    - name: Unarching terraform package...
+      ansible.builtin.unarchive:
+        remote_src: yes
+        src: /tmp/{{ terraform_zip }}
+        dest: '{{ terraform_binary_dir }}'
+      become: true
+
+    - name: Creating symlink for terraform binary...
+      ansible.builtin.file:
+        src: '{{ terraform_binary_dir }}/terraform'
+        dest: '{{ terraform_install_dir }}/terraform'
+        state: link
+        force: '{{ terraform_force_update }}'
+      become: true
+
+    - name: Creating directory for terraform provider plugins...
+      ansible.builtin.file:
+        path: '{{ terraform_provider_dir }}'
+        state: directory
+        mode: 0755
+      become: true
+      
+  always:
+    - name: Removing Terraform detritus...
+      ansible.builtin.file:
+        path: /tmp/{{ terraform_zip }}
+        state: absent
+      become: true

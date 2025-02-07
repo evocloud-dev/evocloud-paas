@@ -1,0 +1,55 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+#This playbook will deploy Helm Binary
+#
+#References:
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-helm ##################"
+
+- name: Checking if helm already exist...
+  ansible.builtin.stat:
+    path: '{{ helm_install_dir }}/helm'
+  changed_when: false
+  become: true
+  register: helm_binary
+
+- name: Uninstalling helm...
+  ansible.builtin.file:
+    path: '{{ helm_install_dir }}/helm'
+    state: absent
+  become: true
+  when: (helm_binary.stat.exists) and (helm_force_update | bool)
+
+- when: (not helm_binary.stat.exists) or (helm_force_update | bool)
+  block:
+    - name: Verifying Helm SHA256 Checksum...
+      ansible.builtin.get_url:
+        url: '{{ helm_download_url }}'
+        dest: '/tmp'
+        mode: '0644'
+        checksum: '{{ helm_checksum }}'
+      become: true
+
+    - name: Installing Helm...
+      ansible.builtin.unarchive:
+        src: '/tmp/helm-{{ helm_ver }}-linux-amd64.tar.gz'
+        dest: '{{ helm_install_dir }}'
+        mode: '0755'
+        remote_src: yes
+        extra_opts:
+          - --strip-components=1
+      become: true
+
+  always:
+    - name: Removing Helm detritius...
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '{{ helm_install_dir }}/LICENSE'
+        - '{{ helm_install_dir }}/README.md'
+        - '/tmp/helm-{{ helm_ver }}-linux-amd64.tar.gz'
+      become: true

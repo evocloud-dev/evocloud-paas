@@ -1,0 +1,30 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-ansible ##################"
+
+#Installs Ansible Configuration Management
+- name: Installing Ansible packages...
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  loop: "{{ required_packages }}"
+  register: packages_install
+  until: packages_install is succeeded
+  retries: 3
+  become: true
+
+- name: Installing Ansible Posix Collection...
+  ansible.builtin.shell: "/usr/bin/ansible-galaxy collection install ansible.posix"
+  #become: true #Commented this out to enable installation of collection in /home/mlkroot/.ansible
+
+- name: Installing Ansible Community.general Collection...
+  ansible.builtin.shell: "/usr/bin/ansible-galaxy collection install community.general"
+  #become: true #Commented this out to enable installation of collection in /home/mlkroot/.ansible
+
+- name: Installing Ansible Community.mysql Collection...
+  ansible.builtin.shell: "/usr/bin/ansible-galaxy collection install community.mysql"
+  #become: true #Commented this out to enable installation of collection in /home/mlkroot/.ansible

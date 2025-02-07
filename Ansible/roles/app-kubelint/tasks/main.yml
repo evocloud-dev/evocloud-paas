@@ -1,0 +1,27 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+#This playbook will deploy Kube-linter Binary
+#
+#References: https://docs.kubelinter.io/
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-kubelint ##################"
+
+- name: Checking if Kube-linter binary is already installed...
+  ansible.builtin.stat:
+    path: "{{ kube_linter_install_dir }}/kube-linter"
+  changed_when: false
+  become: true
+  register: kube_linter_binary
+
+- when: not kube_linter_binary.stat.exists or (kube_linter_force_update | bool)
+  block:
+    - name: Downloading Kube-linter binary...
+      ansible.builtin.get_url:
+        url: '{{ kube_linter_download_url }}'
+        dest: '{{ kube_linter_install_dir }}/kube-linter'
+        mode: 0755
+        checksum: '{{ kube_linter_checksum }}'
+      become: true

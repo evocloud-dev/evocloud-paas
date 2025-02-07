@@ -1,0 +1,13 @@
+---
+nerdctl_ver: 1.2.1
+
+nerdctl_install_dir: /usr/local/bin
+
+# https://github.com/containerd/nerdctl/releases
+# https://github.com/containerd/nerdctl/releases/download/v1.2.1/nerdctl-1.2.1-linux-amd64.tar.gz
+nerdctl_download_url: 'https://github.com/containerd/nerdctl/releases/download/v{{ nerdctl_ver }}/nerdctl-{{ nerdctl_ver }}-linux-amd64.tar.gz'
+
+# https://github.com/containerd/nerdctl/releases/download/v1.2.1/SHA256SUMS
+nerdctl_checksum: sha256:67aa5cf2a32a3dc0c335b96133daee4d2764d9c1a4d86a38398c4995d2df2176
+
+nerdctl_force_update: false
