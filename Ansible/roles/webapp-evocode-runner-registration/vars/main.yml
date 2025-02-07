@@ -1,0 +1,22 @@
+---
+evocode_server_ip: ''
+
+evocode_runner_hostname_fqdn: ''
+
+idam_server_ip: ''
+
+idam_replica_ip: ''
+
+metadata_ns_ip: ''
+
+evocode_runner_type: 'instance_type' #Can be instance_type|group_type|project_type
+
+evocode_runner_executor: 'docker'
+
+base_docker_image: 'alpine:latest'
+
+docker_host: '/run/podman/podman.sock'
+
+evocode_runner_tags: 'docker,linux,rhel8,shared_runner'
+
+evocode_runner_install_dir: '/usr/local/bin'

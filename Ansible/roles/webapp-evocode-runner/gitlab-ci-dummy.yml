@@ -1,0 +1,39 @@
+stages:
+  - validate
+  - plan
+  - deploy
+  - cleanup
+
+terraform_validate:
+  stage: validate
+  needs: []
+  script:
+    - |
+      echo "Running terraform validate"
+      echo "Running terraform fmt"
+
+  allow_failure: false
+
+terraform_plan:
+  stage: plan
+  needs: []
+  script:
+    - echo "Running terraform plan -out='planfile'"
+  allow_failure: false
+  #artifacts:
+
+terraform_deploy:
+  stage: deploy
+  needs: []
+  script:
+    - echo "Running terraform apply"
+  allow_failure: false
+  when: manual
+
+terraform_cleanup:
+  stage: cleanup
+  needs: []
+  script:
+    - echo "Running terraform destroy"
+  allow_failure: false
+  when: manual

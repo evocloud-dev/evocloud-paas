@@ -1,0 +1,93 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+# This playbook installs EvoCode-Runner a Code Executor for the EvoCode Platform
+#References: https://www.howtoforge.com/how-to-install-gitlab-on-rocky-linux-9/
+#            https://docs.gitlab.com/runner/install/linux-manually.html/
+#            https://docs.gitlab.com/runner/commands/index.html#non-interactive-registration
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: webapp-evocode-runner ##################"
+
+- name: Checking for existing EvoCode-Runner service...
+  shell: "{{ evocode_runner_install_dir }}/gitlab-runner status"
+  args:
+    executable: /bin/bash
+  register: evocode_runner_check
+  become: true
+  ignore_errors: true
+
+- when: "(evocode_runner_check.failed | bool) or (evocode_runner_force_update | bool)"
+  block:
+    - name: Unzipping EvoCode-Runner artifacts...
+      ansible.builtin.unarchive:
+        src: 'gitlab-runner-packages.tar.gz'
+        dest: '/home/{{ cloud_user }}'
+        remote_src: false
+      become: true
+
+    - name: Staging EvoCode-Runner artifacts...
+      ansible.builtin.copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: "0755"
+        remote_src: true
+      loop:
+        - src: "/home/{{ cloud_user }}/gitlab-runner-packages/gitlab-runner-helper.x86_64"
+          dest: "{{ evocode_runner_install_dir }}/gitlab-runner-helper"
+        - src: "/home/{{ cloud_user }}/gitlab-runner-packages/gitlab-runner-linux-amd64"
+          dest: "{{ evocode_runner_install_dir }}/gitlab-runner"
+      become: true
+
+  always:
+    - name: Removing detritius...
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '/home/{{ cloud_user }}/gitlab-runner-packages'
+      become: true
+
+# Configuring EvoCode Runner
+- name: Creating EvoCode Runner CI User
+  ansible.builtin.user:
+    name: '{{ evocode_runner_ci_user }}'
+    shell: '/bin/bash'
+    home: '/home/gitlab-runner'
+    create_home: yes
+    comment: 'GitLab Runner'
+  become: true
+
+- name: Initializing EvoCode Runner...
+  ansible.builtin.shell: "{{ item }}"
+  loop:
+    - "sudo {{ evocode_runner_install_dir }}/gitlab-runner install --user={{ evocode_runner_ci_user }} --working-directory=/home/gitlab-runner"
+  args:
+    executable: /bin/bash
+    creates: /opt/gitlab_runner_installed
+  register: gitlab_runner_install
+  become: true
+
+- name: Creating gitlab_runner_installed success file...
+  ansible.builtin.file:
+    path: "/opt/gitlab_runner_installed"
+    state: touch
+  when: gitlab_runner_install is succeeded
+  become: true
+
+- name: Starting EvoCode Runner Services...
+  ansible.builtin.shell: "{{ item }}"
+  loop:
+    - "sudo {{ evocode_runner_install_dir }}/gitlab-runner start"
+  args:
+    executable: /bin/bash
+  become: true
+
+- name: Verifying EvoCode Runner Services...
+  ansible.builtin.shell: "{{ item }}"
+  loop:
+    - "sudo {{ evocode_runner_install_dir }}/gitlab-runner status"
+  args:
+    executable: /bin/bash
+  become: true

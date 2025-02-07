@@ -1,0 +1,10 @@
+---
+evocode_server_ip: ''
+
+gitlab_group: 'geanttech'
+
+gitlab_project: 'evocloud'
+
+gitlab_project_description: 'EvoCloud DevSecOps PaaS/GitOps'
+
+gitlab_project_type: 'private' #Project visibility: private or disabled or enabled

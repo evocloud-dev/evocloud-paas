@@ -1,0 +1,12 @@
+---
+#----------------------------------------------------------
+# This role registers EvoCode Runner to the EvoCode Server
+#----------------------------------------------------------
+- hosts: all
+  gather_facts: false
+  strategy: free
+  vars:
+    creds_store: "{{ lookup('file', ansible_secret) | from_yaml }}"
+
+  roles:
+    - webapp-evocode-runner-registration

@@ -1,0 +1,54 @@
+---
+workflow:
+  name: EvoCode PaaS Modules Deployment
+  #rules:
+  #  - if: $CI_
+
+stages:
+  - paas_modules
+  - paas_nomad_apps
+
+terragrunt:deploy:evonomad:
+  stage: paas_modules
+  needs: []
+  trigger:
+    include:
+      - local: ${CI_PROJECT_DIR}/Terraform/gcp/deployment/cluster-admin-nomad/.gitlab-ci.yml
+  allow_failure: false
+  when: manual
+
+terragrunt:deploy:evotower:
+  stage: paas_modules
+  needs: []
+  trigger:
+    include:
+      - local: ${CI_PROJECT_DIR}/Terraform/gcp/deployment/server-backend-evotower/.gitlab-ci.yml
+  allow_failure: false
+  when: manual
+
+terragrunt:deploy:evokube:
+  stage: paas_modules
+  needs: []
+  trigger:
+    include:
+      - local: ${CI_PROJECT_DIR}/Terraform/gcp/deployment/cluster-admin-kubernetes/.gitlab-ci.yml
+  allow_failure: false
+  when: manual
+
+terragrunt:deploy:cleanup:
+  stage: paas_modules
+  needs: []
+  trigger:
+    include:
+      - local: ${CI_PROJECT_DIR}/Terraform/gcp/deployment/server-cleanup-helper/.gitlab-ci.yml
+  allow_failure: false
+  when: manual
+
+nomad:deploy:tetris:
+  stage: paas_nomad_apps
+  needs: []
+  trigger:
+    include:
+      - local: ${CI_PROJECT_DIR}/NomadPacks/app-tetris/.gitlab-ci.yml
+  allow_failure: false
+  when: manual

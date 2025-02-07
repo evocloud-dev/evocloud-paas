@@ -1,0 +1,69 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+#This playbook will create an EvoCloud/Gitlab Group and Project
+#References:
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: webapp-evocode-group-project ##############"
+
+- name: Generating Gitlab Root User Personal Access Token...
+  ansible.builtin.shell: "head /dev/urandom | tr -dc A-Za-z0-9 | head -c 63 ; echo ''"
+  args:
+    executable: /bin/bash
+  register: root_access_token
+
+#Personal Access token Scopes: https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#personal-access-token-scopes
+- name: Registering the Personal Access Token with the api,admin_mode permissions...
+  ansible.builtin.shell: |
+    gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: ['api', 'admin_mode'], name: 'Gitlab Root Personal Access Token', expires_at: 1.days.from_now); token.set_token('{{ root_access_token.stdout }}'); token.save!"
+  become: true
+  delegate_to: '{{ evocode_server_ip }}'
+
+- name: Output the Personal Access Token
+  ansible.builtin.debug:
+    msg: '{{ root_access_token.stdout }}'
+
+#https://docs.gitlab.com/ee/api/groups.html#list-groups
+- name: Creating a group in EvoCode/Gitlab...
+  ansible.builtin.uri:
+    url: "https://{{ evocode_server_ip }}/api/v4/groups"
+    method: POST
+    status_code: 201
+    validate_certs: no
+    headers:
+      PRIVATE-TOKEN: "{{ root_access_token.stdout }}"
+    body_format: json
+    body:
+      name: "{{ gitlab_group }}"
+      path: "{{ gitlab_group }}"
+  register: gitlab_group_output
+
+- name: Output Evocode/Gitlab Group...
+  ansible.builtin.debug:
+    msg: '{{ gitlab_group_output.json }}'
+
+#https://docs.gitlab.com/ee/api/projects.html#manage-projects
+- name: Creating a project/repository in EvoCode/Gitlab...
+  ansible.builtin.uri:
+    url: "https://{{ evocode_server_ip }}/api/v4/projects"
+    method: POST
+    status_code: 201
+    validate_certs: no
+    headers:
+      PRIVATE-TOKEN: "{{ root_access_token.stdout }}"
+    body_format: json
+    body:
+      name: "{{ gitlab_project }}"
+      description: "{{ gitlab_project_description }}"
+      default_branch: "main"
+      initialize_with_readme: "true"
+      visibility: "{{ gitlab_project_type }}"
+      namespace_id: "{{ gitlab_group_output.json.id }}"
+      lfs_enabled: "true"
+  register: gitlab_project_output
+
+- name: Output Evocode/Gitlab Project...
+  ansible.builtin.debug:
+    msg: '{{ gitlab_project_output.json }}'
