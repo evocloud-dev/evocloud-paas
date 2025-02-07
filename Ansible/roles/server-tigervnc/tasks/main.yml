@@ -1,0 +1,167 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+#This playbook will register a VM host as the FreeIPA Client
+#
+#References: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/system_administrators_guide/ch-tigervnc
+            #https://access.redhat.com/solutions/2516
+            #https://serverspace.us/support/help/install-tigervnc-server-on-centos-8/
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: server-tigervnc ##################"
+
+- name: Installing GUI package group... #This task takes 25 minutes to run. Needs optimization if possible
+  ansible.builtin.dnf:
+    name: "@Server with GUI"
+    state: present
+  become: true
+
+# After installing the GUI package group, GCP VM NetworkManager gets updated causing the VM to not be accessible after reboot.
+# Here is the code block to work around that issue.
+- when: cloud_platform == "gcp"
+  block:
+    - name: Configuring NetworkManager...
+      ansible.builtin.copy:
+        dest: "/etc/NetworkManager/conf.d/00-server.conf"
+        content: |
+          # Overrides needed by Google Cloud Platform
+          [main]
+          no-auto-default=*
+          ignore-carrier=*
+      become: true
+
+
+- name: Setting default GUI target...
+  ansible.builtin.command: "systemctl set-default graphical.target"
+  become: true
+
+- name: Installing TigerVNC server packages and dependencies...
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ required_packages }}"
+  become: true
+
+- name: Restarting and enabling XINETD service...
+  ansible.builtin.systemd:
+    name: xinetd
+    state: restarted
+    enabled: yes
+  become: true
+
+- name: Restarting and enabling XRDP service...
+  ansible.builtin.systemd:
+    name: xrdp
+    state: restarted
+    enabled: yes
+  become: true
+
+#Configuring TigerVNC-Server
+- name: Ensuring original gdm conf is removed..
+  ansible.builtin.file:
+    path: "/etc/gdm/custom.conf"
+    state: absent
+  become: true
+
+- name: Configuring gdm and vncservice settings...
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    mode: '0644'
+  loop:
+    - src: "custom.conf"
+      dest: "/etc/gdm/custom.conf"
+    - src: "xvncserver.conf"
+      dest: "/etc/xinetd.d/xvncserver"
+  register: gdm_files
+  become: true
+
+- name: Adding vncserver to the list of services..
+  ansible.builtin.lineinfile:
+    path: "/etc/services"
+    regexp: "^vnc01"
+    line: "vncconnect01     5950/tcp     #VNC Service"
+  become: true
+
+#Configuring XRDP
+
+- name: Configuring XRDP...
+  ansible.builtin.ini_file:
+    path:    /etc/xrdp/xrdp.ini
+    section: Globals
+    option:  "{{ item.opts }}"
+    value:   "{{ item.value }}"
+    create:  no
+    state:   present
+  loop:
+    - opts: "port"
+      value: "tcp://:3389"
+    - opts: "certificate"
+      value: "/etc/pki/host_certs/{{ server_short_hostname }}.crt"
+    - opts: "key_file"
+      value: "/etc/pki/host_certs/{{ server_short_hostname }}.key"
+    - opts: "security_layer"
+      value: "tls"
+    - opts: "tls_ciphers"
+      value: "HIGH"
+  become: true
+
+- name: Configuring XRDP with LDAP
+  ansible.builtin.replace:
+    path: /etc/pam.d/xrdp-sesman
+    regexp: '^([ \t]*[a-z]+[ \t]+include[ \t]+)password-auth[ \t]*$'
+    replace: '\1system-auth'
+    backup: yes
+  become: true
+
+#Set Firefox default homepage
+- name: Configuring Firefox homepage...
+  ansible.builtin.replace:
+    path: /usr/lib64/firefox/defaults/preferences/all-redhat.js
+    regexp: '{{ item }}'
+    replace: 'https://www.geanttech.com'
+  loop:
+    - 'https:\/\/rockylinux\.org'
+    - 'data:text\/plain,browser\.startup\.homepage=file:\/\/\/usr\/share\/doc\/HTML\/index\.html'
+  become: true
+
+#- name: Rebooting server for GDM to reload...
+#  ansible.builtin.reboot:
+#  become: true
+
+#- name: Rebooting server for GDM to reload...
+#  ansible.builtin.reboot:
+#  async: 1
+#  poll: 0
+#  when: gdm_files.changed
+#  become: true
+
+#- name: Wait for server to come back online...
+#  ansible.builtin.wait_for_connection:
+#    delay: 10
+#    timeout: 30
+#  become: true
+#  when: gdm_files.changed
+- name: Restarting GDM service...
+  ansible.builtin.systemd:
+    name: gdm
+    state: restarted
+    enabled: yes
+  become: true
+
+- name: Restarting XINETD service...
+  ansible.builtin.systemd:
+    name: xinetd
+    state: restarted
+  become: true
+
+- name: Ensuring TigerVNC and XRDP ports are opened..
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: yes
+    immediate: yes
+    state: enabled
+  loop: "{{ tigervnc_ports }}"
+  become: true

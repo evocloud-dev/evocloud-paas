@@ -1,0 +1,13 @@
+---
+cloud_platform: ''
+
+required_packages:
+  - tigervnc-server
+  - tigervnc
+  - gdm
+  - xinetd
+  - xrdp
+
+tigervnc_ports:
+  - 5950/tcp
+  - 3389/tcp
