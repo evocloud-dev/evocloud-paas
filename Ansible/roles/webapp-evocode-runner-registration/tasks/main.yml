@@ -1,0 +1,100 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+# This playbook registers the EvoCode Runner as a Runner Executor on the EvoCode Server
+#
+# References: https://medium.com/marionete/registering-gitlab-runners-programmatically-with-an-authentication-token-a-tutorial-eaa8aa6cbc0d
+#             https://docs.gitlab.com/runner/register/
+#             https://docs.gitlab.com/ee/tutorials/automate_runner_creation/
+#             https://gitlab.com/gitlab-org/gitlab-foss/-/blob/master/doc/user/profile/personal_access_tokens.md
+#             https://gitlab.com/gitlab-org/gitlab-runner/-/issues/29108
+#             https://github.com/tobilg/gitlab-ci-runner-marathon/blob/master/docs/gitlab_runner_register_arguments.md
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: webapp-evocode-runner-registration ##################"
+
+- name: Checking for existing EvoCode-Runner registration...
+  ansible.builtin.stat:
+    path: '/opt/gitlab_runner_registered'
+  changed_when: false
+  register: runner_registration
+  become: true
+  ignore_errors: true
+
+- when: (not runner_registration.stat.exists)
+  block:
+    - name: Generating Gitlab Root User Personal Access Token...
+      ansible.builtin.shell: "head /dev/urandom | tr -dc A-Za-z0-9 | head -c 63 ; echo ''"
+      args:
+        executable: /bin/bash
+      register: root_access_token
+
+    #Personal Access token Scopes: https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#personal-access-token-scopes
+    - name: Registering the Personal Access Token with the create_runner,manage_runner permissions...
+      ansible.builtin.shell: |
+        gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: ['create_runner', 'manage_runner'], name: 'Gitlab Root Personal Access Token', expires_at: 1.days.from_now); token.set_token('{{ root_access_token.stdout }}'); token.save!"
+      become: true
+      delegate_to: '{{ evocode_server_ip }}'
+
+    - name: Output the Personal Access Token
+      ansible.builtin.debug:
+        msg: '{{ root_access_token.stdout }}'
+
+    - name: Creating a runner configuration and authentication token...
+      ansible.builtin.uri:
+        url: "https://{{ evocode_server_ip }}/api/v4/user/runners"
+        method: POST
+        status_code: 201
+        validate_certs: no
+        headers:
+          PRIVATE-TOKEN: "{{ root_access_token.stdout }}"
+        body_format: json
+        body:
+          description: "EvoCode Runner {{ evocode_runner_executor }}+Executor"
+          runner_type: "{{ evocode_runner_type }}" #instance_type | group_type | project_type
+          tag_list: "{{ evocode_runner_tags }}"
+          locked: "false"
+          access-level: "not_protected" #For a protected runner, use the --access-level="ref_protected" parameter.
+      register: runner_authentication_token
+
+    - name: Output the Runner Registration Token
+      ansible.builtin.debug:
+        msg: '{{ runner_authentication_token.json }}'
+
+#Config parameters: https://docs.gitlab.com/runner/configuration/advanced-configuration.html
+    - name: Registering EvoCode Runner...
+      ansible.builtin.shell: |
+        sudo {{ evocode_runner_install_dir }}/gitlab-runner register \
+          --non-interactive \
+          --name "{{ evocode_runner_hostname_fqdn }}-{{ evocode_runner_executor }}" \
+          --url "https://{{ evocode_server_ip }}/" \
+          --token "{{ runner_authentication_token.json.token }}" \
+          --executor "{{ evocode_runner_executor }}" \
+          --docker-image "{{ base_docker_image }}" \
+          --docker-host "unix://{{ docker_host }}" \
+          --docker-pull-policy "if-not-present" \
+          --docker-network-mode "bridge" \
+          --docker-dns "{{ idam_server_ip }}" \
+          --docker-dns "{{ idam_replica_ip }}" \
+          --docker-dns "{{ metadata_ns_ip }}" \
+          --request-concurrency "12" \
+          --tls-ca-file "/etc/pki/host_certs/ca.crt"
+      args:
+        executable: /bin/bash
+      register: runner_configuration
+      become: true
+
+    - name: Creating gitlab_runner_registered success file...
+      ansible.builtin.file:
+        path: "/opt/gitlab_runner_registered"
+        state: touch
+      when: runner_configuration is succeeded
+      become: true
+
+    - name: Starting Evocode-Runner service...
+      ansible.builtin.service:
+        name: gitlab-runner.service
+        state: started
+        enabled: yes
+      become: true
