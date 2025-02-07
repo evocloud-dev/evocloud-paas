@@ -1,5 +1,5 @@
 <!-- BEGIN_TF_DOCS -->
-# Terraform compose module - server-dmz-rdp
+# Terraform compose module - server-dmz-deployer
 
 ## Requirements
 
@@ -17,12 +17,11 @@
 
 ## Dependencies
 
-| Name                                                                                                 | Source                | Type             |
-|------------------------------------------------------------------------------------------------------|-----------------------|------------------|
-| <a name="depedencies_network-subnet"></a> [network-subnet](#dependencies\_network-subnet)            | compose/network-subnet | terraform module |
-| <a name="dependencies_server-dmz-deployer"></a> [server-dmz-deployer](#dependencies\_dmz-deployer)          | compose/server-dmz-rdp  | terraform module |
-| <a name="dependencies_server-admin-idam"></a> [server-admin-idam](#dependencies\_server-admin-idam]) | compose/server-admin-idam | terraform module |
-| <a name="dependencies_server-admin-idam_replica"></a> [server-admin-idam_replica](#dependencies\_server-admin-idam_replica])   | compose/server-admin-idam_replica | terraform module |
+| Name                                                                                                       | Source                            | Type             |
+|------------------------------------------------------------------------------------------------------------|-----------------------------------|------------------|
+| <a name="depedencies_network-subnet"></a> [network-subnet](#dependencies\_network-subnet)                  | compose/network-subnet            | terraform module |
+| <a name="dependencies_network-routing"></a> [network-routing](#dependencies\_network-gateway)              | compose/network-gateway           | terraform module |
+| <a name="dependencies_server-dmz-deployer"></a> [server-dmz-deployer](#dependencies\_server-dmz-deployer]) | compose/server-dmz-deployer         | terraform module |
 
 ## Resources
 
@@ -37,17 +36,14 @@
 | Name                                                                 | Description                                        | Type      | Default                                                   | Required |
 |----------------------------------------------------------------------|----------------------------------------------------|-----------|-----------------------------------------------------------|:--------:|
 | <a name="input_dmz_subnet_name"></a> [dmz_subnet_name](#input\_input_dmz_subnet_name) | Name of the admin subnet                           | `string`  | `dependency.network-subnet.outputs.dmz_subnet_name`     |   yes    |
-| <a name="input_deployer_server_eip"></a> [deployer_server_eip](#input\_deployer_server_eip) | Public IP of the deployment VM                     | `string`  | `dependency.server-dmz-deployer.outputs.public_ip`        |   yes    |
-| <a name="input_idam_server_ip"></a> [idam_server_ip](#input\_idam_server_ip) | Private IP of the Identity Provider VM             | `string`  | `dependency.server-admin-idam.outputs.private_ip`         |   yes    |
-| <a name="input_idam_replica_ip"></a> [idam_replica_ip](#input\_idam_replica_ip) | Public IP of the Identity Provider replica VM      | `string`  | `dependency.server-admin-idam_replica.outputs.private_ip` |   yes    |
-| <a name="input_rdp_revision"></a> [rdp_revision](#input\_rdp_revision) | RDP Deployment Revision   | `string` | `0.1.0`                                                    |   yes    |
+| <a name="input_deployer_revision"></a> [deployer_revision](#input\_deployer_revision) | RDP Deployment Revision   | `string` | `0.1.0`                                                    |   yes    |
 
 ## Outputs
 
-| Name | Description                                  |
-|------|----------------------------------------------|
-| <a name="output_rdp_server_private_ip"></a> [rdp_server_private_ip](#output\_rdp_server_private_ip) | RDP Private IP Address.                    |
-| <a name="output_rdp_server_public_ip"></a> [rdp_server_public_ip](#output\_rdp_server_public_ip) | RDP Public IP Address     |
+| Name | Description                          |
+|------|--------------------------------------|
+| <a name="output_private_ip"></a> [private_ip](#output\_private_ip) | Deployer Servier Private IP Address. |
+| <a name="output_public_ip"></a> [public_ip](#output\_public_ip) | Deployer Server Public IP Address    |
 
 ## Authors
 

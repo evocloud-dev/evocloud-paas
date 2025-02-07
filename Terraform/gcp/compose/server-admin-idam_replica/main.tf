@@ -1,18 +1,4 @@
 #--------------------------------------------------
-# Server SSH Key
-#--------------------------------------------------
-
-#Uncomment the code snippet below if you uncomment enable-oslogin
-#
-#data "google_client_openid_userinfo" "me" {
-#}
-
-#resource "google_os_login_ssh_public_key" "cache" {
-#  user =  data.google_client_openid_userinfo.me.email
-#  key = file(var.PUBLIC_KEY_PAIR)
-#}
-
-#--------------------------------------------------
 # IDAM Replica Server VM
 #--------------------------------------------------
 resource "google_compute_instance" "idam_replica_server" {
@@ -57,40 +43,6 @@ resource "google_compute_instance" "idam_replica_server" {
     automatic_restart = false
     provisioning_model = "SPOT" #SPOT | STANDARD
     instance_termination_action = "STOP" #DELETE | STOP
-  }
-}
-
-#--------------------------------------------------
-# Ansible Inventory for IDAM Replica Server VM
-#--------------------------------------------------
-resource "local_file" "idam_replica_ansible_inventory" {
-  depends_on  = [google_compute_instance.idam_replica_server]
-
-  filename    = "${var.AUTOMATION_FOLDER}/gcp_host_idam_replica_server.ini"
-  directory_permission = "0775"
-  file_permission      = "0775"
-  content     = <<-EOF
-    [idam_server_replica]
-    ansible_ssh_host=${google_compute_instance.idam_replica_server.network_interface[0].network_ip}
-  EOF
-}
-
-#--------------------------------------------------
-# Staging Ansible Inventory File
-#--------------------------------------------------
-resource "null_resource" "staging_ansible_inventory" {
-  depends_on = [local_file.idam_replica_ansible_inventory]
-
-  connection {
-    host        = var.deployer_server_eip
-    type        = "ssh"
-    user        = var.CLOUD_USER
-    private_key = file(var.PRIVATE_KEY_PAIR)
-  }
-
-  provisioner "file" {
-    source        = "${var.AUTOMATION_FOLDER}/gcp_host_idam_replica_server.ini"
-    destination   = "/home/${var.CLOUD_USER}/gcp_host_idam_replica_server.ini"
   }
 }
 
