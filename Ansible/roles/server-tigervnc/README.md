@@ -19,7 +19,12 @@ Example Playbook
 ```yml
 - hosts: servers
   roles:
+    - app-dnsmasq
+    - config-freeipa-client
+    - config-freeipa-certs
     - server-tigervnc
+    - app-vscode
+    - app-fail2ban
 ```
 
 Authors
