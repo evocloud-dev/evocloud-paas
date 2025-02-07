@@ -1,0 +1,14 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-vscode ##################"
+
+# Installing vscode packages
+- name: Installing vscode package...
+  ansible.builtin.dnf:
+    name: '{{ vscode_package }}'
+    state: present
+    disable_gpg_check: yes
+  become: true
