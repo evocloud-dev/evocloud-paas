@@ -1,0 +1,111 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+#This playbook will deploy a FreeIPA Server Replica for High Availability
+#
+#References: https://www.linuxsysadmins.com/setup-a-freeipa-or-idm-replica/
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: server-freeipa-replica ##################"
+
+- name: Set a fact value for server_fqdn...
+  ansible.builtin.set_fact:
+    replica_server_fqdn: "{{ idam_replica_short_hostname }}.{{ domain_tld }}"
+
+- name: RHEL-CENTOS | Installing FreeIPA server packages
+  ansible.builtin.package:
+    name: "{{ freeipa_packages }}"
+  become: true
+
+- name: Ensuring firewall ports are opened...
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    permanent: yes
+    immediate: yes
+    state: enabled
+  loop: "{{ freeipa_services }}"
+  become: true
+
+## Difference between AWS platform and GCP Platform. GCP platform requires dnsmasq
+- when: cloud_platform == "áws"
+  block:
+    - name: Initializing and configuring FreeIPA Replica server on AWS...
+      ansible.builtin.command: "ipa-replica-install --principal admin --admin-password {{ freeipa_admin_passwd }} --setup-ca --setup-dns --setup-kra --realm {{ domain_tld.upper() }} --domain {{ domain_tld }} --no-forwarders --hostname {{ replica_server_fqdn }} --force-join --unattended"
+      args:
+        creates: /opt/freeipa_replica_installed
+      register: freeipa_init_succeeded
+      become: true
+
+    - name: Creating freeipa_replica_installed file after successful initialization...
+      ansible.builtin.file:
+        path: "/opt/freeipa_replica_installed"
+        state: touch
+      when: freeipa_init_succeeded.rc == 0
+      become: true
+
+- when: cloud_platform == "gcp"
+  block:
+    - name: Initializing and configuring FreeIPA Replica server on GCP... #this task takes 12 minutes to run. Needs optimization if possible
+      ansible.builtin.command: "ipa-replica-install --principal admin --admin-password {{ freeipa_admin_passwd }} --setup-ca --setup-dns --setup-kra --realm {{ domain_tld.upper() }} --domain {{ domain_tld }} --no-forwarders --hostname {{ replica_server_fqdn }} --force-join --unattended"
+      args:
+        creates: /opt/freeipa_replica_installed
+      ignore_errors: true
+      become: true
+
+    # We need to turn off dnsmasq at this stage as it conflicts with the IPA Replica DNS Server
+    - name: Stopping and disabling Dnsmasq service...
+      ansible.builtin.systemd:
+        name: dnsmasq
+        state: stopped
+        enabled: false
+      become: true
+
+    # Then restart IPA Server Replica Service
+    - name: Restarting and IPA Replica Service...
+      ansible.builtin.systemd:
+        name: ipa.service
+        state: restarted
+        enabled: yes
+      register: ipa_service_started
+      become: true
+
+    - name: Creating freeipa_replica_installed file after successful initialization...
+      ansible.builtin.file:
+        path: "/opt/freeipa_replica_installed"
+        state: touch
+      when: ipa_service_started is succeeded
+      become: true
+
+#Tunning SSSD and Clearing Cache
+- name: Clearing SSSD service...
+  ansible.builtin.command: "/usr/sbin/sss_cache -E"
+  become: true
+
+- name: Stopping SSSD service...
+  ansible.builtin.systemd:
+    name: sssd
+    state: stopped
+  become: true
+
+- name: Configuring SSSD Kerberos renewal interval...
+  ansible.builtin.lineinfile:
+    path: /etc/sssd/sssd.conf
+    regexp: '{{ item.exp }} '
+    insertafter: '^\[domain/{{ domain_tld }}\].*'
+    line: "{{ item.line }}"
+    group: root
+    owner: root
+    mode: 0600
+  loop:
+    - line: "krb5_renew_interval = 3600"
+      exp: "^krb5_renew_interval "
+    - line: "krb5_renewable_lifetime = 60d"
+      exp: "^krb5_renewable_lifetime "
+  become: true
+
+- name: Starting SSSD service...
+  ansible.builtin.systemd:
+    name: sssd
+    state: started
+  become: true

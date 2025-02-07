@@ -1,0 +1,16 @@
+---
+domain_tld: ''
+idam_server_ip: ''
+idam_replica_ip: ''
+metadata_ns_ip: ''
+
+dnsmasq_packages:
+  - dnsmasq
+
+resolv_conf_path: '/etc/resolv.conf'
+
+dnsmasq_configuration_changes:
+  - regexp: '^.*#resolv-file=.*$'
+    line: 'resolv-file=/etc/resolv.dmasq'
+    state: present
+

@@ -1,0 +1,203 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+#This playbook will register a VM host as the FreeIPA Client
+#
+#References: https://computingforgeeks.com/how-to-install-freeipa-client-on-centos-rhel-8/
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: config-freeipa-client ##################"
+
+- name: Set a fact value for server_fqdn...
+  ansible.builtin.set_fact:
+    idam_server_fqdn: "{{ idam_short_hostname }}.{{ domain_tld }}"
+    server_fqdn: "{{ server_short_hostname }}.{{ domain_tld }}"
+
+- name: Setting up hostname with FQDN...
+  ansible.builtin.command: "/usr/bin/hostnamectl set-hostname {{ server_fqdn }}"
+  become: true
+  
+- name: Fetching the server IP...
+  ansible.builtin.shell: "/usr/bin/hostname -I | awk '{print $1}'"
+  register: fetched_ip
+  become: true
+
+- name: Get the reverse IP value...
+  ansible.builtin.set_fact:
+    reverse_server_ip: "{{ fetched_ip.stdout.split('.') }}"
+
+- name: Adding entries to /etc/hosts...
+  ansible.builtin.blockinfile:
+    path: /etc/hosts
+    block: |
+      {{ item.ip }} {{ item.name }}
+    marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
+  loop:
+    - { name: '{{ server_fqdn }}', ip: '{{ fetched_ip.stdout }}' }
+    - { name: '{{ idam_server_fqdn }}', ip: '{{ idam_server_ip }}' }
+  become: true
+
+- name: Installing module for FreeIPA...
+  ansible.builtin.dnf:
+    name: "{{ freeipa_module }}"
+    state: present
+    update_cache: yes
+    #download_only: true
+    #download_dir: /tmp/freeipa-packages
+  register: freeipa_module_succeeded
+  until: freeipa_module_succeeded is succeeded
+  retries: 3
+  become: true
+
+- name: Installing FreeIPA client packages...
+  ansible.builtin.package:
+    name: "{{ freeipa_client_packages }}"
+  become: true
+
+- name: Ensuring firewall ports are opened...
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    permanent: yes
+    immediate: yes
+    state: enabled
+  loop: "{{ freeipa_client_services }}"
+  become: true
+  
+####### Installing Time Server Chrony #######
+- name: Installing Chrony NTP packages...
+  ansible.builtin.package:
+    name: "{{ chrony_ntp_packages }}"
+  become: true
+  
+- name: Backing up chrony config file...
+  ansible.builtin.command: mv /etc/chrony.conf /etc/chrony.conf.bak
+  args:
+    creates: /etc/chrony.conf.bak
+  become: true
+
+- name: Configuring Chrony...
+  ansible.builtin.template:
+    src: chrony.conf.j2
+    dest: /etc/chrony.conf
+    owner: root
+    mode: '0644'
+  become: true
+  
+- name: Setting up server timezone...
+  ansible.builtin.command: "/usr/bin/timedatectl set-timezone {{ server_timezone }}"
+  become: true
+  
+- name: Setting up Chrony server synchronization...
+  ansible.builtin.command: "/usr/bin/timedatectl set-ntp true"
+  become: true
+ 
+- name: Enabling Chrony service to start at boot...
+  ansible.builtin.systemd:
+    name: chronyd
+    enabled: yes
+    state: restarted
+    daemon_reload: yes
+  become: true
+
+####### FreeIPA Client Registration #######
+- name: Checking if server has been registered with FreeIPA...
+  ansible.builtin.stat:
+    path: /opt/freeipa_client_registered
+  register: freeipa_client_registration
+
+- name: Registering server to FreeIPA...
+  ansible.builtin.command: "/usr/sbin/ipa-client-install --force-join --enable-dns-updates --no-ntp --mkhomedir --server={{ idam_server_fqdn }} --domain={{ domain_tld }} --hostname={{ server_fqdn }} --principal=admin@{{ domain_tld | upper }} --password={{ freeipa_admin_passwd }} --unattended"
+  args:
+    creates: /opt/freeipa_client_registered
+  when: not freeipa_client_registration.stat.exists
+  register: freeipa_client_install
+  become: true
+
+- name: Creating freeipa_client_registration success file...
+  ansible.builtin.file:
+    path: "/opt/freeipa_client_registered"
+    state: touch
+  when: freeipa_client_install is succeeded
+  become: true
+
+- name: Printing IP for host to register...
+  ansible.builtin.debug:
+    msg: "{{ fetched_ip.stdout | trim }}"
+
+#Foward DNS Entry
+- name: Creating forward dns entry...
+  community.general.ipa_dnsrecord:
+    name: "{{ server_short_hostname }}"
+    record_type: "A"
+    zone_name: "{{ domain_tld }}"
+    record_value: "{{ fetched_ip.stdout | trim }}"
+    state: present
+    ipa_host: "{{ idam_server_fqdn }}"
+    ipa_user: "admin"
+    ipa_pass: "{{ freeipa_admin_passwd }}"
+    ipa_timeout: 30
+    validate_certs: no
+  become: true
+
+#Reverse DNS Entry
+- name: Adding dns zone for reverse dns entry...
+  community.general.ipa_dnszone:
+    zone_name: "{{ reverse_server_ip.2 }}.{{ reverse_server_ip.1 }}.{{ reverse_server_ip.0 }}.in-addr.arpa"
+    ipa_host: "{{ idam_server_fqdn }}"
+    ipa_user: "admin"
+    ipa_pass: "{{ freeipa_admin_passwd }}"
+    state: present
+    dynamicupdate: true
+    allowsyncptr: true
+    ipa_timeout: 30
+    validate_certs: no
+  ignore_errors: true
+  become: true
+
+- name: Creating PTR record for a reverse DNS record...
+  community.general.ipa_dnsrecord:
+    record_type: "PTR"
+    zone_name: "{{ reverse_server_ip.2 }}.{{ reverse_server_ip.1 }}.{{ reverse_server_ip.0 }}.in-addr.arpa"
+    record_name: "{{ reverse_server_ip.3 | trim }}"
+    record_value: "{{ server_fqdn }}."
+    state: present
+    ipa_host: "{{ idam_server_fqdn }}"
+    ipa_user: admin
+    ipa_pass: "{{ freeipa_admin_passwd }}"
+    ipa_timeout: 30
+    validate_certs: no
+  become: true
+
+#Tunning SSSD and Clearing Cache
+- name: Clearing SSSD service...
+  ansible.builtin.command: "/usr/sbin/sss_cache -E"
+  become: true
+
+- name: Stopping SSSD service...
+  ansible.builtin.systemd:
+    name: sssd
+    state: stopped
+  become: true
+
+- name: Configuring SSSD Kerberos renewal interval...
+  ansible.builtin.lineinfile:
+    path: /etc/sssd/sssd.conf
+    regexp: '{{ item.exp }} '
+    insertafter: '^\[domain/{{ domain_tld }}\].*'
+    line: "{{ item.line }}"
+    group: root
+    owner: root
+    mode: 0600
+  loop:
+    - line: "krb5_renew_interval = 3600"
+      exp: "^krb5_renew_interval "
+    - line: "krb5_renewable_lifetime = 60d"
+      exp: "^krb5_renewable_lifetime "
+  become: true
+
+- name: Starting SSSD service...
+  ansible.builtin.systemd:
+    name: sssd
+    state: started
+  become: true

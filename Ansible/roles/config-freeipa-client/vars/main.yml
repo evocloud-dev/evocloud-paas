@@ -1,0 +1,24 @@
+---
+server_timezone: ''
+domain_tld: ''
+server_short_hostname: ''
+idam_server_ip: ''
+idam_short_hostname: ''
+
+freeipa_admin_passwd: "{{ creds_store.freeipa_admin_passwd }}"
+freeipa_module: '@idm:DL1'
+freeipa_client_packages:
+  - ipa-client
+
+chrony_ntp_packages:
+  - chrony
+freeipa_client_services:
+  - http
+  - https
+  - dns
+  - ssh
+  - freeipa-ldap
+  - freeipa-ldaps
+  - kerberos
+  - kpasswd
+  - ntp

@@ -1,0 +1,27 @@
+---
+server_timezone: ""
+server_ip: ""
+domain_tld: ""
+idam_short_hostname: ""
+cloud_platform: "" # aws | gcp | alicloud
+directory_manager_passwd: "{{ creds_store.directory_manager_passwd }}"
+freeipa_admin_passwd: "{{ creds_store.freeipa_admin_passwd }}"
+
+freeipa_packages:
+  - freeipa-server
+  - ipa-server-dns
+  - bind-dyndb-ldap
+
+freeipa_services:
+  - http
+  - https
+  - dns
+  - ssh
+  - freeipa-4
+  - freeipa-ldap
+  - freeipa-ldaps
+  - freeipa-replication
+  - freeipa-trust
+  - kerberos
+  - kpasswd
+  - ntp
