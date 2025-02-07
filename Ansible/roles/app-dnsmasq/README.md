@@ -1,7 +1,7 @@
-ClamAV
+Dnsmasq
 =========
 
-Installs [ClamAV](https://www.clamav.net/)
+Installs [Dnsmasq](https://dnsmasq.org/)
 
 Dependencies
 ------------
@@ -19,11 +19,10 @@ Example Playbook
 ```yml
 - hosts: servers
   roles:
-    - app-clamav
+    - app-dnsmasq
 ```
 
 Authors
 ------------------
 
 Created by the [EvoCloud Engineering Team](https://evocloud.dev). Copyright (C) 2025 EvoCloud, Inc.
-

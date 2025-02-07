@@ -1,7 +1,7 @@
-ClamAV
+Fail2ban
 =========
 
-Installs [ClamAV](https://www.clamav.net/)
+Installs [fail2ban](https://github.com/fail2ban/fail2ban/)
 
 Dependencies
 ------------
@@ -19,11 +19,10 @@ Example Playbook
 ```yml
 - hosts: servers
   roles:
-    - app-clamav
+    - app-fail2ban
 ```
 
 Authors
 ------------------
 
 Created by the [EvoCloud Engineering Team](https://evocloud.dev). Copyright (C) 2025 EvoCloud, Inc.
-

@@ -1,7 +1,4 @@
 ---
-# Copyright (C) 2024 GEANT TECHNOLOGY LLC
-# GTTECH-License-Identifier: GPL-3.0-or-later
-
 #This playbook deploys dnsmasq as the alternative to resolv.conf local name resolution
 #This module is only needed by Google Cloud Compute Servers to properly direct dns queries to idam
 

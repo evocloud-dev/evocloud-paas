@@ -4,7 +4,8 @@ Ansible Binary
 [![Build Status](https://github.com/geerlingguy/ansible-role-ansible/workflows/CI/badge.svg?event=push)](https://github.com/geerlingguy/ansible-role-ansible/)
 
 
-Installs [Ansible](https://docs.ansible.com/ansible/latest/) Configuration Management.
+Installs [Ansible](https://docs.ansible.com/ansible/latest/) Configuration Management Tool.
+
 
 
 Dependencies
@@ -26,12 +27,7 @@ Example Playbook
     - app-ansible
 ```
 
-License
--------
-
-Powered by [Geant Technology, LLC](https://www.geanttechnology.com)
-
-Author Information
+Authors
 ------------------
 
-Arnaud Some <arnaud.some@geanttechnology.net>
+Created by the [EvoCloud Engineering Team](https://evocloud.dev). Copyright (C) 2025 EvoCloud, Inc.
