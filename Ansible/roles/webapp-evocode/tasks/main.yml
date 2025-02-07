@@ -1,0 +1,139 @@
+---
+# Copyright (C) 2024 GEANT TECHNOLOGY LLC
+# GTTECH-License-Identifier: GPL-3.0-or-later
+
+# This playbook installs EvoCode Enterprise Code Repository Management Platform
+#References: https://www.howtoforge.com/how-to-install-gitlab-on-rocky-linux-9/
+#            https://docs.gitlab.com/omnibus/installation/
+#            https://docs.gitlab.com/ee/topics/offline/quick_start_guide.html
+#            https://docs.gitlab.com/omnibus/settings/
+#
+#Pipeline Jobs: https://about.gitlab.com/blog/2020/12/10/basics-of-gitlab-ci-updated/
+
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: webapp-evocode ##################"
+
+- name: Checking for existing EvoCode service...
+  shell: "gitlab-ctl status"
+  args:
+    executable: /bin/bash
+  register: evocode_check
+  become: true
+  ignore_errors: true
+
+- name: Setting facts for Domain TLD...
+  ansible.builtin.set_fact:
+    domain_tld1: "{{ domain_tld.split('.')[0] }}"
+    domain_tld2: "{{ domain_tld.split('.')[1] }}"
+  become: true
+
+- when: "(evocode_check.failed | bool) or (evocode_force_update | bool)"
+  block:
+    - name: Staging EvoCode artifacts...
+      ansible.builtin.unarchive:
+        src: 'gitlab-packages.tar.gz'
+        dest: '/home/{{ cloud_user }}'
+        remote_src: false
+      become: true
+
+    - name: Installing EvoCode RPM packages...
+      ansible.builtin.shell: "{{ item }}"
+      loop:
+        - "/usr/bin/dnf install -y /home/{{ cloud_user }}/gitlab-packages/*.rpm"
+      environment:
+        GITLAB_ROOT_PASSWORD: '{{ code_admin_passwd }}'
+      become: true
+
+  always:
+    - name: Removing detritius...
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '/home/{{ cloud_user }}/gitlab-packages'
+      become: true
+
+#Configure TLS Certificate, Enable GitLab container registry, Disable Call Home
+- name: Creating EvoCode certs directory...
+  ansible.builtin.file:
+    path: '{{ evocode_conf_dir }}/ssl'
+    state: directory
+    mode: "0500"
+  become: true
+
+- name: Staging host certs for EvoCode...
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "0500"
+    remote_src: true
+  loop:
+    - src: "{{ cert_dir }}/{{ server_short_hostname }}.crt"
+      dest: "{{ evocode_conf_dir }}/ssl/{{ server_short_hostname }}.{{ domain_tld }}.crt"
+    - src: "{{ cert_dir }}/{{ server_short_hostname }}.key"
+      dest: "{{ evocode_conf_dir }}/ssl/{{ server_short_hostname }}.{{ domain_tld }}.key"
+    - src: "{{ cert_dir }}/ca.crt"
+      dest: "{{ evocode_conf_dir }}/ssl"
+    - src: "{{ cert_dir }}/dhparam.pem"
+      dest: "{{ evocode_conf_dir }}/ssl"
+  become: true
+
+- name: Staging EvoCode config file (gitlab.rb)...
+  ansible.builtin.template:
+    src: '{{ item.f }}.j2'
+    dest: '{{ item.d }}/{{ item.f }}'
+    mode: '{{ item.m | default("0640") }}'
+  with_items:
+    - f: 'gitlab.rb'
+      d: "{{ evocode_conf_dir }}"
+      m: '0300'
+  become: true
+
+- name: Enabling firewall rules...
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: yes
+    immediate: yes
+    state: enabled
+  loop:
+    - '5050/tcp'       #Gitlab Container Registry Port
+  become: true
+
+- name: Initializing EvoCode Platform...
+  ansible.builtin.shell: "gitlab-ctl reconfigure"
+  args:
+    executable: /bin/bash
+  async: 900
+  poll: 0
+  become: true
+  register: evocode_init
+
+- name: Pausing for the async job to fire...
+  ansible.builtin.pause:
+    seconds: 30
+
+- name: Waiting for initialization to complete...
+  ansible.builtin.async_status:
+    jid: "{{ evocode_init.ansible_job_id }}"
+    mode: status
+  until: job_result.finished
+  retries: 90
+  delay: 10
+  become: true
+  register: job_result
+
+- name: Cleaning up async file...
+  ansible.builtin.async_status:
+    jid: '{{ evocode_init.ansible_job_id }}'
+    mode: cleanup
+  become: true
+
+- name: Disabling sign-up and Verifying EvoCode Services...
+  ansible.builtin.shell: "{{ item }}"
+  loop:
+    - 'sudo gitlab-rails runner "ApplicationSetting.current.update!(signup_enabled: false)"'
+    - 'gitlab-ctl status'
+  args:
+    executable: /bin/bash
+  become: true
