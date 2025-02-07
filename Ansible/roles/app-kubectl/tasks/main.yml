@@ -1,7 +1,4 @@
 ---
-# Copyright (C) 2024 GEANT TECHNOLOGY LLC
-# GTTECH-License-Identifier: GPL-3.0-or-later
-
 #Source: https://kubernetes.io/docs/tasks/tools/install-kubectl/
 
 - ansible.builtin.debug:

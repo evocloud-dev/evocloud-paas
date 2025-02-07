@@ -19,20 +19,11 @@ Example Playbook
 ```yml
 - hosts: servers
   roles:
-    - rancher-kubectl
+    - app-kubectl
 ```
 
-Note
-----
-Kubectl can be deployed on the Rancher load-balancer with the kubeconfig file setup from the k3s.yml file.
 
-
-License
--------
-
-Powered by [Geant Technology, LLC](https://www.geanttech.com)
-
-Author Information
+Authors
 ------------------
 
-Arnaud Some <arnaud.some@geanttech.com>
+Created by the [EvoCloud Engineering Team](https://evocloud.dev). Copyright (C) 2025 EvoCloud, Inc.

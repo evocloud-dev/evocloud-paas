@@ -22,12 +22,7 @@ Example Playbook
     - app-kubelint
 ```
 
-License
--------
-
-Powered by [Geant Technology, LLC](https://www.geanttech.com)
-
-Author Information
+Authors
 ------------------
 
-Arnaud Some <arnaud.some@geanttech.com>
+Created by the [EvoCloud Engineering Team](https://evocloud.dev). Copyright (C) 2025 EvoCloud, Inc.

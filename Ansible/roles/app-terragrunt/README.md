@@ -1,9 +1,6 @@
 Terragrunt Binary
 =====
 
-[![Build Status](https://travis-ci.org/andrewrothstein/ansible-terragrunt.svg?branch=master)](https://travis-ci.org/andrewrothstein/ansible-terragrunt)
-
-
 Installs [Terrgrunt Binary](https://github.com/gruntwork-io/terragrunt/)
 
 Dependencies
@@ -25,12 +22,7 @@ Example Playbook
     - app-terragrunt
 ```
 
-License
--------
-
-Powered by [Geant Technology, LLC](https://www.geanttech.com)
-
-Author Information
+Authors
 ------------------
 
-Arnaud Some <arnaud.some@geanttech.com>
+Created by the [EvoCloud Engineering Team](https://evocloud.dev). Copyright (C) 2025 EvoCloud, Inc.

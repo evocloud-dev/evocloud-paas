@@ -1,7 +1,4 @@
 ---
-# Copyright (C) 2024 GEANT TECHNOLOGY LLC
-# GTTECH-License-Identifier: GPL-3.0-or-later
-
 #This playbook deploys Fail2ban
 #References: https://www.howtoforge.com/how-to-install-fail2ban-on-rocky-linux/
 
