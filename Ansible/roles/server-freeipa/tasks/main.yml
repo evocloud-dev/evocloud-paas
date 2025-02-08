@@ -231,7 +231,7 @@
   become: true
 
 - name: Check if TSIG key is already configured...
-  ansible.builtin.command: grep -q "cert-manager-acme" /etc/named/ipa-ext.conf
+  ansible.builtin.command: "grep -q 'cert-manager-acme' /etc/named/ipa-ext.conf"
   ignore_errors: true
   register: grep_tsig_result
   become: true
