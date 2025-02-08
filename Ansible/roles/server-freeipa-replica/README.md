@@ -23,7 +23,6 @@ Example Playbook
     - config-freeipa-client
     - config-freeipa-certs
     - server-freeipa-replica
-    - app-fail2ban
 ```
 
 Authors
