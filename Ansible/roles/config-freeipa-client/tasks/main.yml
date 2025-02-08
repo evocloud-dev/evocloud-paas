@@ -1,7 +1,4 @@
 ---
-# Copyright (C) 2024 GEANT TECHNOLOGY LLC
-# GTTECH-License-Identifier: GPL-3.0-or-later
-
 #This playbook will register a VM host as the FreeIPA Client
 #
 #References: https://computingforgeeks.com/how-to-install-freeipa-client-on-centos-rhel-8/
