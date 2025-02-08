@@ -11,18 +11,13 @@
     - app-packer
     - app-vault
     - app-terragrunt
-    - app-roxctl
     - app-kubectl
     - app-helm
     - app-cilium-cli
-    - app-hubble-cli
-    - app-flux-cli
+    #- app-hubble-cli
+    #- app-flux-cli
     - app-ansible
-    - app-k3sup
     - app-trivy
     - app-kubelint
     - app-nerdctl
-    - app-openjdk
-    - app-maven #depends on app-openjdk
-    - app-gradle #depends on app-openjdk
     - app-fail2ban
