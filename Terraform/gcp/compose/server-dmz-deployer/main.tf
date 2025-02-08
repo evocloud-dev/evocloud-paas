@@ -81,9 +81,6 @@ resource "google_compute_address" "deployer_server_eip" {
 resource "terraform_data" "staging_automation_code" {
   depends_on = [google_compute_instance.deployer_server]
 
-  #Uncomment below if we want to run Triggers when VM ID changes
-  triggers_replace = [google_compute_instance.deployer_server]
-
   connection {
     host        = google_compute_address.deployer_server_eip.address
     type        = "ssh"
@@ -99,11 +96,6 @@ resource "terraform_data" "staging_automation_code" {
   provisioner "file" {
     source        = var.AUTOMATION_FOLDER
     destination   = "/home/${var.CLOUD_USER}"
-  }
-
-  provisioner "file" {
-    source        = "${var.AUTOMATION_FOLDER}/gcp_host_deployer_server.ini"
-    destination   = "/home/${var.CLOUD_USER}/gcp_host_deployer_server.ini"
   }
 
   provisioner "remote-exec" {
@@ -129,7 +121,7 @@ resource "terraform_data" "deployer_server_configuration" {
   ]
 
   #Uncomment below if we want to run Triggers when VM ID changes
-  triggers_replace = [google_compute_instance.deployer_server]
+  #triggers_replace = [google_compute_instance.deployer_server]
   #Uncomment below if we want to run Triggers on Revision number increase
   lifecycle {
     replace_triggered_by = [terraform_data.redeploy_deployer]
