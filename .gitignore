@@ -1,3 +1,5 @@
-# Ignore IDE Folder and Files
+# Ignore IDE Folders and Files
 .idea/
 .vscode/
+
+
