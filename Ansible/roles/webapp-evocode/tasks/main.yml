@@ -1,7 +1,4 @@
 ---
-# Copyright (C) 2024 GEANT TECHNOLOGY LLC
-# GTTECH-License-Identifier: GPL-3.0-or-later
-
 # This playbook installs EvoCode Enterprise Code Repository Management Platform
 #References: https://www.howtoforge.com/how-to-install-gitlab-on-rocky-linux-9/
 #            https://docs.gitlab.com/omnibus/installation/

@@ -1,7 +1,4 @@
 ---
-# Copyright (C) 2024 GEANT TECHNOLOGY LLC
-# GTTECH-License-Identifier: GPL-3.0-or-later
-
 # This playbook registers the EvoCode Runner as a Runner Executor on the EvoCode Server
 #
 # References: https://medium.com/marionete/registering-gitlab-runners-programmatically-with-an-authentication-token-a-tutorial-eaa8aa6cbc0d
