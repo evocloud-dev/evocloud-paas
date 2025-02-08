@@ -13,11 +13,29 @@
 
 - when: "(not kubectl_binary.stat.exists) or (kubectl_force_update | bool)"
   block:
-    - name: Downloading and install kubectl binary...
+    - name: Verifying kubectl client binary checksum...
       ansible.builtin.get_url:
         url: '{{ kubectl_download_url }}'
-        dest: '{{ kubectl_install_dir }}'
-        mode: 0755
+        dest: '/tmp'
+        mode: '0644'
         checksum: '{{ kubectl_checksum }}'
       become: true
-      
+
+    - name: Installing kubectl...
+      ansible.builtin.unarchive:
+        src: '/tmp/kubernetes-client-linux-amd64.tar.gz'
+        dest: '{{ kubectl_install_dir }}'
+        mode: '0755'
+        remote_src: yes
+        extra_opts:
+          - --strip-components=3
+      become: true
+
+  always:
+    - name: Removing kubectl detritius...
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '/tmp/kubernetes-client-linux-amd64.tar.gz'
+      become: true

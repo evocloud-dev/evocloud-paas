@@ -9,4 +9,5 @@ kubectl_download_url: 'https://dl.k8s.io/{{ kubectl_ver }}/kubernetes-client-lin
 
 kubectl_install_dir: '/usr/local/bin'
 
+#https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.32.md#client-binaries
 kubectl_checksum: sha512:3eff144cdc8db4681fcf9b2205fa732ea7836e7878d9cc5617171970bbf80813eea45d08e1d00f6d652b6364c4a099e3e40a2a6a3ddad11a9896c73cda3118d2
