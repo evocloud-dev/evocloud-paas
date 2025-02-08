@@ -1,9 +1,6 @@
 Ansible Binary
 =========
 
-[![Build Status](https://github.com/geerlingguy/ansible-role-ansible/workflows/CI/badge.svg?event=push)](https://github.com/geerlingguy/ansible-role-ansible/)
-
-
 Installs [Ansible](https://docs.ansible.com/ansible/latest/) Configuration Management Tool.
 
 
