@@ -1,7 +1,7 @@
 Requests VM Certs from Freeipa
 =====
 
-Installs [Config Freeipa Client]()
+Installs [Config Freeipa Certs](https://www.freeipa.org/page/Certmonger)
 
 Dependencies
 ------------
