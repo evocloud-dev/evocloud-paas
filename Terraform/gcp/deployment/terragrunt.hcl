@@ -46,7 +46,7 @@ inputs = {
   # DMZ Controller Host
   ###########################################################################
   DEPLOYER_SHORT_HOSTNAME   = "evo-master"
-  BASE_INSTALLER_IMG        = "evocloud-installer-image-b0-1-0"
+  BASE_INSTALLER_IMG        = "evocloud-rocky8-b0-1-0"
   DEPLOYER_PRIVATE_IP       = "10.10.10.5"
   DEPLOYER_INSTANCE_SIZE    = "e2-medium"
   DEPLOYER_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
@@ -55,7 +55,7 @@ inputs = {
   # IDAM Identity and Access Management Server (FreeIPA)
   ###########################################################################
   IDAM_SHORT_HOSTNAME   = "evoidp"
-  BASE_IPASERVER_IMG    = "evocloud-ipaserver-image-b0-1-0"
+  BASE_IPASERVER_IMG    = "evocloud-rocky8-b0-1-0"
   IDAM_PRIVATE_IP       = "10.10.20.5"
   IDAM_INSTANCE_SIZE    = "e2-medium"
   IDAM_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme

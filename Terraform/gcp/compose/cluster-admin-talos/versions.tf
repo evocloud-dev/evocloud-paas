@@ -8,8 +8,8 @@ terraform {
   #Providers required version
   required_providers {
     google = {
-      source  = "terraform.local/evocloud/google"
-      version = ">= 5.1.0, < 5.2.0"
+      #source  = "terraform.local/evocloud/google"
+      version = ">= 5.0.0, < 6.0.0"
     }
     talos = {
       source  = "siderolabs/talos"
