@@ -6,7 +6,7 @@ inputs = {
   admin_subnet_name     = dependency.network-subnet.outputs.admin_subnet_name
   deployer_server_eip   = dependency.server-dmz-deployer.outputs.public_ip
   idam_server_ip        = dependency.server-admin-idam.outputs.private_ip
-  idam_replica_revision = "0.0.1"
+  idam_replica_revision = "0.1.0"
 }
 
 #--------------------------------------------------
