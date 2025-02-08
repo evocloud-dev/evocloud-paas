@@ -1,7 +1,7 @@
 Visual Studio Code Install
 =====
 
-Installs [Visual Studio Code]()
+Installs [Visual Studio Code](https://code.visualstudio.com/)
 
 Dependencies
 ------------
