@@ -25,8 +25,8 @@
 
 - name: shutdown harbor
   ansible.builtin.shell:
-    cmd: /usr/local/bin/docker-compose down
-    chdir: "{{ harbor_directory }}"
+    cmd: /bin/docker compose down
+    chdir: "{{ harbor_directory }}/harbor"
   become: true
   when: harbor_status.rc == 0
 
@@ -55,15 +55,15 @@
 
 - name: install docker packages
   ansible.builtin.dnf:
-    name: "{{ item.pkg }}"
+    name: "{{ item }}"
     state: present
     disable_gpg_check: true
   loop:
-    - pkg: "docker-ce"
-    - pkg: "docker-ce-cli"
-    - pkg: "containerd.io"
-    - pkg: "docker-buildx-plugin"
-    - pkg: "docker-compose-plugin"
+    - docker-ce
+    - docker-ce-cli
+    - containerd.io
+    - docker-buildx-plugin
+    - docker-compose-plugin
   become: true
 
 - name: start and enable docker service
@@ -139,6 +139,21 @@
 - name: run install script
   ansible.builtin.shell: |
     {{ harbor_directory }}/harbor/install.sh --with-trivy
+  become: true
+
+- name: move harbor.service.tmpl to /etc/systemd/system
+  ansible.builtin.template:
+    src: harbor.service.tmpl
+    dest: "/etc/systemd/system/harbor.service"
+    owner: root
+    group: root
+  become: true
+
+- name: enable harbor.service
+  ansible.builtin.systemd_service:
+    name: harbor.service
+    enabled: true
+    masked: no
   become: true
 
 #- name: configure LDAP, create registry and project

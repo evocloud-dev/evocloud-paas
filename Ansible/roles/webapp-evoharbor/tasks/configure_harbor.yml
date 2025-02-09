@@ -18,9 +18,9 @@
 #    body:
 #      auth_mode: "ldap_auth"
 #      primary_auth_mode: true
-#      ldap_url: "https://<idam_fqdn>:636"
-#      ldap_base_dn: "cn=users,cn=accounts,{{ dcs }}"
-#      ldap_search_dn: "uid=admin,cn=users,cn=accounts,{{ dcs }}"
+#      ldap_url: "https://{{ idam_server_ip }}:636"
+#      ldap_base_dn: "cn=users,cn=accounts,{{ ldap_dc }}"
+#      ldap_search_dn: "uid=admin,cn=users,cn=accounts,{{ ldap_dc }}"
 #      ldap_search_password: "{{ freeipa_admin_passwd }}"
 #      ldap_uid: "uid"
 #      ldap_timeout: 0

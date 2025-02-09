@@ -54,11 +54,11 @@ resource "terraform_data" "trigger_redeploy" {
     input = var.evoharbor_revision
 }
 
-resource "terraform_data" "rdp_server_configuration" {
+resource "terraform_data" "evoharbor_server_configuration" {
   depends_on = [google_compute_instance.evoharbor_server]
 
   #Uncomment below if we want to run Triggers when VM ID changes
-  #triggers_replace = [google_compute_instance.rdp_server.id]
+  #triggers_replace = [google_compute_instance.evoharbor_server.id]
   #or Uncomment below if we want to run Triggers on Revision number increase
   lifecycle {
     replace_triggered_by = [terraform_data.trigger_redeploy]

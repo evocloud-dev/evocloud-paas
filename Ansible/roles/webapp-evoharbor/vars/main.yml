@@ -1,4 +1,7 @@
 ---
+#--------------------------------------------------------------
+# COMMON VARS
+#--------------------------------------------------------------
 domain_tld: ''
 
 server_short_hostname: ''
@@ -10,24 +13,28 @@ idam_server_ip: ''
 idam_replica_ip: ''
 
 freeipa_admin_passwd: "{{ creds_store.freeipa_admin_passwd }}"
+ldap_dc: "dc={{ domain_tld.split('.')[0] }},dc={{ domain_tld.split('.')[1] }}"
 
-harbor_admin_passwd: "{{ creds_store.code_harbor_passwd }}"
-
+#--------------------------------------------------------------
+# HARBOR SPECIFIC VARS
+#--------------------------------------------------------------
 evoharbor_force_update: false
 
-harbor_version: v2.12.2
-
+# Directories
 cert_dir: '/etc/pki/host_certs'
+docker_cert_dir: "/etc/docker/certs.d"
+harbor_directory: "/opt/harbor"
+harbor_cert_dir: "/data/cert"
+
+# Harbor Password
+harbor_admin_passwd: "{{ creds_store.code_harbor_passwd }}"
+
+# Harbor Version
+harbor_version: "v2.12.2"
 
 # Packages
 harbor_installer: "harbor-online-installer-{{ harbor_version }}.tgz"
 
-# Directories
-docker_cert_dir: /etc/docker/certs.d
-
-harbor_directory: /opt/harbor
-
-harbor_cert_dir: /data/cert
-
+# URLS
 harbor_github_url: "https://github.com/goharbor/harbor/releases/download"
-#harbor_url:
+harbor_url: "https://{{ server_short_name }}.{{ domain_tld }}"
