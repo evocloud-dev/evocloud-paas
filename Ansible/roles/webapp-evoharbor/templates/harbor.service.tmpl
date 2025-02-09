@@ -1,0 +1,13 @@
+[Unit]
+Description=Start Harbor service with docker compose
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+Restart=on-failure
+RestartSec=5
+ExecStart=/bin/docker compose -f {{ harbor_directory }}/harbor/docker-compose.yml up -d
+
+[Install]
+WantedBy=multi-user.target

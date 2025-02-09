@@ -1,0 +1,51 @@
+---
+#---------------------------------------------------------
+# This role configures harbor LDAP, Project and Registry
+#---------------------------------------------------------
+
+#- name: set auth fact
+#  ansible.builtin.set_fact:
+#    harbor_auth: "admin:{{ harbor_admin_password }}"
+
+#- name: encrypt harbor_auth
+#  ansible.builtin.set_fact:
+#    basicAuth: "{{ harbor_auth | b64encode }}"
+
+#- name: configure ldap
+#  ansible.builtin.uri:
+#    url: "{{ harbor_url }}/api/v2.0/configurations"
+#    method: PUT
+#    body:
+#      auth_mode: "ldap_auth"
+#      primary_auth_mode: true
+#      ldap_url: "https://{{ idam_server_ip }}:636"
+#      ldap_base_dn: "cn=users,cn=accounts,{{ ldap_dc }}"
+#      ldap_search_dn: "uid=admin,cn=users,cn=accounts,{{ ldap_dc }}"
+#      ldap_search_password: "{{ freeipa_admin_passwd }}"
+#      ldap_uid: "uid"
+#      ldap_timeout: 0
+#      ldap_scope: 0
+#      ldap_verify_cert: false
+#    status_code: 200
+#    body_format: json
+#    headers:
+#      Accept: "application/json"
+#      Content-Type: "application/json"
+#      Authorization: "Basic {{ basicAuth }}"
+#  register: ldap_setup
+
+#- name: create registry
+#  ansible.builtin.uri:
+#    url: "{{ harbor_url }}/api/v2.0/registries"
+#    method: POST
+#    body:
+#      url: "https://<github registry>"
+#      name: "evocloud"
+#      credential:
+#        type: "basic"
+#        access_key:
+#        access_secret:
+#      type:
+#      insecure: true
+#      description: "Evocloud Github Registry"
+#  register: registry_status

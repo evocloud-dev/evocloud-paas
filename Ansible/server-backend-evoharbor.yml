@@ -1,0 +1,16 @@
+---
+#------------------------------------------------------
+# This role deploys EvoHarbor OCI Registry
+#------------------------------------------------------
+- hosts: all
+  gather_facts: false
+
+  vars:
+    creds_store: "{{ lookup('file', ansible_secret) | from_yaml }}"
+
+  roles:
+    - app-dnsmasq
+    - config-freeipa-client
+    - config-freeipa-certs
+    - webapp-evoharbor
+    - app-fail2ban

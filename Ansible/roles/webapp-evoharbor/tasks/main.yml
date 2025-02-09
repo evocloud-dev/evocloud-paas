@@ -1,0 +1,160 @@
+---
+# This playbook installs EvoHarbor Enterprise OCI compliant registry
+#References: https://goharbor.io/docs/2.12.0/
+#
+#
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: webapp-evoharbor ##################"
+
+- name: enable ipv4 forwarding
+  ansible.builtin.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_set: yes
+    state: present
+    reload: yes
+  become: true
+
+- name: check for running containers
+  ansible.builtin.shell: |
+    docker ps | grep -q harbor
+  register: harbor_status
+  become: true
+  failed_when: false
+
+- name: shutdown harbor
+  ansible.builtin.shell:
+    cmd: /bin/docker compose down
+    chdir: "{{ harbor_directory }}/harbor"
+  become: true
+  when: harbor_status.rc == 0
+
+- name: create harbor dir in /opt
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ harbor_directory }}"
+    - "{{ harbor_cert_dir }}"
+    - "{{ docker_cert_dir }}/{{ domain_tld }}"
+  become: true
+
+- name: install dnf-plugins-core
+  ansible.builtin.dnf:
+    name: dnf-plugins-core
+    state: present
+    disable_gpg_check: true
+  become: true
+
+- name: add config manager repo
+  ansible.builtin.shell: |
+    dnf config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+  become: true
+
+- name: install docker packages
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+    disable_gpg_check: true
+  loop:
+    - docker-ce
+    - docker-ce-cli
+    - containerd.io
+    - docker-buildx-plugin
+    - docker-compose-plugin
+  become: true
+
+- name: start and enable docker service
+  ansible.builtin.systemd_service:
+    name: docker
+    state: started
+    enabled: true
+  become: true
+
+- name: download harbor online installer
+  ansible.builtin.shell: 
+    cmd: "curl -L -k {{ harbor_github_url }}/{{ harbor_version }}/{{ harbor_installer }} > {{ harbor_installer }}"
+    chdir: "{{ harbor_directory }}"
+  become: true
+
+- name: extract harbor tarball to /opt/harbor
+  ansible.builtin.unarchive:
+    src: "{{ harbor_directory }}/{{ harbor_installer }}"
+    dest: "{{ harbor_directory }}"
+    remote_src: yes
+  become: true
+
+- name: copy host certs to /data/cert
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ harbor_cert_dir }}"
+    mode: "0600"
+    remote_src: yes
+  loop:
+    - src: "/etc/pki/host_certs/evoharbor.crt"
+    - src: "/etc/pki/host_certs/evoharbor.key"
+    - src: "/etc/pki/host_certs/ca.crt"
+  become: true
+
+- name: Create a .cert file for docker
+  ansible.builtin.shell: |
+    openssl x509 -inform PEM -in {{ harbor_cert_dir }}/evoharbor.crt -out {{ harbor_cert_dir }}/evoharbor.cert
+  become: true
+
+- name: copy certs to docker cert dir
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ docker_cert_dir}}/{{ domain_tld }}"
+    mode: "0600"
+    remote_src: yes
+  loop:
+    - src: "{{ harbor_cert_dir }}/evoharbor.cert"
+    - src: "{{ harbor_cert_dir }}/evoharbor.key"
+    - src: "{{ harbor_cert_dir}}/ca.crt"
+  become: true
+
+- name: restart docker service
+  ansible.builtin.systemd_service:
+    name: docker
+    state: restarted
+    enabled: true
+  become: true
+
+- name: replace harbor.yml.tmpl with my own
+  ansible.builtin.template:
+    src: harbor.yml.tmpl
+    dest: "{{ harbor_directory }}/harbor/harbor.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+
+- name: run prepare script
+  ansible.builtin.shell: |
+    {{ harbor_directory }}/harbor/prepare
+  become: true
+
+- name: run install script
+  ansible.builtin.shell: |
+    {{ harbor_directory }}/harbor/install.sh --with-trivy
+  become: true
+
+- name: move harbor.service.tmpl to /etc/systemd/system
+  ansible.builtin.template:
+    src: harbor.service.tmpl
+    dest: "/etc/systemd/system/harbor.service"
+    owner: root
+    group: root
+  become: true
+
+- name: enable harbor.service
+  ansible.builtin.systemd_service:
+    name: harbor.service
+    enabled: true
+    masked: no
+  become: true
+
+#- name: configure LDAP, create registry and project
+#  include_tasks: configure_harbor.yml
