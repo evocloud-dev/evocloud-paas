@@ -11,3 +11,7 @@ The Right to Bear Cloud has been made easy with EvoCloud-PaaS, a Platform stack 
 - **A Kubernetes management platform:** with tools and custom resource definitions needed to deploy downstream Kubernetes clusters on IaaS agnostic infrastructure. All the Kubernetes infrastructures come in ready to host production Cloud-native applications with CSI providers in place, data in transit and data at rest encryption, CNI fabric, Policy engine for enforcement, Audits and Monitoring for compliance, Tracebility and Observability.
 - **SaaS specialized services:** such as Database as a Service, event-driven applications and data processing, and others...
 <p align="center"><img src="./assets/evocloud-architecture.png" /></p>
+
+# We Play Nice with the CNCF Foundation
+EvoCloud-PaaS plays well with other CNCF projects. We integrate the following core technologies from the Cloud-native foundation to bring you a robust platform built on trusted and vetted technology.
+<p align="center"><img src="./assets/evocloud-feat-cloudnative.png" /></p>

@@ -176,6 +176,8 @@
     dynamicupdate: true
     ipa_timeout: 30
     validate_certs: no
+  register: dns_reverse_zone
+  failed_when: "'no modification to be performed' not in dns_reverse_zone.msg"
   become: true
 
 - name: Creating PTR record for a reverse DNS record...
@@ -231,7 +233,7 @@
   become: true
 
 - name: Check if TSIG key is already configured...
-  ansible.builtin.command: grep -q "cert-manager-acme" /etc/named/ipa-ext.conf
+  ansible.builtin.command: "grep -q 'cert-manager-acme' /etc/named/ipa-ext.conf"
   ignore_errors: true
   register: grep_tsig_result
   become: true
@@ -255,7 +257,7 @@
 - name: Append TSIG key to named configuration
   ansible.builtin.lineinfile:
     path: /etc/named/ipa-ext.conf
-    line: "{{ tsig_key.stdout }}"
+    line: "{{ tsig_acme_key.stdout}}"
     create: yes
   become: true
 

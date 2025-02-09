@@ -56,7 +56,7 @@ resource "terraform_data" "evocode_runner_server_configuration" {
   depends_on = [google_compute_instance.evocode_runner_server]
 
   #Uncomment below if we want to run Triggers when VM ID changes
-  triggers_replace = [google_compute_instance.evocode_runner_server]
+  #triggers_replace = [google_compute_instance.evocode_runner_server]
   #Uncomment below if we want to run Triggers on Revision number increase
   lifecycle {
     replace_triggered_by = [terraform_data.redeploy_evocode_runner]

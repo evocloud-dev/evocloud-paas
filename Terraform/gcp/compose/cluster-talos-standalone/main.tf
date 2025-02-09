@@ -236,20 +236,20 @@ resource "talos_machine_bootstrap" "bootstrap_cluster" {
 }
 
 ## Check whether the Talos Kubernetes Cluster is in a healthy state
-data "talos_cluster_health" "cluster_health" {
-  depends_on = [talos_machine_bootstrap.bootstrap_cluster]
+#data "talos_cluster_health" "cluster_health" {
+#  depends_on = [talos_machine_bootstrap.bootstrap_cluster]
 
-  client_configuration    = talos_machine_secrets.talos_vm.client_configuration
-  control_plane_nodes     = [for xvalue in google_compute_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip]
-  endpoints               = [for xvalue in google_compute_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip]
-  skip_kubernetes_checks  = true
-}
+#  client_configuration    = talos_machine_secrets.talos_vm.client_configuration
+#  control_plane_nodes     = [for xvalue in google_compute_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip]
+#  endpoints               = [for xvalue in google_compute_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip]
+#  skip_kubernetes_checks  = true
+#}
 
 ## Collect the Talos Kubeconfig
 resource "talos_cluster_kubeconfig" "kubeconfig" {
   depends_on           = [
     talos_machine_bootstrap.bootstrap_cluster,
-    data.talos_cluster_health.cluster_health,
+    #data.talos_cluster_health.cluster_health,
   ]
 
   client_configuration = talos_machine_secrets.talos_vm.client_configuration

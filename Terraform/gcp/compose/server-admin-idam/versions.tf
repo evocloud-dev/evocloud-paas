@@ -8,7 +8,7 @@ terraform {
   #Providers required version
   required_providers {
     google = {
-      source  = "terraform.local/evocloud/google"
+      #source  = "terraform.local/evocloud/google"
       version = ">= 5.0.0, < 6.0.0"
     }
   }
