@@ -1,0 +1,30 @@
+---
+domain_tld: ''
+
+server_short_hostname: ''
+
+server_ip: ''
+
+idam_server_ip: ''
+
+idam_replica_ip: ''
+
+freeipa_admin_passwd: "{{ creds_store.freeipa_admin_passwd }}"
+
+code_admin_passwd: "{{ creds_store.code_admin_passwd }}"
+
+evoharbor_force_update: false
+
+harbor_version: 2.12.2
+
+cert_dir: '/etc/pki/host_certs'
+
+# Packages
+harbor_installer: harbor-online-installer-v2.12.2.tgz
+
+# Directories
+docker_cert_dir: /etc/docker/certs.d
+
+harbor_directory: /opt/harbor
+
+harbor_cert_dir: /data/cert

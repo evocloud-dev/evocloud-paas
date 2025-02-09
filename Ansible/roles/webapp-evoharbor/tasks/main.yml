@@ -1,0 +1,113 @@
+---
+# This playbook installs EvoHarbor Enterprise OCI compliant registry
+#References: https://goharbor.io/docs/2.12.0/
+#
+#
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: webapp-evoharbor ##################"
+
+- name: create harbor dir in /opt
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ harbor_directory }}"
+    - "{{ harbor_cert_dir }}"
+    - "{{ docker_cert_dir }}/{{ domain_tld }}"
+  become: true
+
+- name: install dnf-plugins-core
+  ansible.builtin.dnf:
+    name: dnf-plugins-core
+    state: present
+    disable_gpg_check: true
+  become: true
+
+- name: add config manager repo
+  ansible.builtin.shell: |
+    dnf config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+  become: true
+
+- name: install docker packages
+  ansible.builtin.dnf:
+    name: "{{ item.pkg }}"
+    state: present
+    disable_gpg_check: true
+  loop:
+    - pkg: "docker-ce"
+    - pkg: "docker-ce-cli"
+    - pkg: "containerd.io"
+    - pkg: "docker-buildx-plugin"
+    - pkg: "docker-compose-plugin"
+  become: true
+
+- name: start and enable docker service
+  ansible.builtin.systemd_service:
+    name: docker
+    state: started
+    enabled: true
+  become: true
+
+- name: extract harbor tarball to /opt/harbor
+  ansible.builtin.unarchive:
+    src: "{{ harbor_directory }}/{{ harbor_installer }}"
+    dest: "{{ harbor_directory }}"
+    remote_src: yes
+  become: true
+
+- name: copy host certs to /data/cert
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ harbor_cert_dir }}"
+    mode: "0600"
+    remote_src: yes
+  loop:
+    - src: "/etc/pki/host_certs/evoharbor.crt"
+    - src: "/etc/pki/host_certs/evoharbor.key"
+    - src: "/etc/pki/host_certs/ca.crt"
+  become: true
+
+- name: Create a .cert file for docker
+  ansible.builtin.shell: |
+    openssl x509 -inform PEM -in {{ harbor_cert_dir }}/evoharbor.crt -out {{ harbor_cert_dir }}/evoharbor.cert
+  become: true
+
+- name: copy certs to docker cert dir
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ docker_cert_dir}}/{{ domain_tld }}"
+    mode: "0600"
+    remote_src: yes
+  loop:
+    - src: "{{ harbor_cert_dir }}/evoharbor.cert"
+    - src: "{{ harbor_cert_dir }}/evoharbor.key"
+    - src: "{{ harbor_cert_dir}}/ca.crt"
+  become: true
+
+- name: restart docker service
+  ansible.builtin.systemd_service:
+    name: docker
+    state: restarted
+    enabled: true
+  become: true
+
+- name: replace harbor.yml.tmpl with my own
+  ansible.builtin.template:
+    src: harbor.yml.tmpl.j2
+    dest: "{{ harbor_directory }}/harbor/harbor.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+
+- name: run prepare script
+  ansible.builtin.shell: |
+    {{ harbor_directory }}/harbor/prepare
+  become: true
+
+- name: run install script
+  ansible.builtin.shell: |
+    {{ harbor_directory }}/harbor/install.sh --with-trivy
+  become: true
