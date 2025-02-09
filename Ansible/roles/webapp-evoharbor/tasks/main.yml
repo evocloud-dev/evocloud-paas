@@ -7,6 +7,29 @@
 - ansible.builtin.debug:
     msg: "################# STARTING ANSIBLE ROLE: webapp-evoharbor ##################"
 
+- name: enable ipv4 forwarding
+  ansible.builtin.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_set: yes
+    state: present
+    reload: yes
+  become: true
+
+- name: check for running containers
+  ansible.builtin.shell: |
+    docker ps | grep -q harbor
+  register: harbor_status
+  become: true
+  failed_when: false
+
+- name: shutdown harbor
+  ansible.builtin.shell:
+    cmd: /usr/local/bin/docker-compose down
+    chdir: "{{ harbor_directory }}"
+  become: true
+  when: harbor_status.rc == 0
+
 - name: create harbor dir in /opt
   ansible.builtin.file:
     path: "{{ item }}"
@@ -48,6 +71,12 @@
     name: docker
     state: started
     enabled: true
+  become: true
+
+- name: download harbor online installer
+  ansible.builtin.shell: 
+    cmd: "curl -L -k {{ harbor_github_url }}/{{ harbor_version }}/{{ harbor_installer }} > {{ harbor_installer }}"
+    chdir: "{{ harbor_directory }}"
   become: true
 
 - name: extract harbor tarball to /opt/harbor
@@ -95,7 +124,7 @@
 
 - name: replace harbor.yml.tmpl with my own
   ansible.builtin.template:
-    src: harbor.yml.tmpl.j2
+    src: harbor.yml.tmpl
     dest: "{{ harbor_directory }}/harbor/harbor.yml"
     owner: root
     group: root
@@ -111,3 +140,6 @@
   ansible.builtin.shell: |
     {{ harbor_directory }}/harbor/install.sh --with-trivy
   become: true
+
+#- name: configure LDAP, create registry and project
+#  include_tasks: configure_harbor.yml

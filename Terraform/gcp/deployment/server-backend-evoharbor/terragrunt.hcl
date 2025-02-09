@@ -47,3 +47,4 @@ dependency "server-admin-idam_replica" {
 #--------------------------------------------------
 terraform {
   source = "${get_terragrunt_dir()}/../../compose//server-backend-evoharbor"
+}
