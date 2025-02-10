@@ -281,6 +281,7 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
 #--set gatewayAPI.enabled=true \
 #--set gatewayAPI.enableAppProtocol=true \
 #--set gatewayAPI.enableAlpn=true \
+#--set-string gatewayAPI.gatewayClass.create=true \
 #--set externalIPs.enabled=true \
 #--set hubble.relay.enabled=true \
 #--set hubble.ui.enabled=true \
