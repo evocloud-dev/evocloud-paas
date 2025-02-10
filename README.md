@@ -13,5 +13,5 @@ The Right to Bear Cloud has been made easy with EvoCloud-PaaS, a Platform stack 
 <p align="center"><img src="./assets/evocloud-architecture.png" /></p>
 
 # We Play Nice with the CNCF Foundation
-EvoCloud-PaaS plays well with other CNCF projects. We integrate the following core technologies from the Cloud-native foundation to bring you a robust platform built on trusted and vetted technology.
+EvoCloud-PaaS plays well with other CNCF projects. We integrate the following core technologies from the Cloud-native foundation to bring you a robust platform built on trusted and vetted solutions.
 <p align="center"><img src="./assets/evocloud-feat-cloudnative.png" /></p>
