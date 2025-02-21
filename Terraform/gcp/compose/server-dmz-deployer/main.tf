@@ -88,6 +88,12 @@ resource "terraform_data" "staging_automation_code" {
     private_key = file(var.PRIVATE_KEY_PAIR)
   }
 
+  provisioner "remote-exec" {
+    inline = [
+      "mkdir -p /home/${var.CLOUD_USER}/EVOCLOUD"
+    ]
+  }
+
   provisioner "file" {
     source        = var.PRIVATE_KEY_PAIR
     destination   = "/home/${var.CLOUD_USER}/gcp-evocloud.pem"
@@ -95,7 +101,7 @@ resource "terraform_data" "staging_automation_code" {
 
   provisioner "file" {
     source        = var.AUTOMATION_FOLDER
-    destination   = "/home/${var.CLOUD_USER}"
+    destination   = "/home/${var.CLOUD_USER}/EVOCLOUD"
   }
 
   provisioner "remote-exec" {
