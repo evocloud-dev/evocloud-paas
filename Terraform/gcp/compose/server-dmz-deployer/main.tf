@@ -102,6 +102,7 @@ resource "terraform_data" "staging_automation_code" {
     inline = [
       "sudo yum update -y",
       "hostnamectl status",
+      "mkdir -p /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault",
     ]
   }
 
