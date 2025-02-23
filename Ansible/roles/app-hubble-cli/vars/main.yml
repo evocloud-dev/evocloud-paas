@@ -1,0 +1,13 @@
+---
+hubble_cli_ver: 'v1.17.1'
+
+hubble_cli_install_dir: /usr/local/bin
+
+hubble_cli_force_update: false
+
+#https://github.com/cilium/hubble/releases/tag/v1.17.1
+#https://github.com/cilium/cilium-cli/releases/download/v0.16.24/cilium-linux-amd64.tar.gz
+hubble_cli_download_url: 'https://github.com/cilium/hubble/releases/download/{{ hubble_cli_ver }}/hubble-linux-amd64.tar.gz'
+
+#https://github.com/cilium/hubble/releases/download/v1.17.1/hubble-linux-amd64.tar.gz.sha256sum
+hubble_cli_checksum: sha256:1fa643076206df77be36fab8eaf900bd8bf9cf2dd479e13bdb2a5af98335e530

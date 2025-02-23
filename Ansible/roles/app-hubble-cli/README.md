@@ -1,7 +1,7 @@
-Cilium CLI
+Hubble CLI
 =========
 
-Installs [Cilium CLI](https://github.com/cilium/cilium-cli)
+Installs [Hubble CLI](https://github.com/cilium/hubble)
 
 Dependencies
 ------------
@@ -19,7 +19,7 @@ Example Playbook
 ```yml
 - hosts: servers
   roles:
-    - app-cilium-cli
+    - app-hubble-cli
 ```
 
 Authors

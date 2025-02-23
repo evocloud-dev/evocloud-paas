@@ -1,0 +1,48 @@
+---
+#This playbook will install HubbleCLI Binary
+#
+#References:
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-hubble-cli ##################"
+
+- name: Checking if hubble-cli already exist...
+  ansible.builtin.stat:
+    path: '{{ hubble_cli_install_dir }}/hubble'
+  changed_when: false
+  become: true
+  register: hubble_cli_binary
+
+- name: Uninstalling hubble-cli...
+  ansible.builtin.file:
+    path: '{{ hubble_cli_install_dir }}/hubble'
+    state: absent
+  become: true
+  when: (hubble_cli_binary.stat.exists) and (hubble_cli_force_update | bool)
+
+- when: (not hubble_cli_binary.stat.exists) or (hubble_cli_force_update | bool)
+  block:
+    - name: Verifying hubble-cli sha256 checksum...
+      ansible.builtin.get_url:
+        url: '{{ hubble_cli_download_url }}'
+        dest: '/tmp'
+        mode: '0644'
+        checksum: '{{ hubble_cli_checksum }}'
+      become: true
+
+    - name: Installing hubble-cli...
+      ansible.builtin.unarchive:
+        src: '/tmp/hubble-linux-amd64.tar.gz'
+        dest: '{{ hubble_cli_install_dir }}'
+        mode: '0755'
+        remote_src: yes
+      become: true
+
+  always:
+    - name: Removing hubble-cli detritus...
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '/tmp/hubble-linux-amd64.tar.gz'
+      become: true
