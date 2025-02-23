@@ -1,0 +1,70 @@
+---
+# This playbook installs Sigstore Cosign for signing artifacts and images
+# before pushing to Registry
+# References: https://docs.sigstore.dev/about/overview/
+#
+#
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-cosign ##################"
+
+- name: install dnf-plugins-core
+  ansible.builtin.dnf:
+    name: dnf-plugins-core
+    state: present
+    disable_gpg_check: true
+  become: true
+
+- name: add config manager repo
+  ansible.builtin.shell: |
+    dnf config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+  become: true
+
+- name: install docker packages
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+    disable_gpg_check: true
+  loop:
+    - docker-ce
+    - docker-ce-cli
+    - containerd.io
+  become: true
+
+- name: start and enable docker service
+  ansible.builtin.systemd_service:
+    name: docker
+    state: started
+    enabled: true
+  become: true
+
+
+- name: Create cosign directory
+  ansible.builtin.file:
+    path: "{{ cosign_dir }}"
+    state: directory
+  become: true
+
+- name: Download Cosign Release
+  ansible.builtin.shell:
+    cmd: "curl -L -k {{ cosign_github_url }}/{{ cosign_binary }} > {{ cosign_binary }}"
+    chdir: "{{ cosign_dir }}"
+  become: true
+
+- name: Extract cosign
+  ansible.builtin.unarchive:
+    src: "{{ cosign_dir }}"
+    dest: /usr/local/bin
+    mode: '0755'
+    remote_src: yes
+  become: true
+
+- name: Verify Install
+  command: cosign version
+  register: cosign_version
+
+- name: Print cosign version
+  debug:
+    msg: "Cosign Version: {{ cosign_version.stdout }}"
+
+  

@@ -20,4 +20,5 @@
     - app-trivy
     - app-kubelint
     - app-nerdctl
+    - app-cosign
     - app-fail2ban

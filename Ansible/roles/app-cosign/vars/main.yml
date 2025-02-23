@@ -1,0 +1,29 @@
+---
+#--------------------------------------------------------------
+# COMMON VARS
+#--------------------------------------------------------------
+domain_tld: ''
+
+server_short_hostname: ''
+
+server_ip: ''
+
+idam_server_ip: ''
+
+idam_replica_ip: ''
+
+freeipa_admin_passwd: "{{ creds_store.freeipa_admin_passwd }}"
+
+#--------------------------------------------------------------
+# COSIGN SPECIFIC VARS
+#--------------------------------------------------------------
+# Directory
+cosign_dir: "/opt/cosign"
+
+# Packages
+cosign_binary: "cosign_linux_amd64"
+
+# URLS
+cosign_github_url: "https://github.com/sigstore/cosign/releases/latest"
+
+
