@@ -21,9 +21,9 @@ freeipa_admin_passwd: "{{ creds_store.freeipa_admin_passwd }}"
 cosign_dir: "/opt/cosign"
 
 # Packages
-cosign_binary: "cosign_linux_amd64"
+cosign_binary: "cosign-linux-amd64"
 
 # URLS
-cosign_github_url: "https://github.com/sigstore/cosign/releases/latest"
+cosign_github_url: "https://github.com/sigstore/cosign/releases/latest/download"
 
 

@@ -52,19 +52,23 @@
   become: true
 
 - name: Extract cosign
-  ansible.builtin.unarchive:
-    src: "{{ cosign_dir }}"
-    dest: /usr/local/bin
+  ansible.builtin.copy:
+    src: "{{ cosign_dir }}/{{ cosign_binary }}"
+    dest: /usr/local/bin/cosign
     mode: '0755'
     remote_src: yes
   become: true
 
 - name: Verify Install
-  command: cosign version
+  command: cosign version --json
   register: cosign_version
 
 - name: Print cosign version
   debug:
     msg: "Cosign Version: {{ cosign_version.stdout }}"
 
-  
+- name: remove the binary
+  ansible.builtin.file:
+    path: "{{ cosign_dir }}/{{ cosign_binary }}"
+    state: absent
+  become: true
