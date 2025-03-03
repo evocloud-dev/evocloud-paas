@@ -1,0 +1,15 @@
+---
+kubelogin_force_update: false
+
+#https://kubernetes.io/releases/
+kubelogin_ver: 'v1.32.2' #in lock steps with the Kubernetes version
+
+#https://github.com/int128/kubelogin/releases/download/v1.32.2/kubelogin_linux_amd64.zip
+kubelogin_download_url: 'https://github.com/int128/kubelogin/releases/download/{{ kubelogin_ver }}/kubelogin_linux_amd64.zip'
+
+kubectl_install_dir: '/usr/local/bin'
+
+kubelogin_install_dir: '/usr/local/bin'
+
+#https://github.com/int128/kubelogin/releases/download/v1.32.2/kubelogin_linux_amd64.zip.sha256
+kubelogin_checksum: sha256:83cd392b0b53cbf4335e3fdbbef6ca1eb26831fb37369e9759169954ea8f7b7b
