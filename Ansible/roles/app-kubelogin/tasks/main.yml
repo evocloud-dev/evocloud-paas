@@ -18,7 +18,7 @@
 
 - name: Checking if kubelogin already exist...
   ansible.builtin.stat:
-    path: '{{ kubelogin_install_dir }}/kubelogin'
+    path: '{{ kubelogin_install_dir }}/kubectl-oidc_login' #naming convention is enforced
   changed_when: false
   become: true
   register: kubelogin_binary
@@ -36,7 +36,7 @@
     - name: Installing kubelogin...
       ansible.builtin.unarchive:
         src: '/tmp/kubelogin_linux_amd64.zip'
-        dest: '{{ kubelogin_install_dir }}'
+        dest: '{{ kubelogin_install_dir }}/kubectl-oidc_login' #naming convention is enforced
         mode: '0755'
         remote_src: yes
       become: true
