@@ -1,0 +1,51 @@
+---
+#Source: https://github.com/int128/kubelogin
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-kubelogin ##################"
+
+- name: Checking if kubectl is installed...
+  ansible.builtin.stat:
+    path: '{{ kubectl_install_dir }}/kubectl'
+  changed_when: false
+  become: true
+  register: kubectl_binary
+
+- name: Failing if kubectl does not exist
+  ansible.builtin.fail:
+    msg: "kubectl dependency is not installed..."
+  when: not kubectl_binary.stat.exists
+
+- name: Checking if kubelogin already exist...
+  ansible.builtin.stat:
+    path: '{{ kubelogin_install_dir }}/kubectl-oidc_login' #naming convention is enforced
+  changed_when: false
+  become: true
+  register: kubelogin_binary
+
+- when: "(not kubelogin_binary.stat.exists) or (kubelogin_force_update | bool)"
+  block:
+    - name: Verifying kubelogin binary checksum...
+      ansible.builtin.get_url:
+        url: '{{ kubelogin_download_url }}'
+        dest: '/tmp'
+        mode: '0644'
+        checksum: '{{ kubelogin_checksum }}'
+      become: true
+
+    - name: Installing kubelogin...
+      ansible.builtin.unarchive:
+        src: '/tmp/kubelogin_linux_amd64.zip'
+        dest: '{{ kubelogin_install_dir }}/kubectl-oidc_login' #naming convention is enforced
+        mode: '0755'
+        remote_src: yes
+      become: true
+
+  always:
+    - name: Removing kubelogin detritius...
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '/tmp/kubelogin_linux_amd64.zip'
+      become: true

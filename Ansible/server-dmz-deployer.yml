@@ -12,10 +12,11 @@
     - app-vault
     - app-terragrunt
     - app-kubectl
+    - app-kubelogin
     - app-helm
     - app-cilium-cli
-    #- app-hubble-cli
-    #- app-flux-cli
+    - app-hubble-cli
+    - app-flux-cli
     - app-ansible
     - app-trivy
     - app-kubelint

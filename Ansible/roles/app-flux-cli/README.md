@@ -1,7 +1,7 @@
-Cilium CLI
+Flux CLI
 =========
 
-Installs [Cilium CLI](https://github.com/cilium/cilium-cli)
+Installs [Flux CLI](https://github.com/fluxcd/flux2)
 
 Dependencies
 ------------
@@ -19,7 +19,7 @@ Example Playbook
 ```yml
 - hosts: servers
   roles:
-    - app-cilium-cli
+    - flux-cli
 ```
 
 Authors

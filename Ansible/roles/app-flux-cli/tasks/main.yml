@@ -1,0 +1,48 @@
+---
+#This playbook will install Flux-CLI Binary
+#
+#References:
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-flux-cli ##################"
+
+- name: Checking if flux-cli already exist...
+  ansible.builtin.stat:
+    path: '{{ flux_cli_install_dir }}/flux'
+  changed_when: false
+  become: true
+  register: flux_cli_binary
+
+- name: Uninstalling flux-cli...
+  ansible.builtin.file:
+    path: '{{ flux_cli_install_dir }}/flux'
+    state: absent
+  become: true
+  when: (flux_cli_binary.stat.exists) and (flux_force_update | bool)
+
+- when: (not fux_cli_binary.stat.exists) or (flux_cli_force_update | bool)
+  block:
+    - name: Verifying flux-cli sha256 checksum...
+      ansible.builtin.get_url:
+        url: '{{ flux_cli_download_url }}'
+        dest: '/tmp'
+        mode: '0644'
+        checksum: '{{ flux_cli_checksum }}'
+      become: true
+
+    - name: Installing flux-cli...
+      ansible.builtin.unarchive:
+        src: '/tmp/flux_{{ flux_cli_ver }}_linux_amd64.tar.gz'
+        dest: '{{ flux_cli_install_dir }}'
+        mode: '0755'
+        remote_src: yes
+      become: true
+
+  always:
+    - name: Removing flux-cli detritus...
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '/tmp/flux_{{ flux_cli_ver }}_linux_amd64.tar.gz'
+      become: true

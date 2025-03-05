@@ -1,7 +1,8 @@
-Cilium CLI
+Kubelogin
 =========
+Kubelogin is a kubectl plugin for Kubernetes OpenID Connect (OIDC) authentication, also known as kubectl oidc-login.
 
-Installs [Cilium CLI](https://github.com/cilium/cilium-cli)
+Installs [Kubelogin](https://github.com/int128/kubelogin)
 
 Dependencies
 ------------
@@ -19,7 +20,9 @@ Example Playbook
 ```yml
 - hosts: servers
   roles:
-    - app-cilium-cli
+    - app-kubectl #dependency
+    - app-kubelogin
+
 ```
 
 Authors
