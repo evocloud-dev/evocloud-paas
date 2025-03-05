@@ -1,20 +1,5 @@
 ---
 #--------------------------------------------------------------
-# COMMON VARS
-#--------------------------------------------------------------
-domain_tld: ''
-
-server_short_hostname: ''
-
-server_ip: ''
-
-idam_server_ip: ''
-
-idam_replica_ip: ''
-
-freeipa_admin_passwd: "{{ creds_store.freeipa_admin_passwd }}"
-
-#--------------------------------------------------------------
 # COSIGN SPECIFIC VARS
 #--------------------------------------------------------------
 # Directory
