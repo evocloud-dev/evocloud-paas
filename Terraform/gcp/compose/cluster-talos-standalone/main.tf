@@ -237,20 +237,20 @@ resource "talos_machine_bootstrap" "bootstrap_cluster" {
 }
 
 ## Check whether the Talos Kubernetes Cluster is in a healthy state
-#data "talos_cluster_health" "cluster_health" {
-#  depends_on = [talos_machine_bootstrap.bootstrap_cluster]
+data "talos_cluster_health" "cluster_health" {
+  depends_on = [talos_machine_bootstrap.bootstrap_cluster]
 
-#  client_configuration    = talos_machine_secrets.talos_vm.client_configuration
-#  control_plane_nodes     = [for xvalue in google_compute_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip]
-#  endpoints               = [for xvalue in google_compute_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip]
-#  skip_kubernetes_checks  = true
-#}
+  client_configuration    = talos_machine_secrets.talos_vm.client_configuration
+  control_plane_nodes     = [for xvalue in google_compute_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip]
+  endpoints               = [for xvalue in google_compute_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip]
+  skip_kubernetes_checks  = true
+}
 
 ## Collect the Talos Kubeconfig
 resource "talos_cluster_kubeconfig" "kubeconfig" {
   depends_on           = [
     talos_machine_bootstrap.bootstrap_cluster,
-    #data.talos_cluster_health.cluster_health,
+    data.talos_cluster_health.cluster_health,
   ]
 
   client_configuration = talos_machine_secrets.talos_vm.client_configuration
@@ -260,46 +260,34 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
 
 
 ############### CILIUM HELM TEMPLATE GENERATION CODE ############################
-#Documentation: https://docs.cilium.io/en/stable/
-#Parameter options: https://docs.cilium.io/en/stable/cmdref/cilium-agent/
-#helm repo add cilium https://helm.cilium.io/
+#Parameter options: https://docs.cilium.io/en/stable/cmdref/cilium-agent/t
+#cd cilium-1.16.6/install/kubernetes/
 #Basic Cilium Deployment with no kube-prometheus monitoring integration
-#helm template cilium cilium/cilium \
-#--version 1.17.0 \
+#helm template cilium ./cilium \
+#--version 1.16.6 \
 #--namespace kube-system \
+#--set ipam.mode=kubernetes \
+#--set kubeProxyReplacement=true \
+#--set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
+#--set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
+#--set cgroup.autoMount.enabled=false \
+#--set cgroup.hostRoot=/sys/fs/cgroup \
 #--set k8sServiceHost=localhost \
 #--set k8sServicePort=7445 \
 #--set k8sClientRateLimit.qps=50 \
 #--set k8sClientRateLimit.burst=200 \
-#--set cluster.name=evokube-mgr \
-#--set cluster.id=0 \
-#--set rollOutCiliumPods=true \
-#--set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
-#--set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
+#--set=gatewayAPI.enabled=true \
+#--set=gatewayAPI.enableAlpn=true \
 #--set l2announcements.enabled=true \
-#--set envoyConfig.enabled=true \
-#--set ingressController.enabled=true \
-#--set gatewayAPI.enabled=true \
-#--set gatewayAPI.enableAppProtocol=true \
-#--set gatewayAPI.enableAlpn=true \
-#--set-string gatewayAPI.gatewayClass.create=true \
-#--set externalIPs.enabled=true \
+#--set=gatewayAPI.enableAppProtocol=true \
+#--set operator.rollOutPods=true \
+#--set rollOutCiliumPods=true \
 #--set hubble.relay.enabled=true \
 #--set hubble.ui.enabled=true \
-#--set hubble.ui.rollOutPods=true \
-#--set ipam.mode=kubernetes \
-#--set kubeProxyReplacement=true \
-#--set maglev.tableSize=65521 \
-#--set loadBalancer.algorithm=maglev \
-#--set operator.rollOutPods=true \
-#--set cgroup.autoMount.enabled=false \
-#--set cgroup.hostRoot=/sys/fs/cgroup \
-#--set envoy.securityContext.capabilities.keepCapNetBindService=true > /home/mlkroot/cilium-1.17.0.yaml
+#--set envoy.securityContext.capabilities.keepCapNetBindService=true > /home/mlkroot/cilium.yaml
 
-
-##To add kube-prometheus monitoring integration:
-##
-##
+#To add kube-prometheus monitoring integration:
+#
 #--set operator.prometheus.enabled=true \
 #--set operator.prometheus.serviceMonitor.enabled=true \
 #--set operator.dashboards.enabled=true \
@@ -320,8 +308,10 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
 #--set hubble.metrics.enabled="{dns,drop,tcp,flow,port-distribution,icmp,httpV2:exemplars=true;labelsContext=source_ip\,source_namespace\,source_workload\,destination_ip\,destination_namespace\,destination_workload\,traffic_direction}"     \
 #--set prometheus.enabled=true \
 
-#When performing cilium upgrade, include this required parameter:
-#--set preflight.enabled=true
+#To tweak the load balancing algorithm
+#
+#--set loadBalancer.algorithm=maglev \
+#--set loadBalancer.mode=dsr \
 
 ############### ROOK-CEPH HELM TEMPLATE GENERATION CODE ############################
 # https://www.talos.dev/v1.9/kubernetes-guides/configuration/ceph-with-rook/

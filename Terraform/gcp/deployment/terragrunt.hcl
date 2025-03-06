@@ -93,7 +93,7 @@ inputs = {
   # Talos Kubernetes Cluster (Kubernetes)
   ###########################################################################
   TALOS_AMI_NAME              = "evocloud-talos19-b010"
-  TALOS_AMI_SOURCE            = "https://storage.cloud.google.com/evocloud-cnpg-cluster-backup/gcp-amd64.raw.tar.gz" #https://factory.talos.dev/image/96f8c146a67c80daad900d3fc1a6976fe11062321eee9ab6ae2a6aea88b2d26e/v1.9.2/gcp-amd64.raw.tar.gz
+  TALOS_AMI_SOURCE            = "https://storage.cloud.google.com/evocloud-cnpg-cluster-backup/gcp-amd64.raw.tar.gz" #https://factory.talos.dev/image/96f8c146a67c80daad900d3fc1a6976fe11062321eee9ab6ae2a6aea88b2d26e/v1.9.4/gcp-amd64.raw.tar.gz
 
   #TALOS CONTROLPLANE NODES
   TALOS_CTRL_INSTANCE_SIZE    = "e2-standard-4"
