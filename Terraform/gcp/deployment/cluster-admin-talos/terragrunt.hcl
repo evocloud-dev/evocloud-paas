@@ -7,9 +7,9 @@ inputs = {
   deployer_server_eip = dependency.server-dmz-deployer.outputs.public_ip
   idam_server_ip      = dependency.server-admin-idam.outputs.private_ip
   idam_replica_ip     = dependency.server-admin-idam_replica.outputs.private_ip
-  cluster_name        = "evokube-mgr"
-  talos_version       = "v1.9.2"
-  kubernetes_version  = "v1.32.1"
+  cluster_name        = "cluster-mgr0"
+  talos_version       = "v1.9.4"
+  kubernetes_version  = "v1.32.2"
   taloslb_revision    = "0.1.0"
   create_talos_img    = true
 }

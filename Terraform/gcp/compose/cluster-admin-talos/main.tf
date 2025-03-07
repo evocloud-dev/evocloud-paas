@@ -50,94 +50,6 @@ resource "google_compute_address" "ingress_lb_ip" {
 }
 
 #--------------------------------------------------
-# Loadbalancer VMs
-#--------------------------------------------------
-# random_integer resource is needed to be able to assign different zones to google_compute_instance
-resource "random_integer" "zone_selector_loadbalancer" {
-  for_each     = var.TALOS_LB_NODES
-  min = 0
-  max = length(var.GCP_REGIONS) - 1
-}
-
-resource "google_compute_instance" "talos_loadbalancer" {
-
-  for_each     = var.TALOS_LB_NODES
-  name         = format("%s", each.value)
-  machine_type = var.TALOS_LB_INSTANCE_SIZE #custom-6-20480 | custom-6-15360-ext
-  description  = "Talos LoadBalancer VM Instance"
-  zone         = element(var.GCP_REGIONS, random_integer.zone_selector_loadbalancer[each.key].result)
-  hostname     = format("%s.%s", each.value, var.DOMAIN_TLD)
-
-  boot_disk {
-    initialize_params {
-      image = var.BASE_AMI_NAME
-      size  = var.BASE_VOLUME_SIZE
-      type  = var.TALOS_LB_BASE_VOLUME_TYPE
-      labels = {
-        name = format("%s-%s", "base-volume", each.value)
-      }
-    }
-  }
-
-  network_interface {
-    subnetwork  = var.admin_subnet_name
-  }
-
-  allow_stopping_for_update = true
-
-  labels = {
-    server = format("%s", each.value)
-  }
-
-  metadata = {
-    #enable-oslogin = "TRUE"
-    ssh-keys       = "${var.CLOUD_USER}:${file("${var.PUBLIC_KEY_PAIR}")}"
-  }
-
-  metadata_startup_script = "/usr/bin/date"
-
-  #For selecting Spot Instances - Remove this snippet in production
-  scheduling {
-    preemptible = true
-    automatic_restart = false
-    provisioning_model = "SPOT" #SPOT | STANDARD
-    instance_termination_action = "STOP" #DELETE | STOP
-  }
-}
-
-####### Ansible Configuration Code - Talos Controlplane LoabBalancer VM Configuration #######
-resource "terraform_data" "redeploy_talos_lb" {
-  input = var.taloslb_revision
-}
-
-resource "terraform_data" "talos_lb_configuration" {
-  depends_on = [
-    google_compute_instance.talos_loadbalancer,
-    google_compute_instance.talos_ctrlplane
-  ]
-
-  lifecycle {
-    replace_triggered_by = [terraform_data.redeploy_talos_lb]
-  }
-
-  for_each = google_compute_instance.talos_loadbalancer
-  #Connection to bastion host (DEPLOYER_Server)
-  connection {
-    host        = var.deployer_server_eip
-    type        = "ssh"
-    user        = var.CLOUD_USER
-    private_key = file(var.PRIVATE_KEY_PAIR)
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "chmod 600 /home/${var.CLOUD_USER}/gcp-evocloud.pem",
-      "${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/talos-kube-lb.yml --forks 10 --inventory ${each.value.network_interface[0].network_ip}, --user ${var.CLOUD_USER} --private-key /home/${var.CLOUD_USER}/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml server_ip=${each.value.network_interface[0].network_ip} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} server_short_hostname=${each.value.name} domain_tld=${var.DOMAIN_TLD} server_timezone=${var.DEFAULT_TIMEZONE} cloud_user=${var.CLOUD_USER} metadata_ns_ip=${var.GCP_METADATA_NS} idam_replica_ip=${var.idam_replica_ip} upstream_servers=${join(",", values(google_compute_instance.talos_ctrlplane)[*].network_interface[0].network_ip)} ports_list=[80,443,6443] upstream_port=6443'",
-    ]
-  }
-}
-
-#--------------------------------------------------
 # Talos Control Plane VMs
 #--------------------------------------------------
 # random_integer resource is needed to be able to assign different zones to google_compute_instance
@@ -254,16 +166,16 @@ resource "google_compute_disk" "extra_disk" {
   name  = "${google_compute_instance.talos_workload[each.key].name}-extra-volume"
   type  = var.TALOS_WKLD_EXTRA_VOLUME_TYPE
   size  = var.BASE_VOLUME_200
-  zone  = google_compute_instance.talos_workload[each.key].self_link  # Use self_link to reference instance zone
+  zone  = google_compute_instance.talos_workload[each.key].zone
   physical_block_size_bytes = 4096
 }
 
 resource "google_compute_attached_disk" "disk_attachment" {
   for_each = { for k, v in var.TALOS_WKLD_NODES : k => v if v.extra_volume }
   disk     = google_compute_disk.extra_disk[each.key].name
-  instance = google_compute_instance.talos_workload[each.key].name
+  instance = google_compute_instance.talos_workload[each.key].self_link
   mode     = "READ_WRITE"
-  zone     = google_compute_instance.talos_workload[each.key].self_link  # Use self_link to reference instance zone
+  zone     = google_compute_instance.talos_workload[each.key].zone
 }
 
 #--------------------------------------------------
@@ -285,10 +197,10 @@ data "talos_client_configuration" "talosconfig" {
 
 ## Generate the Controlplane configuration and instantiate the Talos Controlplane VMs
 data "talos_machine_configuration" "talos_controlplane" {
-  depends_on = [google_compute_instance.talos_ctrlplane, terraform_data.talos_lb_configuration]
+  depends_on = [google_compute_instance.talos_ctrlplane]
 
   cluster_name       = var.cluster_name
-  cluster_endpoint   = "https://${google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip}:6443"
+  cluster_endpoint   = "https://${google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip}:6443"
   machine_type       = "controlplane"
   machine_secrets    = talos_machine_secrets.talos_vm.machine_secrets
   talos_version      = var.talos_version
@@ -344,7 +256,6 @@ data "talos_machine_configuration" "talos_controlplane" {
         apiServer = {
           certSANs = [
             google_compute_address.talos_vip.address,
-            google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip
           ]
         }
         network = {
@@ -397,10 +308,10 @@ resource "talos_machine_configuration_apply" "controlplane" {
 
 ## Generate the Worker configuration and instantiate the Talos Worker VMs
 data "talos_machine_configuration" "talos_worker" {
-  depends_on = [google_compute_instance.talos_workload, terraform_data.talos_lb_configuration]
+  depends_on = [google_compute_instance.talos_workload]
 
   cluster_name       = var.cluster_name
-  cluster_endpoint   = "https://${google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip}:6443"
+  cluster_endpoint   = "https://${google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip}:6443"
   machine_type       = "worker"
   machine_secrets    = talos_machine_secrets.talos_vm.machine_secrets
   talos_version      = var.talos_version
