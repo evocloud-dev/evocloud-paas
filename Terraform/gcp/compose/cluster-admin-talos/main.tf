@@ -254,7 +254,7 @@ resource "google_compute_disk" "extra_disk" {
   name  = "${google_compute_instance.talos_workload[each.key].name}-extra-volume"
   type  = var.TALOS_WKLD_EXTRA_VOLUME_TYPE
   size  = var.BASE_VOLUME_200
-  zone  = google_compute_instance.talos_workload[each.key].zone
+  zone  = google_compute_instance.talos_workload[each.key].self_link  # Use self_link to reference instance zone
   physical_block_size_bytes = 4096
 }
 
@@ -263,7 +263,7 @@ resource "google_compute_attached_disk" "disk_attachment" {
   disk     = google_compute_disk.extra_disk[each.key].name
   instance = google_compute_instance.talos_workload[each.key].name
   mode     = "READ_WRITE"
-  zone     = google_compute_instance.talos_workload[each.key].zone
+  zone     = google_compute_instance.talos_workload[each.key].self_link  # Use self_link to reference instance zone
 }
 
 #--------------------------------------------------
