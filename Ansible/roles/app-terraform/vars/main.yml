@@ -1,5 +1,5 @@
 ---
-terraform_version: '1.3.9'
+terraform_version: '1.11.1'
 
 os_arch: linux_amd64
 
@@ -11,12 +11,12 @@ terraform_provider_dir: /usr/share/terraform/providers/terraform.local/evocloud
 
 terraform_force_update: false
 
-# https://releases.hashicorp.com/terraform/1.3.9/terraform_1.3.9_SHA256SUMS
-terraform_checksum: sha256:53048fa573effdd8f2a59b726234c6f450491fe0ded6931e9f4c6e3df6eece56
+# https://releases.hashicorp.com/terraform/1.11.1/terraform_1.11.1_SHA256SUMS
+terraform_checksum: sha256:1af58f77958186227bce9ae4d9b08e004fb0902c7a6bdc813cdbab88739f9316
 
 terraform_zip: 'terraform_{{ terraform_version }}_{{ os_arch }}.zip'
 
-# https://releases.hashicorp.com/terraform/1.3.9/terraform_1.3.9_linux_amd64.zip
+# https://releases.hashicorp.com/terraform/1.11.1/terraform_1.11.1_linux_amd64.zip
 terraform_download_url: '{{ terraform_mirror }}/{{ terraform_version }}/{{ terraform_zip }}'
 
 terraform_binary_dir: '{{ terraform_install_dir }}/terraform_{{ terraform_version }}'
