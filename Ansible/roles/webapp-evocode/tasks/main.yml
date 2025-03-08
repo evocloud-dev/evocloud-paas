@@ -27,28 +27,13 @@
 
 - when: "(evocode_check.failed | bool) or (evocode_force_update | bool)"
   block:
-    - name: Staging EvoCode artifacts...
-      ansible.builtin.unarchive:
-        src: 'gitlab-packages.tar.gz'
-        dest: '/home/{{ cloud_user }}'
-        remote_src: false
-      become: true
-
     - name: Installing EvoCode RPM packages...
       ansible.builtin.shell: "{{ item }}"
       loop:
-        - "/usr/bin/dnf install -y /home/{{ cloud_user }}/gitlab-packages/*.rpm"
+        - "curl https://packages.gitlab.com/install/repositories/gitlab/gitlab-ee/script.rpm.sh | sudo bash"
+        - "/usr/bin/dnf install -y {{ gitlab_artifact }}"
       environment:
         GITLAB_ROOT_PASSWORD: '{{ code_admin_passwd }}'
-      become: true
-
-  always:
-    - name: Removing detritius...
-      ansible.builtin.file:
-        path: "{{ item }}"
-        state: absent
-      loop:
-        - '/home/{{ cloud_user }}/gitlab-packages'
       become: true
 
 #Configure TLS Certificate, Enable GitLab container registry, Disable Call Home
