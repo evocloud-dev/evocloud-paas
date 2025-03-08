@@ -7,7 +7,6 @@ inputs = {
   evocode_private_ip            = dependency.server-backend-evocode.outputs.private_ip
   idam_server_ip                = dependency.server-admin-idam.outputs.private_ip
   idam_replica_ip               = dependency.server-admin-idam_replica.outputs.private_ip
-  evocode_runner_private_ip     = dependency.server-backend-evocode-runner.outputs.private_ip
   evocode_group_revision        = "0.1.0"
 }
 
@@ -41,13 +40,6 @@ dependency "server-admin-idam_replica" {
 #--------------------------------------------------
 dependency "server-backend-evocode" {
   config_path   = "${get_terragrunt_dir()}/../server-backend-evocode"
-}
-
-#--------------------------------------------------
-# Set server-backend-evocode-runner module dependency
-#--------------------------------------------------
-dependency "server-backend-evocode-runner" {
-  config_path   = "${get_terragrunt_dir()}/../server-backend-evocode-runner"
 }
 
 #--------------------------------------------------
