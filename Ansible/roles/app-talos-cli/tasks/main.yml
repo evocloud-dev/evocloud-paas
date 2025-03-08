@@ -1,0 +1,32 @@
+---
+#This playbook will deploy Talos CLI Binary
+#
+#References:
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-talos-cli ##################"
+
+- name: Checking if TalosCTL binary is already installed...
+  ansible.builtin.stat:
+    path: /usr/local/bin/talosctl
+  changed_when: false
+  register: talosctl_binary
+  become: true
+
+- when: not talosctl_binary.stat.exists or (talosctl_force_update | bool)
+  block:
+    - name: Downloading TalosCTL binary...
+      ansible.builtin.get_url:
+        url: '{{ talosctl_download_url }}'
+        dest: '{{ talosctl_install_dir }}'
+        mode: 0755
+        checksum: '{{ talosctl_checksum }}'
+      become: true
+
+    - name: Creating symlink for TalosCTL binary...
+      ansible.builtin.file:
+        src: '{{ talosctl_install_dir }}/talosctl-{{ os_arch }}'
+        dest: '{{ talosctl_install_dir }}/talosctl'
+        state: link
+        force: true
+      become: true

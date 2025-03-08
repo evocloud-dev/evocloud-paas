@@ -17,6 +17,7 @@
     - app-cilium-cli
     - app-hubble-cli
     - app-flux-cli
+    - app-talos-cli
     - app-ansible
     - app-trivy
     - app-kubelint
