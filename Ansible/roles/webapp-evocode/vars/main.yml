@@ -15,14 +15,16 @@ code_admin_passwd: "{{ creds_store.code_admin_passwd }}"
 
 evocode_force_update: false
 
+
 gitlab_users_group: 'gitlab_usr'
 
 gitlab_admins_group: 'gitlab_adm'
 
-#Gitlab packages: https://packages.gitlab.com/gitlab/gitlab-ee
-# wget --content-disposition https://packages.gitlab.com/gitlab/gitlab-ee/packages/el/8/gitlab-ee-17.5.1-ee.0.el8.x86_64.rpm/download.rpm
-gitlab_version: 17.5.1
+gitlab_artifact: 'gitlab-ee'
 
 cert_dir: '/etc/pki/host_certs'
 
 evocode_conf_dir: '/etc/gitlab'
+
+#Gitlab packages: https://packages.gitlab.com/gitlab/gitlab-ee
+# wget --content-disposition https://packages.gitlab.com/gitlab/gitlab-ee/packages/el/8/gitlab-ee-17.5.1-ee.0.el8.x86_64.rpm/download.rpm
