@@ -28,5 +28,5 @@
         src: '{{ terragrunt_install_dir }}/terragrunt_{{ os_arch }}'
         dest: '{{ terragrunt_install_dir }}/terragrunt'
         state: link
-        force: '{{ terragrunt_force_update }}'
+        force: true
       become: true
