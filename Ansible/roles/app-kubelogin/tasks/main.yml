@@ -36,9 +36,13 @@
     - name: Installing kubelogin...
       ansible.builtin.unarchive:
         src: '/tmp/kubelogin_linux_amd64.zip'
-        dest: '{{ kubelogin_install_dir }}/kubectl-oidc_login' #naming convention is enforced
+        dest: '{{ kubelogin_install_dir }}'
         mode: '0755'
         remote_src: yes
+      become: true
+
+    - name: Enforcing kubelogin naming convention...
+      ansible.builtin.command: "/usr/bin/mv {{ kubelogin_install_dir }}/kubelogin {{ kubelogin_install_dir }}/kubectl-oidc_login"
       become: true
 
   always:
@@ -48,4 +52,6 @@
         state: absent
       loop:
         - '/tmp/kubelogin_linux_amd64.zip'
+        - '{{ kubelogin_install_dir }}/LICENSE'
+        - '{{ kubelogin_install_dir }}/README.md'
       become: true
