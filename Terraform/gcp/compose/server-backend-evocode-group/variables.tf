@@ -28,11 +28,6 @@ variable "deployer_server_eip" {
   type        = string
 }
 
-variable "evocode_runner_private_ip" {
-  description = "EvoCode Runner Private IPv4"
-  type        = string
-}
-
 variable "evocode_private_ip" {
   description = "EvoCode Server Private IPv4"
   type        = string
