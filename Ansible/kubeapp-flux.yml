@@ -1,0 +1,12 @@
+---
+#---------------------------------------------------------------------------------------
+# This role will deploy Kubernetes Application: Flux
+#---------------------------------------------------------------------------------------
+- hosts: all
+  gather_facts: false
+  strategy: free
+  vars:
+    creds_store: "{{ lookup('file', ansible_secret) | from_yaml }}"
+
+  roles:
+    - kubedeploy-flux

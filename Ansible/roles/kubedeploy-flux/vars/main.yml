@@ -1,0 +1,20 @@
+---
+cloud_user: ''
+
+evocode_private_ip: ''
+
+fluxcd_git_repo: ''
+
+fluxcd_repo_dir: ''
+
+fluxcd_repo_group: ''
+
+fluxcd_force_update: false
+
+fluxcd_namespace: 'flux-system'
+
+fluxcli_install_dir: '/usr/local/bin'
+
+kube_config_dir: '/home/{{ cloud_user }}/kubeconfig'
+
+#https://github.com/fluxcd/flux2/releases
