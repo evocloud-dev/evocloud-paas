@@ -1,0 +1,54 @@
+---
+#This playbook will install Kubescape CLI Binary
+#
+#References:
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-kubescape ##################"
+
+- name: Checking if kubescape-cli already exist...
+  ansible.builtin.stat:
+    path: '{{ kubescape_install_dir }}/kubescape'
+  changed_when: false
+  become: true
+  register: kubescape_binary
+
+- name: Uninstalling kubescape-cli...
+  ansible.builtin.file:
+    path: '{{ kubescape_install_dir }}/kubescape'
+    state: absent
+  become: true
+  when: (kubescape_binary.stat.exists) and (kubescape_force_update | bool)
+
+- when: (not kubescape_binary.stat.exists) or (kubescape_force_update | bool)
+  block:
+    - name: Verifying kubescape sha256 checksum...
+      ansible.builtin.get_url:
+        url: '{{ kubescape_download_url }}'
+        dest: '/tmp'
+        mode: '0644'
+        checksum: '{{ kubescape_checksum }}'
+      become: true
+
+    - name: Installing kubescape-cli...
+      ansible.builtin.unarchive:
+        src: '/tmp/kubescape-ubuntu-latest.tar.gz'
+        dest: '{{ kubescape_install_dir }}'
+        mode: '0755'
+        remote_src: yes
+      become: true
+
+    - name: Renaming kubescape-cli...
+      ansible.builtin.command: "/usr/bin/mv {{ kubescape_install_dir }}/kubescape-ubuntu-latest {{ kubescape_install_dir }}/kubescape"
+      become: true
+
+  always:
+    - name: Removing kubescape-cli detritus...
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '/tmp/kubescape-ubuntu-latest.tar.gz'
+        - '{{ kubescape_install_dir }}/LICENSE'
+        - '{{ kubescape_install_dir }}/README.md'
+      become: true

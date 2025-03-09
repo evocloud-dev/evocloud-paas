@@ -1,0 +1,13 @@
+---
+kubescape_ver: '3.0.30'
+
+kubescape_install_dir: /usr/local/bin
+
+kubescape_force_update: false
+
+#https://github.com/kubescape/kubescape/releases/tag/v3.0.30
+#https://github.com/kubescape/kubescape/releases/download/v3.0.30/kubescape-ubuntu-latest.tar.gz
+kubescape_download_url: 'https://github.com/kubescape/kubescape/releases/download/v{{ kubescape_ver }}/kubescape-ubuntu-latest.tar.gz'
+
+#https://github.com/kubescape/kubescape/releases/download/v3.0.30/kubescape-ubuntu-latest.sha256
+kubescape_checksum: sha256:e48c0ad6bab27b80a638084951ad80c956778d5e8a839acf4688a11f62de6e38
