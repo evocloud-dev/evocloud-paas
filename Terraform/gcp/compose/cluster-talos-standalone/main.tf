@@ -185,6 +185,9 @@ data "talos_machine_configuration" "talos_controlplane" {
           cni = {
             name = "none"
           }
+          dnsDomain = "cluster.local"
+          podSubnets = ["10.244.0.0/16"]
+          serviceSubnets = ["10.96.0.0/12"]
         }
         proxy = {
           disabled = true
