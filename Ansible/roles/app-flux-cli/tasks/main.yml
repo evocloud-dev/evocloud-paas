@@ -20,7 +20,7 @@
   become: true
   when: (flux_cli_binary.stat.exists) and (flux_force_update | bool)
 
-- when: (not fux_cli_binary.stat.exists) or (flux_cli_force_update | bool)
+- when: (not flux_cli_binary.stat.exists) or (flux_cli_force_update | bool)
   block:
     - name: Verifying flux-cli sha256 checksum...
       ansible.builtin.get_url:

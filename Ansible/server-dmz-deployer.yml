@@ -13,6 +13,7 @@
     - app-terragrunt
     - app-kubectl
     - app-kubelogin
+    - app-kubescape
     - app-helm
     - app-cilium-cli
     - app-hubble-cli
