@@ -1,0 +1,69 @@
+---
+#This playbook will deploy Flux Gitops operator into Kubernetes
+#References: https://fluxcd.io/flux/cmd/flux_bootstrap_gitlab/
+#            https://fluxcd.io/flux/installation/bootstrap/gitlab/
+#            https://fluxcd.io/flux/components/
+#            https://fluxcd.io/flux/guides/
+#            https://v2-4.docs.fluxcd.io/flux/installation/configuration/air-gapped/
+#            https://fluxcd.io/flux/guides/repository-structure/
+#            https://github.com/fluxcd/source-controller/blob/v1.1.0/docs/spec/v1beta2/helmrepositories.md#cert-secret-reference
+#            https://fluxcd.io/flux/cmd/flux_uninstall/
+#            https://www.youtube.com/watch?v=2CCZ8fcLyGk&t=16s
+#            https://www.youtube.com/watch?v=wZEcvNZfkD0
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubedeploy-flux ##############"
+
+- name: Checking for existing Flux-CLI tool...
+  ansible.builtin.stat:
+    path: '{{ fluxcli_install_dir }}/flux'
+  changed_when: false
+  become: true
+  register: fluxcli_check
+
+- name: Verifying if Flux is bootstrapped...
+  ansible.builtin.shell: |
+    KUBECONFIG={{ kube_config_dir }}/talos-cluster.yaml {{ fluxcli_install_dir }}/flux check
+  ignore_errors: yes  # Ignore errors if Flux is not bootstrapped
+  register: fluxdeploy_check
+
+- when: fluxdeploy_check.rc != 0  # RC (return code) 0 means Flux is bootstrapped
+  block:
+    - name: Generating Gitlab Root User Personal Access Token...
+      ansible.builtin.shell: "head /dev/urandom | tr -dc A-Za-z0-9 | head -c 63 ; echo ''"
+      args:
+        executable: /bin/bash
+      register: root_access_token
+
+    #Personal Access token Scopes: https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#personal-access-token-scopes
+    - name: Registering the Personal Access Token with api access permissions...
+      ansible.builtin.shell: |
+        gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: ['api'], name: 'Gitlab Root Personal Access Token', expires_at: 1.days.from_now); token.set_token('{{ root_access_token.stdout }}'); token.save!"
+      become: true
+      delegate_to: '{{ evocode_private_ip }}'
+
+    #- name: Output the Personal Access Token
+    #  ansible.builtin.debug:
+    #    msg: '{{ root_access_token.stdout }}'
+
+    - name: Deployind FluxCD on a cluster connected to a GitLab repository...
+      ansible.builtin.shell: |
+        GITLAB_TOKEN={{ root_access_token.stdout }} KUBECONFIG={{ kube_config_dir }}/talos-cluster.yaml {{ fluxcli_install_dir }}/flux bootstrap gitlab \
+          --namespace {{ fluxcd_namespace }} \
+          --hostname={{ evocode_private_ip }} \
+          --ssh-hostname={{ evocode_private_ip }} \
+          --repository={{ fluxcd_git_repo }} \
+          --branch=main \
+          --owner={{ fluxcd_repo_group }} \
+          --path={{ fluxcd_repo_dir }} \
+          --token-auth=false \
+          --read-write-key=true \
+          --ca-file=/etc/pki/host_certs/ca.crt \
+          --components-extra='image-reflector-controller,image-automation-controller'
+      args:
+        chdir: '{{ kube_config_dir }}'
+      become: true
+      register: flux_bootstrap
+
+  # To uninstall Flux components, its custom resources and namespace run:
+  #flux uninstall --namespace=flux-system
