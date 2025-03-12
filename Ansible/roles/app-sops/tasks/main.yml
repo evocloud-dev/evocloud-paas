@@ -1,0 +1,26 @@
+---
+#Source: https://github.com/getsops/sops/releases/tag/v3.9.4
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-sops ##################"
+
+- name: Checking if SOPS is installed...
+  ansible.builtin.stat:
+    path: '{{ sops_install_dir }}/sops'
+  changed_when: false
+  become: true
+  register: sops_binary
+
+- when: "(not sops_binary.stat.exists) or (sops_force_update | bool)"
+  block:
+    - name: Verifying SOPS binary checksum...
+      ansible.builtin.get_url:
+        url: '{{ sops_download_url }}'
+        dest: '/tmp'
+        mode: '0755'
+        checksum: '{{ sops_checksum }}'
+      become: true
+
+    - name: Renaming SOPS binary...
+      ansible.builtin.command: "/usr/bin/mv /tmp/sops-{{ sops_ver }}.linux.amd64 {{ sops_install_dir }}/sops"
+      become: true
