@@ -1,0 +1,13 @@
+---
+age_ver: 'v1.2.1'
+
+age_install_dir: /usr/local/bin
+
+age_force_update: false
+
+#https://github.com/FiloSottile/age/releases/tag/v1.2.1
+#https://github.com/FiloSottile/age/releases/download/v1.2.1/age-v1.2.1-linux-amd64.tar.gz
+age_download_url: 'https://github.com/FiloSottile/age/releases/download/{{ age_ver }}/age-{{ age_ver }}-linux-amd64.tar.gz'
+
+#Manually computed
+age_checksum: sha256:7df45a6cc87d4da11cc03a539a7470c15b1041ab2b396af088fe9990f7c79d50

@@ -1,0 +1,54 @@
+---
+#This playbook will install age a simple, modern, and secure tool for encrypting files
+#
+#References: https://github.com/FiloSottile/age
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-age ##################"
+
+- name: Checking if age already exist...
+  ansible.builtin.stat:
+    path: '{{ age_install_dir }}/age'
+  changed_when: false
+  become: true
+  register: age_binary
+
+- name: Uninstalling age...
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: absent
+  loop:
+    - '{{ age_install_dir }}/age'
+    - '{{ age_install_dir }}/age-keygen'
+  become: true
+  when: (age_binary.stat.exists) and (age_force_update | bool)
+
+- when: (not age_binary.stat.exists) or (age_force_update | bool)
+  block:
+    - name: Verifying age sha256 checksum...
+      ansible.builtin.get_url:
+        url: '{{ age_download_url }}'
+        dest: '/tmp'
+        mode: '0644'
+        checksum: '{{ age_checksum }}'
+      become: true
+
+    - name: Installing age binaries...
+      ansible.builtin.unarchive:
+        src: '/tmp/age-{{ age_ver }}-linux-amd64.tar.gz'
+        dest: '{{ age_install_dir }}'
+        mode: '0755'
+        extra_opts:
+          - --strip-components=1
+        remote_src: yes
+      become: true
+
+  always:
+    - name: Removing age detritus...
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '/tmp/age-{{ age_ver }}-linux-amd64.tar.gz'
+        - '{{ age_install_dir }}/LICENSE'
+      become: true
