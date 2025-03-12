@@ -19,6 +19,7 @@
     - app-hubble-cli
     - app-flux-cli
     - app-talos-cli
+    - app-age
     - app-sops
     - app-ansible
     - app-trivy
