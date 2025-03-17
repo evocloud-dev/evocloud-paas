@@ -4,9 +4,9 @@
 inputs = {
   deployer_server_eip           = dependency.server-dmz-deployer.outputs.public_ip
   evocode_private_ip            = dependency.server-backend-evocode.outputs.private_ip
-  fluxcd_repo_group             = "evosystems"
+  fluxcd_repo_group             = "evocloud-org"
   fluxcd_git_repo               = "evocloud"
-  fluxcd_repo_dir               = "Gitops/k8s-clusters/cluster-mgr0"
+  fluxcd_repo_dir               = "Gitops/clusters/cluster-mgr0"
   fluxcd_revision               = "0.1.0"
 }
 

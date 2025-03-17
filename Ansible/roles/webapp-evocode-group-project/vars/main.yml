@@ -1,7 +1,7 @@
 ---
 evocode_server_ip: ''
 
-gitlab_group: 'evosystems'
+gitlab_group: 'evocloud-org'
 
 gitlab_project: 'evocloud'
 
