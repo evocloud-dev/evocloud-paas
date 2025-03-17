@@ -1,5 +1,4 @@
-Copyright (c) The OpenTofu Authors
-Copyright (c) 2014 HashiCorp, Inc.
+Copyright (c) EvoCloud, Inc.
 
 Mozilla Public License, version 2.0
 
