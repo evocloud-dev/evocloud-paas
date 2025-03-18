@@ -1,4 +1,6 @@
 ---
+cloud_user: ''
+
 flux_cli_ver: '2.5.1'
 
 flux_cli_install_dir: /usr/local/bin

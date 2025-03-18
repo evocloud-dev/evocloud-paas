@@ -38,6 +38,18 @@
         remote_src: yes
       become: true
 
+    - name: Adding flux bash completion to .bashrc...
+      ansible.builtin.blockinfile:
+        path: "/home/{{ cloud_user }}/.bashrc"
+        block: |
+          # Flux bash completion
+          if command -v flux &>/dev/null; then
+            . <(flux completion bash)
+          fi
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - Flux bash completion"
+        create: yes
+      become: yes
+
   always:
     - name: Removing flux-cli detritus...
       ansible.builtin.file:
