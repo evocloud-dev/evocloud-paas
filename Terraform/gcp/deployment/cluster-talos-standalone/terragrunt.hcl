@@ -7,8 +7,8 @@ inputs = {
   idam_server_ip      = dependency.server-admin-idam.outputs.private_ip
   idam_replica_ip     = dependency.server-admin-idam_replica.outputs.private_ip
   cluster_name        = "evotalos-workstation"
-  talos_version       = "v1.9.4"
-  kubernetes_version  = "v1.32.2"
+  talos_version       = "v1.9.5"
+  kubernetes_version  = "v1.32.3"
   create_talos_img    = false
 }
 
