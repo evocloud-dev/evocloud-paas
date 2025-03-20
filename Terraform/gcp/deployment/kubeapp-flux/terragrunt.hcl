@@ -6,7 +6,7 @@ inputs = {
   evocode_private_ip            = dependency.server-backend-evocode.outputs.private_ip
   fluxcd_repo_group             = "evocloud-org"
   fluxcd_git_repo               = "evocloud"
-  fluxcd_repo_dir               = "Gitops/clusters/cluster-mgr0"
+  fluxcd_repo_dir               = "Gitops/clusters/cluster-mgr"
   fluxcd_revision               = "0.1.0"
 }
 
