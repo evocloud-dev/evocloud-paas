@@ -1,0 +1,66 @@
+---
+#This playbook will install Kubectl-vela plugin and vela CLI Binary
+#
+#References: https://github.com/kubevela/kubevela
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-kubevela ##################"
+
+- name: Checking if kubectl-vela already exist...
+  ansible.builtin.stat:
+    path: '{{ kubevela_install_dir }}/kubectl-vela'
+  changed_when: false
+  become: true
+  register: kubevela_binary
+
+- name: Checking if vela already exist...
+  ansible.builtin.stat:
+    path: '{{ kubevela_install_dir }}/vela'
+  changed_when: false
+  become: true
+  register: vela_binary
+
+- when: (not vela_binary.stat.exists) or (kubevela_force_update | bool)
+  block:
+    - name: Verifying kubectl-vela sha256 checksum...
+      ansible.builtin.get_url:
+        url: '{{ kubevela_download_url }}'
+        dest: '/tmp'
+        mode: '0644'
+        checksum: '{{ kubevela_checksum }}'
+      become: true
+
+    - name: Verifying vela sha256 checksum...
+      ansible.builtin.get_url:
+        url: '{{ vela_download_url }}'
+        dest: '/tmp'
+        mode: '0644'
+        checksum: '{{ vela_checksum }}'
+      become: true
+
+    - name: Installing kubectl-vela and vela...
+      ansible.builtin.unarchive:
+        src: '{{ item.src }}'
+        dest: '{{ item.dest }}'
+        mode: '0755'
+        remote_src: yes
+        extra_opts:
+          - --strip-components=1
+      loop:
+        - src: "/tmp/kubectl-vela-{{ kubevela_ver }}-linux-amd64.tar.gz"
+          dest: "/usr/local/bin"
+        - src: "vela-{{ kubevela_ver }}-linux-amd64.tar.gz"
+          dest: "/usr/local/bin"
+      become: true
+
+  always:
+    - name: Removing kubevela detritus...
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '/tmp/kubectl-vela-{{ kubevela_ver }}-linux-amd64.tar.gz'
+        - '/tmp/vela-{{ kubevela_ver }}-linux-amd64.tar.gz'
+        - '/usr/local/bin/LICENSE'
+        - '/usr/local/bin/README.md'
+      become: true
