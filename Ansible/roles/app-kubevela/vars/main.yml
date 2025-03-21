@@ -1,0 +1,19 @@
+---
+kubevela_ver: 'v1.10.2'
+
+kubevela_install_dir: /usr/local/bin
+
+kubevela_force_update: false
+
+#https://github.com/kubevela/kubevela/releases/tag/v1.10.2
+#https://github.com/kubevela/kubevela/releases/download/v1.10.2/kubectl-vela-v1.10.2-linux-amd64.tar.gz
+kubevela_download_url: 'https://github.com/kubevela/kubevela/releases/download/{{ kubevela_ver }}/kubectl-vela-{{ kubevela_ver }}-linux-amd64.tar.gz'
+
+#https://github.com/kubevela/kubevela/releases/download/v1.10.2/vela-v1.10.2-linux-amd64.tar.gz
+vela_download_url: 'https://github.com/kubevela/kubevela/releases/download/{{ kubevela_ver }}/vela-{{ kubevela_ver }}-linux-amd64.tar.gz'
+
+#https://github.com/kubevela/kubevela/releases/download/v1.10.2/sha256sums.txt
+kubevela_checksum: sha256:b283cf67e51bee16e801ae4dbd6db0493ba9dbca43e8c01fc5162ba659c82e5d
+vela_checksum: sha256:3d71485f8001033ed32dac6e6be7debfc6746e22a4809dfb45e806a7a65d52c3
+
+
