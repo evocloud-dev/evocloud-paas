@@ -1,5 +1,5 @@
 ---
-cilium_cli_ver: 'v0.16.24'
+cilium_cli_ver: 'v0.18.2'
 
 cilium_cli_install_dir: /usr/local/bin
 
@@ -9,5 +9,5 @@ cilium_cli_force_update: false
 #https://github.com/cilium/cilium-cli/releases/download/v0.16.24/cilium-linux-amd64.tar.gz
 cilium_cli_download_url: 'https://github.com/cilium/cilium-cli/releases/download/{{ cilium_cli_ver }}/cilium-linux-amd64.tar.gz'
 
-#https://github.com/cilium/cilium-cli/releases/download/v0.16.24/cilium-linux-amd64.tar.gz.sha256sum
-cilium_cli_checksum: sha256:019c9c765222b3db5786f7b3a0bff2cd62944a8ce32681acfb47808330f405a7
+#https://github.com/cilium/cilium-cli/releases/download/v0.18.2/cilium-linux-amd64.tar.gz.sha256sum
+cilium_cli_checksum: sha256:1b4bd5fd5c96ab1195cd4eb56841c983a21149c62ee39922b7955f1cd0eda23a
