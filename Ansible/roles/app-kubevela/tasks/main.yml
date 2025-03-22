@@ -49,7 +49,7 @@
       loop:
         - src: "/tmp/kubectl-vela-{{ kubevela_ver }}-linux-amd64.tar.gz"
           dest: "/usr/local/bin"
-        - src: "vela-{{ kubevela_ver }}-linux-amd64.tar.gz"
+        - src: "/tmp/vela-{{ kubevela_ver }}-linux-amd64.tar.gz"
           dest: "/usr/local/bin"
       become: true
 
