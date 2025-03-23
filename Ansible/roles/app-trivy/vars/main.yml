@@ -1,8 +1,8 @@
 ---
-trivy_version: '0.38.3'
+trivy_version: '0.60.0'
 
-# https://github.com/aquasecurity/trivy/releases/tag/v0.38.3
+# https://github.com/aquasecurity/trivy/releases/tag/v0.60.0
 trivy_download_url: 'https://github.com/aquasecurity/trivy/releases/download/v{{ trivy_version }}/trivy_{{ trivy_version }}_Linux-64bit.rpm'
 
-# https://github.com/aquasecurity/trivy/releases/download/v0.38.3/trivy_0.38.3_checksums.txt
-trivy_checksum: sha256:e94d6034b310826b6a287ab4d1f62c8a042c5b977dfe80c2b28d3d3f42cceb81
+# https://github.com/aquasecurity/trivy/releases/download/v0.60.0/trivy_0.60.0_checksums.txt
+trivy_checksum: sha256:e122d727b398f53dd742aeaa5bbbc2d565d202b092a57dbbd2a40dfbdf4b29e8
