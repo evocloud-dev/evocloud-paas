@@ -1,3 +1,4 @@
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fevocloud-dev%2Fevocloud-paas.svg?type=shield&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2Fevocloud-dev%2Fevocloud-paas?ref=badge_shield&issueType=license) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fevocloud-dev%2Fevocloud-paas.svg?type=shield&issueType=security)](https://app.fossa.com/projects/git%2Bgithub.com%2Fevocloud-dev%2Fevocloud-paas?ref=badge_shield&issueType=security)
 <p align="center"><img src="./EvoCloudGithub.png" /></p>
 
 ## EvoCloud
