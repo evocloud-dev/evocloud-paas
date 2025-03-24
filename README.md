@@ -18,4 +18,5 @@ EvoCloud-PaaS plays well with other CNCF projects. We integrate the following co
 
 ## Licensing
 Evocloud-PaaS automation code is under the Mozilla Public License version 2.0 (MPL-2.0).
+
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fevocloud-dev%2Fevocloud-paas.svg?type=large&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2Fevocloud-dev%2Fevocloud-paas?ref=badge_large&issueType=license)
