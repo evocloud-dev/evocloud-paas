@@ -43,9 +43,7 @@
         path: "/home/{{ cloud_user }}/.bashrc"
         block: |
           # Flux bash completion
-          if command -v flux &>/dev/null; then
-            . <(flux completion bash)
-          fi
+          eval "$(flux completion bash)"
         marker: "# {mark} ANSIBLE MANAGED BLOCK - Flux bash completion"
         create: yes
       become: yes

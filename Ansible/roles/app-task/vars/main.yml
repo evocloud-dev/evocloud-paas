@@ -1,0 +1,13 @@
+---
+task_ver: 'v3.42.1'
+
+task_install_dir: /usr/local/bin
+
+task_force_update: false
+
+#https://github.com/go-task/task/releases/tag/v3.42.1
+#https://github.com/go-task/task/releases/download/v3.42.1/task_linux_amd64.tar.gz
+task_download_url: 'https://github.com/go-task/task/releases/download/{{ task_ver }}/task_linux_amd64.tar.gz'
+
+#Manually computed
+task_checksum: sha256:05b41f97e655f56cc8a7617106622dbfb5f647d13ec6013ff7719bc80b52746c

@@ -105,7 +105,7 @@ inputs = {
   }
 
   #TALOS WORKER NODES
-  TALOS_WKLD_INSTANCE_SIZE      = "e2-highcpu-8"
+  TALOS_WKLD_INSTANCE_SIZE      = "e2-standard-4"
   TALOS_WKLD_BASE_VOLUME_TYPE   = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
   TALOS_WKLD_EXTRA_VOLUME_TYPE  = "pd-balanced"
   TALOS_WKLD_NODES              = {
@@ -154,7 +154,7 @@ inputs = {
   }
 
   #TALOS STANDALONE
-  TALOS_CTRL_STANDALONE_SIZE    = "e2-standard-2"
+  TALOS_CTRL_STANDALONE_SIZE    = "e2-standard-4"
   TALOS_STANDALONE_VOLUME_TYPE  = "pd-balanced"
   TALOS_CTRL_STANDALONE            = {
     node01 = "evotalos-workstation"

@@ -1,0 +1,58 @@
+---
+#This playbook will install task a simple, lightweight task-runner/build tool.
+#
+#References: https://github.com/go-task/task
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-task ##################"
+
+- name: Checking if task already exist...
+  ansible.builtin.stat:
+    path: '{{ task_install_dir }}/task'
+  changed_when: false
+  become: true
+  register: task_binary
+
+- when: (not task_binary.stat.exists) or (task_force_update | bool)
+  block:
+    - name: Verifying task sha256 checksum...
+      ansible.builtin.get_url:
+        url: '{{ task_download_url }}'
+        dest: '/tmp'
+        mode: '0644'
+        checksum: '{{ task_checksum }}'
+      become: true
+
+    - name: Installing task binary...
+      ansible.builtin.unarchive:
+        src: '/tmp/task_linux_amd64.tar.gz'
+        dest: '/tmp'
+        mode: '0755'
+        remote_src: yes
+      become: true
+
+    - name: Moving task binary to /usr/local/bin...
+      ansible.builtin.command: "/usr/bin/mv /tmp/task {{ task_install_dir }}/task"
+      become: true
+
+    - name: Adding task bash completion to .bashrc...
+      ansible.builtin.blockinfile:
+        path: "/home/{{ cloud_user }}/.bashrc"
+        block: |
+          # Task bash completion
+          eval "$(task --completion bash)"
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - Task bash completion"
+        create: yes
+      become: yes
+
+  always:
+    - name: Removing task detritus...
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '/tmp/task_linux_amd64.tar.gz'
+        - '/tmp/LICENSE'
+        - '/tmp/README.md'
+        - '/tmp/completion'
+      become: true
