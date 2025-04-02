@@ -1,4 +1,6 @@
 ---
+cloud_user: ''
+
 task_ver: 'v3.42.1'
 
 task_install_dir: /usr/local/bin

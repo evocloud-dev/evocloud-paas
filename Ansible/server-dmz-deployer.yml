@@ -26,4 +26,5 @@
     - app-kubelint
     - app-nerdctl
     - app-cosign
+    - app-task
     - app-fail2ban
