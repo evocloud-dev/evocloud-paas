@@ -2,5 +2,33 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
+  ],
+
+  "packageRules": [
+    {
+      "matchPaths": ["Ansible/**"],
+      "matchDatasources": ["github-tags", "github-releases"],
+      "matchPackageNames": ["*"],
+      "matchFiles": ["**/*.tar", "**/*.tar.gz", "**/*.tar.bz2", "**/*.tar.xz"],
+      "enabled": true
+    },
+    {
+      "matchPaths": ["Ansible/**"],
+      "matchDatasources": ["git-tags", "git-refs"],
+      "matchPackageNames": ["*"],
+      "matchFiles": ["**/*.tar", "**/*.tar.gz", "**/*.tar.bz2", "**/*.tar.xz"],
+      "enabled": true
+    }
+  ],
+  
+  "regexManagers": [
+    {
+      "fileMatch": ["Ansible/.*\\.(ya?ml|yml|json|txt|cfg|conf|ini|role|tasks|vars|defaults|meta|j2)$"],
+      "matchStrings": [
+        "(?<depName>[^\\s]+)\\/(?<packageName>[^\\s]+)\\/releases\\/download\\/(?:v?|versions?\\/)?(?<currentValue>[^\\s\\/]+)\\/(?<packageName>[^\\s]+)\\.(tar|tar\\.gz|tar\\.bz2|tar\\.xz)",
+        "download\\.github\\.com\\/(?<depName>[^\\s]+)\\/(?<packageName>[^\\s]+)\\/archive\\/(?:v?|versions?\\/)?(?<currentValue>[^\\s\\/]+)\\.(tar|tar\\.gz|tar\\.bz2|tar\\.xz)"
+      ],
+      "datasourceTemplate": "github-tags"
+    }
   ]
 }
