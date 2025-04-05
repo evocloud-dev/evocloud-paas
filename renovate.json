@@ -1,23 +1,39 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "gitAuthor": "evocloud-bot <geanttechnology@gmail.com>",
   "extends": [
     "config:recommended"
   ],
-
-  "packageRules": [
+  "assignees": [
+    "geanttechnology"
+  ],
+  "ignorePaths": [
+    "assets/"
+  ],
+  "ansible": {
+    "fileMatch": [
+       "Ansible/.+\\.ya?ml$"
+    ]
+  },
+  "terraform": {
+    "fileMatch": [
+      "Terraform/.+\\.tf$"
+    ]
+  },
+  "customManagers": [
     {
-      "matchPaths": ["Ansible/**"],
-      "matchDatasources": ["github-tags", "github-releases"],
-      "matchPackageNames": ["*"],
-      "matchFiles": ["**/*.tar", "**/*.tar.gz", "**/*.tar.bz2", "**/*.tar.xz"],
-      "enabled": true
-    },
-    {
-      "matchPaths": ["Ansible/**"],
-      "matchDatasources": ["git-tags", "git-refs"],
-      "matchPackageNames": ["*"],
-      "matchFiles": ["**/*.tar", "**/*.tar.gz", "**/*.tar.bz2", "**/*.tar.xz"],
-      "enabled": true
+      "customType": "regex",
+      "description": "Process various dependencies",
+      "fileMatch": [
+        "Ansible/.+\\.ya?ml$"
+      ],
+      "fileMatch": [
+        "Terraform/.+\\.tf$"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*=?))?\n .*: (?<currentValue>.*=?)"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
     }
   ]
 }
