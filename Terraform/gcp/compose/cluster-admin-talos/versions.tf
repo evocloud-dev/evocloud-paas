@@ -9,7 +9,7 @@ terraform {
   required_providers {
     google = {
       #source  = "terraform.local/evocloud/google"
-      version = ">= 5.0.0, < 6.0.0"
+      version = "< 7.0.0"
     }
     talos = {
       source  = "siderolabs/talos"
