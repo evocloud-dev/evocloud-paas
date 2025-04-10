@@ -292,7 +292,19 @@ data "talos_machine_configuration" "talos_controlplane" {
           var.TALOS_EXTRA_MANIFESTS["kyverno_policy"],
           var.TALOS_EXTRA_MANIFESTS["kubelet_serving_cert"],
           var.TALOS_EXTRA_MANIFESTS["kube-metric_server"],
+          var.TALOS_EXTRA_MANIFESTS["local-storage_class"],
           var.TALOS_EXTRA_MANIFESTS["flux-cd-operator"]
+        ]
+        inlineManifests = [
+          {
+            name     = "evocloud-ns"
+            contents = <<-EOT
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: evocloud-ns
+            EOT
+          }
         ]
       }
     }),
