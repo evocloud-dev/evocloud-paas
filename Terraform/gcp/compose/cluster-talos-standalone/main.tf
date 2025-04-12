@@ -227,6 +227,17 @@ data "talos_machine_configuration" "talos_controlplane" {
             EOT
           }
         ]
+        inlineManifests = [
+          {
+            name     = "evocloud-ns"
+            contents = <<-EOT
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: evocloud-ns
+            EOT
+          }
+        ]
       }
     }),
   ]
