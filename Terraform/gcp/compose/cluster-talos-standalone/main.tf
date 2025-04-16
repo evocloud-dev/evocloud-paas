@@ -226,6 +226,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                 name: evocloud-ns
             EOT
           }
+
         ]
         inlineManifests = [
           {
