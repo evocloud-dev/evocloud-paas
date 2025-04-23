@@ -52,12 +52,6 @@ resource "google_compute_address" "ingress_lb_ip" {
 #--------------------------------------------------
 # Talos Control Plane VMs
 #--------------------------------------------------
-# random_integer resource is needed to be able to assign different zones to google_compute_instance
-resource "random_integer" "zone_selector_ctrlnode" {
-  for_each     = var.TALOS_CTRL_STANDALONE
-  min = 0
-  max = length(var.GCP_REGIONS) - 1
-}
 
 ##Talos Controlplane VMs Creation
 resource "google_compute_instance" "talos_ctrlplane" {
@@ -67,7 +61,7 @@ resource "google_compute_instance" "talos_ctrlplane" {
   name         = format("%s", each.value)
   machine_type = var.TALOS_CTRL_STANDALONE_SIZE #custom-6-20480 | custom-6-15360-ext
   description  = "Talos Controlplane Standalone Instance"
-  zone         = element(var.GCP_REGIONS, random_integer.zone_selector_ctrlnode[each.key].result)
+  zone         = var.GCP_REGIONS[0]
   hostname     = format("%s.%s", each.value, var.DOMAIN_TLD)
 
   boot_disk {
@@ -214,7 +208,8 @@ data "talos_machine_configuration" "talos_controlplane" {
           var.TALOS_EXTRA_MANIFESTS["kube-metric_server"],
           var.TALOS_EXTRA_MANIFESTS["local-storage_class"],
           var.TALOS_EXTRA_MANIFESTS["flux-cd-operator"],
-          var.TALOS_EXTRA_MANIFESTS["kube-buildpack"]
+          var.TALOS_EXTRA_MANIFESTS["kube-buildpack"],
+          var.TALOS_EXTRA_MANIFESTS["flux-instance"]
         ]
         inlineManifests = [
           {
@@ -225,7 +220,7 @@ data "talos_machine_configuration" "talos_controlplane" {
               metadata:
                 name: evocloud-ns
             EOT
-          }
+          },
         ]
       }
     }),
