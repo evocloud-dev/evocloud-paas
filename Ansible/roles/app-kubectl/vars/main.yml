@@ -2,9 +2,9 @@
 kubectl_force_update: false
 
 #https://kubernetes.io/releases/
-kubectl_ver: 'v1.32.2'
+kubectl_ver: 'v1.32.3'
 
-#https://dl.k8s.io/v1.32.2/kubernetes-client-linux-amd64.tar.gz
+#https://dl.k8s.io/v1.32.3/kubernetes-client-linux-amd64.tar.gz
 kubectl_download_url: 'https://dl.k8s.io/{{ kubectl_ver }}/kubernetes-client-linux-amd64.tar.gz'
 
 kubectl_install_dir: '/usr/local/bin'

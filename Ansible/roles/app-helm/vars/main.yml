@@ -1,13 +1,13 @@
 ---
-helm_ver: 'v3.17.2'
+helm_ver: 'v3.17.3'
 
 helm_install_dir: /usr/local/bin
 
 helm_force_update: false
 
 #https://github.com/helm/helm/tags
-# https://get.helm.sh/helm-v3.17.2-linux-amd64.tar.gz
+# https://get.helm.sh/helm-v3.17.3-linux-amd64.tar.gz
 helm_download_url: 'https://get.helm.sh/helm-{{ helm_ver }}-linux-amd64.tar.gz'
 
-# https://get.helm.sh/helm-v3.17.2-linux-amd64.tar.gz.sha256sum
-helm_checksum: sha256:90c28792a1eb5fb0b50028e39ebf826531ebfcf73f599050dbd79bab2f277241
+# https://get.helm.sh/helm-v3.17.3-linux-amd64.tar.gz.sha256sum
+helm_checksum: sha256:ee88b3c851ae6466a3de507f7be73fe94d54cbf2987cbaa3d1a3832ea331f2cd
