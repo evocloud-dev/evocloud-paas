@@ -2,12 +2,12 @@
 sops_force_update: false
 
 #https://github.com/getsops/sops/releases
-sops_ver: 'v3.9.4'
+sops_ver: 'v3.10.2'
 
-#https://github.com/getsops/sops/releases/download/v3.9.4/sops-v3.9.4.linux.amd64
+#https://github.com/getsops/sops/releases/download/v3.10.2/sops-v3.10.2.linux.amd64
 sops_download_url: 'https://github.com/getsops/sops/releases/download/{{ sops_ver }}/sops-{{ sops_ver }}.linux.amd64'
 
-#https://github.com/getsops/sops/releases/download/v3.9.4/sops-v3.9.4.checksums.txt
-sops_checksum: sha256:5488e32bc471de7982ad895dd054bbab3ab91c417a118426134551e9626e4e85
+#https://github.com/getsops/sops/releases/download/v3.10.2/sops-v3.10.2.checksums.txt
+sops_checksum: sha256:79b0f844237bd4b0446e4dc884dbc1765fc7dedc3968f743d5949c6f2e701739
 
 sops_install_dir: '/usr/local/bin'
