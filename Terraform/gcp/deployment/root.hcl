@@ -129,6 +129,10 @@ inputs = {
       short_name = "evotalos-wk05"
       extra_volume = true
     }
+    node06 = {
+      short_name = "evotalos-wk06"
+      extra_volume = true
+    }
   }
 
   #TALOS LOADBALANCER NODE
@@ -142,9 +146,9 @@ inputs = {
   TALOS_EXTRA_MANIFESTS     = {
     gateway_api_std       = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml"
     gateway_api_tls       = "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.2.1/config/crd/experimental/gateway.networking.k8s.io_tlsroutes.yaml"
-    cilium_manifest       = "https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/cilium-1.17.2.yaml"
-    rook_ceph_operator    = "https://raw.githubusercontent.com/geanttechnology/evocloud-k8s-manifests/refs/heads/main/rook-operator.yaml"
-    rook_ceph_cluster     = "https://raw.githubusercontent.com/geanttechnology/evocloud-k8s-manifests/refs/heads/main/rook-cluster.yaml"
+    cilium_manifest       = "https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/cilium-1.17.3.yaml"
+    rook_ceph_operator    = "https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/rook-operator-v1.17.1.yaml"
+    rook_ceph_cluster     = "https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/rook-cluster-v1.17.1.yaml"
     headlamp_ui           = "https://raw.githubusercontent.com/geanttechnology/evocloud-k8s-manifests/refs/heads/main/kubernetes-headlamp.yaml"
     kyverno_policy        = "https://github.com/kyverno/kyverno/releases/download/v1.14.0/install.yaml"
     kubelet_serving_cert  = "https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml"
@@ -152,6 +156,8 @@ inputs = {
     flux-cd-operator      = "https://github.com/controlplaneio-fluxcd/flux-operator/releases/latest/download/install.yaml"
     local-storage_class   = "https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/local-storageclass.yaml"
     kube-buildpack        = "https://github.com/buildpacks-community/kpack/releases/download/v0.16.1/release-0.16.1.yaml"
+    flux-instance         = "https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/flux-instance.yaml"
+    kubevela-core         = "https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/kubevela-core-1.10.2.yaml"
   }
 
   #TALOS STANDALONE
