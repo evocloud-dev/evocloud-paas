@@ -484,5 +484,10 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
 # https://www.talos.dev/v1.9/kubernetes-guides/configuration/ceph-with-rook/
 #Talos Kubernetes Cluster requires to label namespace rook-ceph with 'pod-security.kubernetes.io/enforce=privileged' for it to work
 #
-#helm template --create-namespace --namespace rook-ceph rook-ceph rook-release/rook-ceph > /home/mlkroot/rook-operator.yaml
-#helm template --create-namespace --namespace rook-ceph rook-ceph-cluster --set operatorNamespace=rook-ceph rook-release/rook-ceph-cluster > /home/mlkroot/rook-cluster.yaml
+#helm template --create-namespace --namespace rook-ceph rook-ceph rook-release/rook-ceph \
+#--set monitoring.enabled=true > /home/mlkroot/rook-operator-v1.17.1.yaml
+#
+#helm template --create-namespace --namespace rook-ceph rook-ceph-cluster \
+# --set operatorNamespace=rook-ceph \
+# --set toolbox.enabled=true \
+# --set monitoring.enabled=true rook-release/rook-ceph-cluster > /home/mlkroot/rook-cluster-v1.17.1.yaml
