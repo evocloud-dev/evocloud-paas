@@ -285,7 +285,7 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
 #cd cilium-1.16.6/install/kubernetes/
 #Basic Cilium Deployment with no kube-prometheus monitoring integration
 #helm template cilium ./cilium \
-#--version 1.16.6 \
+#--version 1.17.3 \
 #--namespace kube-system \
 #--set ipam.mode=kubernetes \
 #--set kubeProxyReplacement=true \

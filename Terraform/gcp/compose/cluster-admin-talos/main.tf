@@ -422,7 +422,7 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
 #helm repo add cilium https://helm.cilium.io/
 #Basic Cilium Deployment with no kube-prometheus monitoring integration
 #helm template cilium cilium/cilium \
-#--version 1.17.0 \
+#--version 1.17.3 \
 #--namespace kube-system \
 #--set k8sServiceHost=localhost \
 #--set k8sServicePort=7445 \
@@ -451,7 +451,7 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
 #--set operator.rollOutPods=true \
 #--set cgroup.autoMount.enabled=false \
 #--set cgroup.hostRoot=/sys/fs/cgroup \
-#--set envoy.securityContext.capabilities.keepCapNetBindService=true > /home/mlkroot/cilium-1.17.0.yaml
+#--set envoy.securityContext.capabilities.keepCapNetBindService=true > /home/mlkroot/cilium-1.17.3.yaml
 
 
 ##To add kube-prometheus monitoring integration:
