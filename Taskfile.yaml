@@ -1,0 +1,10 @@
+version: 3
+dotenv: ['.env']
+
+tasks:
+  deploy:
+    desc: "Invoke Docker run command to deploy EvoCloud"
+    cmds:
+      - docker run \
+        -v MOUNT_DIR \
+        --name evo-bootstrap

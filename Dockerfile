@@ -15,10 +15,13 @@ COPY --from=alpine/terragrunt:$TERRAFORM_VERSION /bin/terraform /usr/local/bin
 RUN apk add --no-cache curl ansible \
     && curl -L -k "https://github.com/gruntwork-io/terragrunt/releases/download/v$TERRAGRUNT_VERSION/terragrunt_linux_amd64" > "/usr/local/bin/terragrunt" \
     && curl -L -k "https://github.com/go-task/task/releases/download/v$TASKFILE_VERSION/task_linux_amd64.tar.gz" > "/tmp/task_linux_amd64.tar.gz" \
+    && curl -L -k "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz" > "/tmp/google-cloud-cli-linux-x86_64.tar.gz" \
+    && tar -xzf /tmp/google-cloud-cli-linux-x86_64.tar.gz -C /opt \
     && tar -xzf /tmp/task_linux_amd64.tar.gz task -C /usr/local/bin \
     && chmod u+x /usr/local/bin/terragrunt \
     && chmod u+x /usr/local/bin/task \
-    && mkdir -p /opt/EVOCLOUD
+    && mkdir -p /opt/EVOCLOUD \
+    && ln -s /opt/google-cloud-sdk/bin/gcloud /usr/local/bin/gcloud
 
 # Stage 2: Runtime Environment \
 FROM build-stage AS final-stage
