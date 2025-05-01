@@ -1,10 +1,13 @@
 version: 3
-dotenv: ['.env']
 
 tasks:
-  deploy:
-    desc: "Invoke Docker run command to deploy EvoCloud"
+  single-node:
+    desc: "Deploys Single Node Talos Cluster"
     cmds:
-      - docker run \
-        -v MOUNT_DIR \
-        --name evo-bootstrap
+      - | 
+        ssh -i {{.MNTDIR}}/gcp-evocloud.pem -o "StrictHostKeyChecking=no" {{.CLOUDUSER}}@34.162.143.181 \
+          "ssh -i {{.HOMEDIR}}/gcp-evocloud.pem -o "StrictHostKeyChecking=no" {{.CLOUDUSER}}@10.10.10.5 \
+          'gcloud auth activate-service-account --key-file {{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}} \
+          && export GOOGLE_APPLICATION_CREDENTIALS="{{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}}" \
+          && cd {{.HOMEDIR}}/EVOCLOUD/Terraform/gcp/deployment/cluster-talos-standalone/ && terragrunt destroy -auto-approve'"
+
