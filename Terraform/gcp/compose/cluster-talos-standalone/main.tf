@@ -461,8 +461,3 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
 # --set toolbox.enabled=true \
 # --set monitoring.enabled=true rook-release/rook-ceph-cluster > /home/mlkroot/rook-cluster-v1.17.1.yaml
 
-################# KRO HELM TEMPLATE GENERATION ##############################
-#https://github.com/kro-run/kro
-#helm template kro oci://ghcr.io/kro-run/kro/kro --version=0.2.3 \
-# --create-namespace --namespace kro > /home/mlkroot/kro-0.2.3.yaml
-
