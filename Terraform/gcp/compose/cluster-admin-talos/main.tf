@@ -307,6 +307,122 @@ data "talos_machine_configuration" "talos_controlplane" {
                 name: evocloud-ns
             EOT
           },
+          {
+            name     = "kro-helm-deploy"
+            contents = <<-EOT
+              ---
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRoleBinding
+              metadata:
+                name: kro-install
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes CRB after 24 hours (86400 seconds)
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: cluster-admin
+              subjects:
+              - kind: ServiceAccount
+                name: kro-install
+                namespace: kube-system
+              ---
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: kro-install
+                namespace: kube-system
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes SA after 24 hours (86400 seconds)
+              ---
+              apiVersion: batch/v1
+              kind: Job
+              metadata:
+                name: kro-helm-app-deployer
+                namespace: kube-system
+              spec:
+                backoffLimit: 10
+                template:
+                  metadata:
+                    labels:
+                      job: kro-deployment
+                  spec:
+                    containers:
+                    - name: helm
+                      image: alpine/helm:3
+                      command:
+                        - sh
+                        - -c
+                        - |
+                          kubectl create namespace kro || true
+                          helm upgrade --install kro-orchestrator oci://ghcr.io/kro-run/kro/kro \
+                            --namespace kro \
+                            --create-namespace \
+                            --version 0.2.3 \
+                            --wait
+                    restartPolicy: Never
+                    serviceAccount: kro-install
+                    serviceAccountName: kro-install
+            EOT
+          },
+          {
+            name     = "kubevela-helm-deploy"
+            contents = <<-EOT
+              ---
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRoleBinding
+              metadata:
+                name: kubevela-install
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes CRB after 24 hours (86400 seconds)
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: cluster-admin
+              subjects:
+              - kind: ServiceAccount
+                name: vela-install
+                namespace: kube-system
+              ---
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: vela-install
+                namespace: kube-system
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes SA after 24 hours (86400 seconds)
+              ---
+              apiVersion: batch/v1
+              kind: Job
+              metadata:
+                name: vela-helm-app-deployer
+                namespace: kube-system
+              spec:
+                backoffLimit: 10
+                template:
+                  metadata:
+                    labels:
+                      job: vela-deployment
+                  spec:
+                    containers:
+                    - name: helm
+                      image: alpine/helm:3
+                      command:
+                        - sh
+                        - -c
+                        - |
+                          kubectl create namespace vela-system || true
+                          helm repo add kubevela https://kubevela.github.io/charts
+                          helm repo update
+                          helm upgrade --install kubevela kubevela/vela-core \
+                            --namespace vela-system \
+                            --create-namespace \
+                            --version 1.10.2 \
+                            --wait
+                    restartPolicy: Never
+                    serviceAccount: vela-install
+                    serviceAccountName: vela-install
+            EOT
+          },
         ]
       }
     }),
