@@ -602,3 +602,8 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
 #
 #helm template --create-namespace --namespace rook-ceph rook-ceph rook-release/rook-ceph \
 #--set monitoring.enabled=true > /home/mlkroot/rook-operator-v1.17.1.yaml
+#
+#helm template --create-namespace --namespace rook-ceph rook-ceph-cluster \
+# --set operatorNamespace=rook-ceph \
+# --set toolbox.enabled=true \
+# --set monitoring.enabled=true rook-release/rook-ceph-cluster > /home/mlkroot/rook-cluster-v1.17.1.yaml
