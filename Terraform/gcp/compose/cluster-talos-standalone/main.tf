@@ -49,9 +49,17 @@ resource "google_compute_address" "ingress_lb_ip" {
   address_type = "INTERNAL"
 }
 
+
 #--------------------------------------------------
 # Talos Control Plane VMs
 #--------------------------------------------------
+
+# random_integer resource is needed to be able to assign different zones to google_compute_instance
+resource "random_integer" "zone_selector_ctrlnode" {
+  for_each     = var.TALOS_CTRL_STANDALONE
+  min = 0
+  max = length(var.GCP_REGIONS) - 1
+}
 
 ##Talos Controlplane VMs Creation
 resource "google_compute_instance" "talos_ctrlplane" {
@@ -61,7 +69,7 @@ resource "google_compute_instance" "talos_ctrlplane" {
   name         = format("%s", each.value)
   machine_type = var.TALOS_CTRL_STANDALONE_SIZE #custom-6-20480 | custom-6-15360-ext
   description  = "Talos Controlplane Standalone Instance"
-  zone         = var.GCP_REGIONS[0]
+  zone         = element(var.GCP_REGIONS, random_integer.zone_selector_ctrlnode[each.key].result)
   hostname     = format("%s.%s", each.value, var.DOMAIN_TLD)
 
   boot_disk {
@@ -200,6 +208,7 @@ data "talos_machine_configuration" "talos_controlplane" {
           }
         }
         allowSchedulingOnControlPlanes = true
+        //Extra Manifests
         extraManifests = [
           var.TALOS_EXTRA_MANIFESTS["gateway_api_std"],
           var.TALOS_EXTRA_MANIFESTS["gateway_api_tls"],
@@ -211,6 +220,7 @@ data "talos_machine_configuration" "talos_controlplane" {
           var.TALOS_EXTRA_MANIFESTS["kube-buildpack"],
           var.TALOS_EXTRA_MANIFESTS["flux-instance"]
         ]
+        //Inline Manifests
         inlineManifests = [
           {
             name     = "evocloud-ns"
@@ -221,15 +231,120 @@ data "talos_machine_configuration" "talos_controlplane" {
                 name: evocloud-ns
             EOT
           },
-        ]
-        inlineManifests = [
           {
-            name     = "evocloud-ns"
+            name     = "kro-helm-deploy"
             contents = <<-EOT
-              apiVersion: v1
-              kind: Namespace
+              ---
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRoleBinding
               metadata:
-                name: evocloud-ns
+                name: kro-install
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes CRB after 24 hours (86400 seconds)
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: cluster-admin
+              subjects:
+              - kind: ServiceAccount
+                name: kro-install
+                namespace: kube-system
+              ---
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: kro-install
+                namespace: kube-system
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes SA after 24 hours (86400 seconds)
+              ---
+              apiVersion: batch/v1
+              kind: Job
+              metadata:
+                name: kro-helm-app-deployer
+                namespace: kube-system
+              spec:
+                backoffLimit: 10
+                template:
+                  metadata:
+                    labels:
+                      job: kro-deployment
+                  spec:
+                    containers:
+                    - name: helm
+                      image: alpine/helm:3
+                      command:
+                        - sh
+                        - -c
+                        - |
+                          kubectl create namespace kro || true
+                          helm upgrade --install kro-orchestrator oci://ghcr.io/kro-run/kro/kro \
+                            --namespace kro \
+                            --create-namespace \
+                            --version 0.2.3 \
+                            --wait
+                    restartPolicy: Never
+                    serviceAccount: kro-install
+                    serviceAccountName: kro-install
+            EOT
+          },
+          {
+            name     = "kubevela-helm-deploy"
+            contents = <<-EOT
+              ---
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRoleBinding
+              metadata:
+                name: kubevela-install
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes CRB after 24 hours (86400 seconds)
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: cluster-admin
+              subjects:
+              - kind: ServiceAccount
+                name: vela-install
+                namespace: kube-system
+              ---
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: vela-install
+                namespace: kube-system
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes SA after 24 hours (86400 seconds)
+              ---
+              apiVersion: batch/v1
+              kind: Job
+              metadata:
+                name: vela-helm-app-deployer
+                namespace: kube-system
+              spec:
+                backoffLimit: 10
+                template:
+                  metadata:
+                    labels:
+                      job: vela-deployment
+                  spec:
+                    containers:
+                    - name: helm
+                      image: alpine/helm:3
+                      command:
+                        - sh
+                        - -c
+                        - |
+                          kubectl create namespace vela-system || true
+                          helm repo add kubevela https://kubevela.github.io/charts
+                          helm repo update
+                          helm upgrade --install kubevela kubevela/vela-core \
+                            --namespace vela-system \
+                            --create-namespace \
+                            --version 1.10.2 \
+                            --wait
+                    restartPolicy: Never
+                    serviceAccount: vela-install
+                    serviceAccountName: vela-install
             EOT
           },
         ]
@@ -345,3 +460,4 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
 # --set operatorNamespace=rook-ceph \
 # --set toolbox.enabled=true \
 # --set monitoring.enabled=true rook-release/rook-ceph-cluster > /home/mlkroot/rook-cluster-v1.17.1.yaml
+
