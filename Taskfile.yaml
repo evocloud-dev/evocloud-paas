@@ -1,19 +1,16 @@
 version: 3
 
 tasks:
-  get-installer-natip:
-    internal: true
-    cmds:
-      - gcloud compute instances list --filter="evo-master" --format "get(networkInterfaces[0].accessConfigs[0].natIP)"
-
   deploy-talos-single-node:
     desc: "Deploys Single Node Talos Cluster"
-    deps: [get-installer-natip]
+    silent: true
+    vars:
+      INSTALLER_NAT_IP:
+        sh: gcloud compute instances list --filter="evo-master" --format "get(networkInterfaces[0].accessConfigs[0].natIP)" --project {{.PROJECT_NAME}}
     cmds:
-      - INSTALLER_NAT_IP=$(task get-installer-natip --silent)
       - | 
         ssh -i {{.MNTDIR}}/gcp-evocloud.pem -o "StrictHostKeyChecking=no" {{.CLOUDUSER}}@{{.INSTALLER_NAT_IP}} \
           "ssh -i {{.HOMEDIR}}/gcp-evocloud.pem -o "StrictHostKeyChecking=no" {{.CLOUDUSER}}@{{.INSTALLER_NAT_IP}} \
           'gcloud auth activate-service-account --key-file {{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}} \
           && export GOOGLE_APPLICATION_CREDENTIALS="{{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}}" \
-          && cd {{.HOMEDIR}}/EVOCLOUD/Terraform/gcp/deployment/cluster-talos-standalone/ && terragrunt destroy -auto-approve'"
+          && cd {{.HOMEDIR}}/EVOCLOUD/Terraform/gcp/deployment/cluster-talos-standalone/ && terragrunt apply -auto-approve'"
