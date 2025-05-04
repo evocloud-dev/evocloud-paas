@@ -1,5 +1,5 @@
 LABEL maintainer="maintainers@evocloud.dev"
-LABEL evocloud-bootstrapper="0.3.2"
+LABEL evocloud-bootstrapper="0.3.3"
 LABEL release-date=""
 
 # Stage 1: Build Environment
@@ -26,7 +26,7 @@ RUN apk add --no-cache curl python3 openssh \
 # Stage 2: Runtime Environment \
 FROM build-stage AS final-stage
 
-ARG PAAS_VERSION="0.3.2"
+ARG PAAS_VERSION="0.3.3"
 RUN curl -L -k "https://github.com/evocloud-dev/evocloud-paas/archive/refs/tags/v$PAAS_VERSION-alpha.tar.gz" > "/tmp/evocloud-$PAAS_VERSION.tar.gz" \
     && tar -xzf /tmp/evocloud-$PAAS_VERSION.tar.gz -C /opt/EVOCLOUD \
     && rm -rf /tmp/*
