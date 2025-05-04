@@ -1,7 +1,14 @@
 version: 3
 
 tasks:
-  deploy-talos-single-node:
+  gcloud-auth:
+    desc: "Authenticates to gcloud so VMs and Kube cluster can be deployed"
+    silent: true
+    cmds:
+      - gcloud auth activate-service-account --key-file "{{.MNTDIR}}/{{.KEYFILE}}"
+      - export GOOGLE_APPLICATION_CREDENTIALS="{{.MNTDIR}}/{{.KEYFILE}}"
+
+  deploy-talos-single:
     desc: "Deploys Single Node Talos Cluster"
     silent: true
     vars:
