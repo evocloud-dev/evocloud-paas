@@ -31,3 +31,4 @@ RUN curl -L -k "https://github.com/evocloud-dev/evocloud-paas/archive/refs/tags/
     && tar -xzf /tmp/evocloud-$PAAS_VERSION.tar.gz -C /opt/EVOCLOUD \
     && rm -rf /tmp/*
 
+WORKDIR /opt/EVOCLOUD/evocloud-paas-$PAAS_VERSION-alpha

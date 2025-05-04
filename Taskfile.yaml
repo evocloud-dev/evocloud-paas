@@ -10,6 +10,7 @@ tasks:
 
   deploy-talos-single:
     desc: "Deploys Single Node Talos Cluster"
+    deps: [gcloud-auth]
     silent: true
     vars:
       INSTALLER_NAT_IP:
