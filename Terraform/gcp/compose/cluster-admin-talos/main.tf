@@ -294,7 +294,8 @@ data "talos_machine_configuration" "talos_controlplane" {
           var.TALOS_EXTRA_MANIFESTS["kube-metric_server"],
           var.TALOS_EXTRA_MANIFESTS["local-storage_class"],
           var.TALOS_EXTRA_MANIFESTS["flux-cd-operator"],
-          var.TALOS_EXTRA_MANIFESTS["kube-buildpack"]
+          var.TALOS_EXTRA_MANIFESTS["kube-buildpack"],
+          var.TALOS_EXTRA_MANIFESTS["flux-instance"]
         ]
         inlineManifests = [
           {
@@ -305,7 +306,123 @@ data "talos_machine_configuration" "talos_controlplane" {
               metadata:
                 name: evocloud-ns
             EOT
-          }
+          },
+          {
+            name     = "kro-helm-deploy"
+            contents = <<-EOT
+              ---
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRoleBinding
+              metadata:
+                name: kro-install
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes CRB after 24 hours (86400 seconds)
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: cluster-admin
+              subjects:
+              - kind: ServiceAccount
+                name: kro-install
+                namespace: kube-system
+              ---
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: kro-install
+                namespace: kube-system
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes SA after 24 hours (86400 seconds)
+              ---
+              apiVersion: batch/v1
+              kind: Job
+              metadata:
+                name: kro-helm-app-deployer
+                namespace: kube-system
+              spec:
+                backoffLimit: 10
+                template:
+                  metadata:
+                    labels:
+                      job: kro-deployment
+                  spec:
+                    containers:
+                    - name: helm
+                      image: alpine/helm:3
+                      command:
+                        - sh
+                        - -c
+                        - |
+                          kubectl create namespace kro || true
+                          helm upgrade --install kro-orchestrator oci://ghcr.io/kro-run/kro/kro \
+                            --namespace kro \
+                            --create-namespace \
+                            --version 0.2.3 \
+                            --wait
+                    restartPolicy: Never
+                    serviceAccount: kro-install
+                    serviceAccountName: kro-install
+            EOT
+          },
+          {
+            name     = "kubevela-helm-deploy"
+            contents = <<-EOT
+              ---
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRoleBinding
+              metadata:
+                name: kubevela-install
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes CRB after 24 hours (86400 seconds)
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: cluster-admin
+              subjects:
+              - kind: ServiceAccount
+                name: vela-install
+                namespace: kube-system
+              ---
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: vela-install
+                namespace: kube-system
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes SA after 24 hours (86400 seconds)
+              ---
+              apiVersion: batch/v1
+              kind: Job
+              metadata:
+                name: vela-helm-app-deployer
+                namespace: kube-system
+              spec:
+                backoffLimit: 10
+                template:
+                  metadata:
+                    labels:
+                      job: vela-deployment
+                  spec:
+                    containers:
+                    - name: helm
+                      image: alpine/helm:3
+                      command:
+                        - sh
+                        - -c
+                        - |
+                          kubectl create namespace vela-system || true
+                          helm repo add kubevela https://kubevela.github.io/charts
+                          helm repo update
+                          helm upgrade --install kubevela kubevela/vela-core \
+                            --namespace vela-system \
+                            --create-namespace \
+                            --version 1.10.2 \
+                            --wait
+                    restartPolicy: Never
+                    serviceAccount: vela-install
+                    serviceAccountName: vela-install
+            EOT
+          },
         ]
       }
     }),
@@ -421,7 +538,7 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
 #helm repo add cilium https://helm.cilium.io/
 #Basic Cilium Deployment with no kube-prometheus monitoring integration
 #helm template cilium cilium/cilium \
-#--version 1.17.0 \
+#--version 1.17.3 \
 #--namespace kube-system \
 #--set k8sServiceHost=localhost \
 #--set k8sServicePort=7445 \
@@ -450,7 +567,7 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
 #--set operator.rollOutPods=true \
 #--set cgroup.autoMount.enabled=false \
 #--set cgroup.hostRoot=/sys/fs/cgroup \
-#--set envoy.securityContext.capabilities.keepCapNetBindService=true > /home/mlkroot/cilium-1.17.0.yaml
+#--set envoy.securityContext.capabilities.keepCapNetBindService=true > /home/mlkroot/cilium-1.17.3.yaml
 
 
 ##To add kube-prometheus monitoring integration:
@@ -483,5 +600,10 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
 # https://www.talos.dev/v1.9/kubernetes-guides/configuration/ceph-with-rook/
 #Talos Kubernetes Cluster requires to label namespace rook-ceph with 'pod-security.kubernetes.io/enforce=privileged' for it to work
 #
-#helm template --create-namespace --namespace rook-ceph rook-ceph rook-release/rook-ceph > /home/mlkroot/rook-operator.yaml
-#helm template --create-namespace --namespace rook-ceph rook-ceph-cluster --set operatorNamespace=rook-ceph rook-release/rook-ceph-cluster > /home/mlkroot/rook-cluster.yaml
+#helm template --create-namespace --namespace rook-ceph rook-ceph rook-release/rook-ceph \
+#--set monitoring.enabled=true > /home/mlkroot/rook-operator-v1.17.1.yaml
+#
+#helm template --create-namespace --namespace rook-ceph rook-ceph-cluster \
+# --set operatorNamespace=rook-ceph \
+# --set toolbox.enabled=true \
+# --set monitoring.enabled=true rook-release/rook-ceph-cluster > /home/mlkroot/rook-cluster-v1.17.1.yaml

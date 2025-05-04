@@ -16,7 +16,7 @@ output "talos_client_configuration" {
 }
 
 # Retrieve the Talos Configuration in case you would like to interact with the `talosctl`
-output "talos_configuration" {
+output "talosconfig" {
   description = "The generated talosconfig"
   value     = data.talos_client_configuration.talosconfig.talos_config
   sensitive = true

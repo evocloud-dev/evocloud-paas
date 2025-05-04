@@ -18,6 +18,9 @@ ldap_dc: "dc={{ domain_tld.split('.')[0] }},dc={{ domain_tld.split('.')[1] }}"
 #--------------------------------------------------------------
 # HARBOR SPECIFIC VARS
 #--------------------------------------------------------------
+# Harbor Version
+harbor_version: "v2.13.0"
+
 evoharbor_force_update: false
 
 # Directories
@@ -28,9 +31,6 @@ harbor_cert_dir: "/data/cert"
 
 # Harbor Password
 harbor_admin_passwd: "{{ creds_store.code_harbor_passwd }}"
-
-# Harbor Version
-harbor_version: "v2.12.2"
 
 # Packages
 harbor_installer: "harbor-online-installer-{{ harbor_version }}.tgz"

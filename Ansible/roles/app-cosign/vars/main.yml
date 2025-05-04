@@ -2,6 +2,8 @@
 #--------------------------------------------------------------
 # COSIGN SPECIFIC VARS
 #--------------------------------------------------------------
+# Cosign Version
+cosign_version: "v2.5.0"
 # Directory
 cosign_dir: "/opt/cosign"
 
@@ -9,6 +11,6 @@ cosign_dir: "/opt/cosign"
 cosign_binary: "cosign-linux-amd64"
 
 # URLS
-cosign_github_url: "https://github.com/sigstore/cosign/releases/latest/download"
+cosign_github_url: "https://github.com/sigstore/cosign/releases/download/{{ cosign_version }}"
 
 

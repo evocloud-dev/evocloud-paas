@@ -61,14 +61,14 @@
 
 ## Outputs
 
-| Name | Description                                  |
-|------|----------------------------------------------|
-| <a name="output_kubeconfig"></a> [kubeconfig](#output\_kubeconfig) | The generated kubeconfig.                    |
+| Name                                                                                                       | Description                                  |
+|------------------------------------------------------------------------------------------------------------|----------------------------------------------|
+| <a name="output_kubeconfig"></a> [kubeconfig](#output\_kubeconfig)                                         | The generated kubeconfig.                    |
 | <a name="output_talos_client_configuration"></a> [talos_client_configuration](#output\_talos_client_configuration) | The generated Talos client configuration     |
-| <a name="output_talos_configuration"></a> [kubeconfig](#output\_talos_configuration) | The generated Talos configuration            |
-| <a name="output_talos_controlplane_config"></a> [talosconfig](#output\_talos_controlplane_config) | The generated Talos contol plane configuration |
-| <a name="output_talos_worker_config"></a> [kubeconfig](#output\_talos_worker_config) | The generated Talos worker plane configuration |
-| <a name="output_talos_vip"></a> [talosconfig](#output\_talos_vip) | The Talos virtual ip address                 |
+| <a name="output_talosconfig"></a> [talosconfig](#output\_talosconfig)                                      | The generated Talos configuration            |
+| <a name="output_talos_controlplane_config"></a> [talosconfig](#output\_talos_controlplane_config)          | The generated Talos contol plane configuration |
+| <a name="output_talos_worker_config"></a> [kubeconfig](#output\_talos_worker_config)                       | The generated Talos worker plane configuration |
+| <a name="output_talos_vip"></a> [talosconfig](#output\_talos_vip)                                          | The Talos virtual ip address                 |
 
 ## Authors
 

@@ -1,8 +1,8 @@
 ---
 #https://packages.microsoft.com/yumrepos/vscode/
-vscode_package: "https://packages.microsoft.com/yumrepos/vscode/Packages/c/code-1.98.1-1741624570.el8.x86_64.rpm"
+vscode_package: "https://packages.microsoft.com/yumrepos/vscode/Packages/c/code-1.99.3-1744761644.el8.x86_64.rpm"
 vscode_checksums:
   # https://code.visualstudio.com/download
   '1.98.1':
     # https://packages.microsoft.com/yumrepos/vscode/Packages/c/
-    linux_64bit-rpm: sha256:eac6c6833e1050f401bb4564f92b3c922b4cdf1d19b3b84bc8bad6332a5ea9de
+    linux_64bit-rpm: sha256:5bad360e7df1535809b5df787bb1c16934ba545bde5c3f65e874269bcca4f20a
