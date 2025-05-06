@@ -454,6 +454,10 @@ data "talos_machine_configuration" "talos_controlplane" {
                           path: /spec/template/spec/containers/0/args/-
                           value: --requeue-dependency=15s
 
+              ---
+              #Deploying Flux App: KRO
+
+
             EOT
           },
           {
