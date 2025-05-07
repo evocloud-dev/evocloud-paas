@@ -27,6 +27,7 @@ inputs = {
   CLOUD_USER        = "mlkroot"
   PUBLIC_KEY_PAIR   = "/etc/pki/tls/gcp-evocloud.pub"
   PRIVATE_KEY_PAIR  = "/etc/pki/tls/gcp-evocloud.pem"
+  GCP_JSON_CREDS    = "geanttech-evocloud-aa3aa17df584.json"
 
   ###########################################################################
   # Ansible/Automation Runtime Environment Configurations
