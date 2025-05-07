@@ -214,6 +214,9 @@ data "talos_machine_configuration" "talos_controlplane" {
   config_patches = [
     yamlencode({
       machine = {
+        sysctls = {
+          "user.max_user_namespaces" = "11255"
+        }
         network = {
           nameservers = [var.idam_server_ip, var.idam_replica_ip, var.GCP_METADATA_NS]
           interfaces = [
@@ -229,6 +232,12 @@ data "talos_machine_configuration" "talos_controlplane" {
         kubelet = {
           extraArgs = {
             rotate-server-certificates = true
+          }
+          extraConfig = {
+            featureGates = {
+              UserNamespacesSupport = true
+              UserNamespacesPodSecurityStandards = true
+            }
           }
         }
         systemDiskEncryption = {
@@ -254,6 +263,9 @@ data "talos_machine_configuration" "talos_controlplane" {
       }
       cluster = {
         apiServer = {
+          extraArgs = {
+            feature-gates = "UserNamespacesSupport=true,UserNamespacesPodSecurityStandards=true"
+          }
           certSANs = [
             google_compute_address.talos_vip.address,
           ]
@@ -289,13 +301,10 @@ data "talos_machine_configuration" "talos_controlplane" {
           var.TALOS_EXTRA_MANIFESTS["rook_ceph_operator"],
           var.TALOS_EXTRA_MANIFESTS["rook_ceph_cluster"],
           var.TALOS_EXTRA_MANIFESTS["headlamp_ui"],
-          var.TALOS_EXTRA_MANIFESTS["kyverno_policy"],
           var.TALOS_EXTRA_MANIFESTS["kubelet_serving_cert"],
           var.TALOS_EXTRA_MANIFESTS["kube-metric_server"],
           var.TALOS_EXTRA_MANIFESTS["local-storage_class"],
-          var.TALOS_EXTRA_MANIFESTS["flux-cd-operator"],
-          var.TALOS_EXTRA_MANIFESTS["kube-buildpack"],
-          var.TALOS_EXTRA_MANIFESTS["flux-instance"]
+          var.TALOS_EXTRA_MANIFESTS["kube-buildpack"]
         ]
         inlineManifests = [
           {
@@ -421,6 +430,170 @@ data "talos_machine_configuration" "talos_controlplane" {
                     restartPolicy: Never
                     serviceAccount: vela-install
                     serviceAccountName: vela-install
+            EOT
+          },
+          {
+            name     = "flux-helm-deploy"
+            contents = <<-EOT
+              ---
+              #Flux Operator Chart Repo: https://github.com/controlplaneio-fluxcd/charts/tree/main/charts/flux-operator
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRoleBinding
+              metadata:
+                name: flux-install
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes CRB after 24 hours (86400 seconds)
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: cluster-admin
+              subjects:
+              - kind: ServiceAccount
+                name: flux-install
+                namespace: kube-system
+              ---
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: flux-install
+                namespace: kube-system
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes SA after 24 hours (86400 seconds)
+              ---
+              apiVersion: batch/v1
+              kind: Job
+              metadata:
+                name: flux-helm-operator
+                namespace: kube-system
+              spec:
+                backoffLimit: 10
+                template:
+                  metadata:
+                    labels:
+                      job: flux-operator-deployment
+                  spec:
+                    containers:
+                    - name: helm
+                      image: alpine/helm:3
+                      command:
+                        - sh
+                        - -c
+                        - |
+                          kubectl create namespace flux-system || true
+                          helm upgrade --install flux-operator oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator \
+                            --namespace flux-system \
+                            --create-namespace \
+                            --version 0.19.0 \
+                            --wait
+                    restartPolicy: Never
+                    serviceAccount: flux-install
+                    serviceAccountName: flux-install
+              ---
+              #Deploying Flux Instance
+              apiVersion: fluxcd.controlplane.io/v1
+              kind: FluxInstance
+              metadata:
+                name: flux
+                namespace: flux-system
+                annotations:
+                  fluxcd.controlplane.io/reconcileEvery: "1h"
+                  fluxcd.controlplane.io/reconcileArtifactEvery: "10m"
+                  fluxcd.controlplane.io/reconcileTimeout: "5m"
+              spec:
+                distribution:
+                  version: "2.x"
+                  registry: "ghcr.io/fluxcd"
+                  artifact: "oci://ghcr.io/controlplaneio-fluxcd/flux-operator-manifests"
+                components:
+                  - source-controller
+                  - kustomize-controller
+                  - helm-controller
+                  - notification-controller
+                  - image-reflector-controller
+                  - image-automation-controller
+                cluster:
+                  type: kubernetes
+                  multitenant: true
+                  networkPolicy: true
+                  domain: "cluster.local"
+                kustomize:
+                  patches:
+                    - target:
+                        kind: Deployment
+                        name: "(kustomize-controller|helm-controller)"
+                      patch: |
+                        - op: add
+                          path: /spec/template/spec/containers/0/args/-
+                          value: --concurrent=10
+                        - op: add
+                          path: /spec/template/spec/containers/0/args/-
+                          value: --requeue-dependency=15s
+
+            EOT
+          },
+          {
+            name     = "kyverno-helm-deploy"
+            contents = <<-EOT
+              ---
+              #Kyverno Chart Repo: https://github.com/kyverno/kyverno/tree/main/charts
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRoleBinding
+              metadata:
+                name: kyverno-install
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes CRB after 24 hours (86400 seconds)
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: cluster-admin
+              subjects:
+              - kind: ServiceAccount
+                name: kyverno-install
+                namespace: kube-system
+              ---
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: kyverno-install
+                namespace: kube-system
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes SA after 24 hours (86400 seconds)
+              ---
+              apiVersion: batch/v1
+              kind: Job
+              metadata:
+                name: kyverno-helm-deployer
+                namespace: kube-system
+              spec:
+                backoffLimit: 10
+                template:
+                  metadata:
+                    labels:
+                      job: kyverno-helm-deployment
+                  spec:
+                    containers:
+                    - name: helm
+                      image: alpine/helm:3
+                      command:
+                        - sh
+                        - -c
+                        - |
+                          kubectl create namespace kyverno || true
+                          kubectl label namespace kyverno pod-security.kubernetes.io/enforce=privileged
+                          helm repo add kyverno https://kyverno.github.io/kyverno/
+                          helm repo update
+                          helm upgrade --install kyverno kyverno/kyverno \
+                            --namespace kyverno \
+                            --create-namespace \
+                            --version 3.4.1 \
+                            --set admissionController.replicas=3 \
+                            --set backgroundController.replicas=2 \
+                            --set cleanupController.replicas=2 \
+                            --set reportsController.replicas=2 \
+                            --wait
+                    restartPolicy: Never
+                    serviceAccount: kyverno-install
+                    serviceAccountName: kyverno-install
             EOT
           },
         ]

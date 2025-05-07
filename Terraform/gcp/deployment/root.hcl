@@ -153,11 +153,8 @@ inputs = {
     kyverno_policy        = "https://github.com/kyverno/kyverno/releases/download/v1.14.0/install.yaml"
     kubelet_serving_cert  = "https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml"
     kube-metric_server    = "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml"
-    flux-cd-operator      = "https://github.com/controlplaneio-fluxcd/flux-operator/releases/latest/download/install.yaml"
     local-storage_class   = "https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/local-storageclass.yaml"
     kube-buildpack        = "https://github.com/buildpacks-community/kpack/releases/download/v0.16.1/release-0.16.1.yaml"
-    flux-instance         = "https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/flux-instance.yaml"
-    kubevela-core         = "https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/kubevela-core-1.10.2.yaml"
   }
 
   #TALOS STANDALONE
