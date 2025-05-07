@@ -1,5 +1,5 @@
 LABEL maintainer="maintainers@evocloud.dev"
-LABEL evocloud-bootstrapper="0.3.3"
+LABEL evocloud-bootstrapper="0.3.4"
 LABEL release-date=""
 
 # Stage 1: Build Environment
@@ -12,7 +12,7 @@ ARG TERRAFORM_VERSION="1.11.4"
 ARG TERRAGRUNT_VERSION="0.77.22"
 
 COPY --from=alpine/terragrunt:$TERRAFORM_VERSION /bin/terraform /usr/local/bin
-RUN apk add --no-cache curl python3 openssh \
+RUN apk add --no-cache curl ansible openssh \
     && curl -L -k "https://github.com/gruntwork-io/terragrunt/releases/download/v$TERRAGRUNT_VERSION/terragrunt_linux_amd64" > "/usr/local/bin/terragrunt" \
     && curl -L -k "https://github.com/go-task/task/releases/download/v$TASKFILE_VERSION/task_linux_amd64.tar.gz" > "/tmp/task_linux_amd64.tar.gz" \
     && curl -L -k "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz" > "/tmp/google-cloud-cli-linux-x86_64.tar.gz" \
@@ -26,9 +26,10 @@ RUN apk add --no-cache curl python3 openssh \
 # Stage 2: Runtime Environment \
 FROM build-stage AS final-stage
 
-ARG PAAS_VERSION="0.3.3"
+ARG PAAS_VERSION="0.3.4"
 RUN curl -L -k "https://github.com/evocloud-dev/evocloud-paas/archive/refs/tags/v$PAAS_VERSION-alpha.tar.gz" > "/tmp/evocloud-$PAAS_VERSION.tar.gz" \
     && tar -xzf /tmp/evocloud-$PAAS_VERSION.tar.gz -C /opt/EVOCLOUD \
-    && rm -rf /tmp/*
+    && rm -rf /tmp/* \
+    && touch /opt/EVOCLOUD/evocloud-paas-$PAAS_VERSION-alpha/.env
 
 WORKDIR /opt/EVOCLOUD/evocloud-paas-$PAAS_VERSION-alpha

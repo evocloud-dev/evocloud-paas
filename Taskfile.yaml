@@ -1,24 +1,88 @@
 version: 3
 
+silent: true
+
 tasks:
   gcloud-auth:
     desc: "Authenticates to gcloud so VMs and Kube cluster can be deployed"
-    silent: true
     cmds:
+      - echo "EvoCloud container authenticating to gcloud"
       - gcloud auth activate-service-account --key-file "{{.MNTDIR}}/{{.KEYFILE}}"
       - export GOOGLE_APPLICATION_CREDENTIALS="{{.MNTDIR}}/{{.KEYFILE}}"
 
-  deploy-talos-single:
-    desc: "Deploys Single Node Talos Cluster"
+  build-evo-master:
+    desc: "Deploys evo-master Server"
     deps: [gcloud-auth]
-    silent: true
-    vars:
-      INSTALLER_NAT_IP:
-        sh: gcloud compute instances list --filter="evo-master" --format "get(networkInterfaces[0].accessConfigs[0].natIP)" --project {{.PROJECT_NAME}}
     cmds:
-      - | 
-        ssh -i {{.MNTDIR}}/gcp-evocloud.pem -o "StrictHostKeyChecking=no" {{.CLOUDUSER}}@{{.INSTALLER_NAT_IP}} \
-          "ssh -i {{.HOMEDIR}}/gcp-evocloud.pem -o "StrictHostKeyChecking=no" {{.CLOUDUSER}}@{{.INSTALLER_NAT_IP}} \
-          'gcloud auth activate-service-account --key-file {{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}} \
-          && export GOOGLE_APPLICATION_CREDENTIALS="{{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}}" \
-          && cd {{.HOMEDIR}}/EVOCLOUD/Terraform/gcp/deployment/cluster-talos-standalone/ && terragrunt apply -auto-approve'"
+      - echo "Deploying evo-master"
+      - |
+        cd {{.HOMEDIR}}/EVOCLOUD/Terraform/gcp/deployment/server-01-dmz-deployer/ \
+          && terragrunt apply -auto-approve"
+
+  build-idm:
+    desc: "Deploys IdM Server"
+    deps: [gcloud-auth, build-evo-master]
+    cmds:
+      - echo "Deploying IdM Server"
+      - |
+        gcloud compute ssh evo-master --quiet \
+          --ssh-flag="-o StrictHostKeyChecking=no" \
+          --ssh-flag="-o UserKnownHostsFile=/dev/null" \
+          --ssh-flag="-o LogLevel=ERROR" \
+          --project {{.PROJECT_NAME}} \
+          --zone {{.ZONE}} \
+          --command="gcloud auth activate-service-account --key-file {{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}} \
+            && export GOOGLE_APPLICATION_CREDENTIALS={{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}} \
+            && cd {{.HOMEDIR}}/EVOCLOUD/Terraform/gcp/deployment/server-02-admin-idam/ \
+            && terragrunt apply -auto-approve"
+
+  build-idm-replica:
+    desc: "Deploys IdM Replica Server"
+    deps: [gcloud-auth, build-evo-master, build-ipa]
+    cmds:
+      - echo "Deploying IdM Replica Server"
+      - |
+        gcloud compute ssh evo-master --quiet \
+          --ssh-flag="-o StrictHostKeyChecking=no" \
+          --ssh-flag="-o UserKnownHostsFile=/dev/null" \
+          --ssh-flag="-o LogLevel=ERROR" \
+          --project {{.PROJECT_NAME}} \
+          --zone {{.ZONE}} \
+          --command="gcloud auth activate-service-account --key-file {{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}} \
+            && export GOOGLE_APPLICATION_CREDENTIALS={{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}} \
+            && cd {{.HOMEDIR}}/EVOCLOUD/Terraform/gcp/deployment/server-03-admin-idam_replica/ \
+            && terragrunt apply -auto-approve"
+
+  build-talos-single:
+    desc: "Deploys Single Node Talos Cluster"
+    deps: [gcloud-auth, build-evo-master]
+    cmds:
+      - echo "Deploying Talos Single Node Kube Cluster"
+      - |
+        gcloud compute ssh evo-master --quiet \
+          --ssh-flag="-o StrictHostKeyChecking=no" \
+          --ssh-flag="-o UserKnownHostsFile=/dev/null" \
+          --ssh-flag="-o LogLevel=ERROR" \
+          --project {{.PROJECT_NAME}} \
+          --zone {{.ZONE}} \
+          --command="gcloud auth activate-service-account --key-file {{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}} \
+            && export GOOGLE_APPLICATION_CREDENTIALS={{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}} \
+            && cd {{.HOMEDIR}}/EVOCLOUD/Terraform/gcp/deployment/cluster-talos-standalone/ \
+            && terragrunt apply -auto-approve"
+
+  build-talos-cluster:
+    desc: "Deploys Full Talos Cluster"
+    deps: [gcloud-auth, build-evo-master]
+    cmds:
+      - echo "Deploying Full Talos Kube Cluster"
+      - |
+        gcloud compute ssh evo-master --quiet \
+          --ssh-flag="-o StrictHostKeyChecking=no" \
+          --ssh-flag="-o UserKnownHostsFile=/dev/null" \
+          --ssh-flag="-o LogLevel=ERROR" \
+          --project {{.PROJECT_NAME}} \
+          --zone {{.ZONE}} \
+          --command="gcloud auth activate-service-account --key-file {{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}} \
+            && export GOOGLE_APPLICATION_CREDENTIALS={{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}} \
+            && cd {{.HOMEDIR}}/EVOCLOUD/Terraform/gcp/deployment/cluster-admin-talos/ \
+            && terragrunt apply -auto-approve"
