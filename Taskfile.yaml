@@ -15,9 +15,7 @@ tasks:
     deps: [gcloud-auth]
     cmds:
       - echo "Deploying evo-master"
-      - |
-        cd {{.HOMEDIR}}/EVOCLOUD/Terraform/gcp/deployment/server-01-dmz-deployer/ \
-          && terragrunt apply -auto-approve"
+      - "cd /opt/EVOCLOUD/Terraform/gcp/deployment/server-01-dmz-deployer/ && terragrunt apply -auto-approve"
 
   build-idm:
     desc: "Deploys IdM Server"
@@ -38,7 +36,7 @@ tasks:
 
   build-idm-replica:
     desc: "Deploys IdM Replica Server"
-    deps: [gcloud-auth, build-evo-master, build-ipa]
+    deps: [gcloud-auth, build-evo-master, build-idm]
     cmds:
       - echo "Deploying IdM Replica Server"
       - |
@@ -55,7 +53,7 @@ tasks:
 
   build-talos-single:
     desc: "Deploys Single Node Talos Cluster"
-    deps: [gcloud-auth, build-evo-master]
+    deps: [gcloud-auth, build-evo-master, build-idm, build-idm-replica]
     cmds:
       - echo "Deploying Talos Single Node Kube Cluster"
       - |

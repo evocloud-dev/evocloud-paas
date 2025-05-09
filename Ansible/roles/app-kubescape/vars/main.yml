@@ -10,4 +10,4 @@ kubescape_force_update: false
 kubescape_download_url: 'https://github.com/kubescape/kubescape/releases/download/v{{ kubescape_ver }}/kubescape-ubuntu-latest.tar.gz'
 
 #https://github.com/kubescape/kubescape/releases/download/v3.0.34/kubescape-ubuntu-latest.sha256
-kubescape_checksum: sha256:04f0a9af0a0884e17ce782c571ccf1a2f8e4d69e46405fd08836bb8a51dc482b
+kubescape_checksum: sha256:598f6ac9d5e0fd5a38f4248b49f59ee549302da62957a89955760a9ac060a373
