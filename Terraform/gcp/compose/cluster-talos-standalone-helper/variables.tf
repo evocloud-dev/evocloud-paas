@@ -8,10 +8,6 @@ variable "GCP_REGION" {
   type        = string
 }
 
-variable "evotalos_revision" {
-  description = "EVOTALOS STANDALONE revision version"
-}
-
 variable "deployer_server_eip" {
   description = "Deployer Server Public IP"
   type        = string
