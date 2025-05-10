@@ -24,5 +24,5 @@ dependency "server-dmz-deployer" {
 # Load server-admin-idam module
 #--------------------------------------------------
 terraform {
-  source = "${get_terragrunt_dir()}/../../compose//server-admin-idam"
+  source = "${get_terragrunt_dir()}/../../compose//server-admin-idam-helper"
 }
