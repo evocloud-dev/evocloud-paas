@@ -28,6 +28,7 @@ RUN dnf install -y epel-release && \
     mkdir -p /opt/EVOCLOUD && \
     mkdir -p /opt/EVOCLOUD/Keys && \
     mkdir -p /opt/EVOCLOUD/Logs && \
+    mkdir -p /opt/EVOCLOUD/Ansible/secret-vault &&\
     ln -s /opt/google-cloud-sdk/bin/gcloud /usr/local/bin/gcloud
 
 # Stage 2: Runtime Environment \
