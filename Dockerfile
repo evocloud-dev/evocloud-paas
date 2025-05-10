@@ -1,5 +1,5 @@
 LABEL maintainer="maintainers@evocloud.dev"
-LABEL evocloud-bootstrapper="0.3.5"
+LABEL evocloud-bootstrapper="0.3.6"
 LABEL release-date=""
 
 # Stage 1: Build Environment
@@ -34,7 +34,7 @@ RUN dnf install -y epel-release && \
 # Stage 2: Runtime Environment \
 FROM build-stage AS final-stage
 
-ARG PAAS_VERSION="0.3.5"
+ARG PAAS_VERSION="0.3.6"
 RUN curl -L -k "https://github.com/evocloud-dev/evocloud-paas/archive/refs/tags/v$PAAS_VERSION-alpha.tar.gz" > "/tmp/evocloud-$PAAS_VERSION.tar.gz" && \
     tar -xzf /tmp/evocloud-$PAAS_VERSION.tar.gz --strip-components=1 -C /opt/EVOCLOUD && \
     rm -rf /tmp/* && \
