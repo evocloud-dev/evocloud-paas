@@ -14,7 +14,7 @@ resource "terraform_data" "evoidam_deployment" {
     inline = [
       "export GOOGLE_APPLICATION_CREDENTIALS='/home/${var.CLOUD_USER}/EVOCLOUD/Keys/${var.GCP_JSON_CREDS}'",
       "gcloud auth activate-service-account --key-file /home/${var.CLOUD_USER}/EVOCLOUD/Keys/${var.GCP_JSON_CREDS}",
-      "cd /home/${var.CLOUD_USER}/EVOCLOUD/Terraform/gcp/deployment/server-admin-idam",
+      "cd /home/${var.CLOUD_USER}/EVOCLOUD/Terraform/gcp/deployment/server-02-admin-idam",
       "terragrunt apply --auto-approve",
     ]
   }
