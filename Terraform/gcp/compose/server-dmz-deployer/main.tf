@@ -100,6 +100,11 @@ resource "terraform_data" "staging_automation_code" {
   }
 
   provisioner "file" {
+    source        = var.PUBLIC_KEY_PAIR
+    destination   = "/home/${var.CLOUD_USER}/gcp-evocloud.pub"
+  }
+
+  provisioner "file" {
     source        = var.AUTOMATION_FOLDER
     destination   = "/home/${var.CLOUD_USER}/EVOCLOUD"
   }

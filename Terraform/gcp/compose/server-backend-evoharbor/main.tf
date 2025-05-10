@@ -35,7 +35,7 @@ resource "google_compute_instance" "evoharbor_server" {
 
   metadata = {
     #enable-oslogin = "TRUE"
-    ssh-keys       = "${var.CLOUD_USER}:${file("${var.PUBLIC_KEY_PAIR}")}"
+    ssh-keys       = "${var.CLOUD_USER}:${file("/home/${var.CLOUD_USER}/gcp-evocloud.pub")}"
   }
 
   #For selecting Spot Instances - Remove this snippet in production
