@@ -111,6 +111,8 @@ resource "terraform_data" "staging_automation_code" {
 
   provisioner "remote-exec" {
     inline = [
+      "chmod 600 /home/${var.CLOUD_USER}/gcp-evocloud.pem",
+      "chmod 600 /home/${var.CLOUD_USER}/gcp-evocloud.pub",
       "sudo yum update -y",
       "hostnamectl status",
       "mkdir -p /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault",
