@@ -19,12 +19,10 @@ tasks:
       - "ls -al /etc/pki/tls | grep gcp-evocloud.pub"
       - "ls -al Ansible/secret-vault | grep ansible-vault-pass.txt"
       - "ls -al Ansible/secret-vault | grep secret-store.yml"
-      #- root.hcl
     cmds:
-      - cp {{.MNTDIR}}/gcp-evocloud.pem {{.MNTDIR}}/gcp-evocloud.pub /etc/pki/tls
-      - cp {{.MNTDIR}}/ansible-vault-pass.txt {{.MNTDIR}}/secret-store.yml Ansible/secret-vault
-      - rm -f {{.DEPLOY_DIR}}/root.hcl
-      - cp {{.MNTDIR}}/root.hcl {{.DEPLOY_DIR}}
+      - \cp {{.MNTDIR}}/gcp-evocloud.pem {{.MNTDIR}}/gcp-evocloud.pub /etc/pki/tls
+      - \cp {{.MNTDIR}}/ansible-vault-pass.txt {{.MNTDIR}}/secret-store.yml Ansible/secret-vault
+      - \cp {{.MNTDIR}}/root.hcl {{.DEPLOY_DIR}}
 
   build-evo-master:
     desc: "Deploys evo-master Server"
