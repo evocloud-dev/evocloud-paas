@@ -1,65 +1,82 @@
 version: 3
 
 silent: true
+vars:
+  # Common across tasks
+  DEPLOY_DIR:     "/opt/EVOCLOUD/Terraform/gcp/deployment"
+  GLCOUD_AUTH:    "gcloud auth activate-service-account --key-file"
+  GCLOUD_EXPORT:  "export GOOGLE_APPLICATION_CREDENTIALS"
+  KEYS_DIR:       "/opt/EVOCLOUD/Keys"
+  TERRAGRUNT_RUN: "terragrunt run-all apply --non-interactive -auto-approve"
 
 tasks:
-  gcloud-auth:
-    desc: "Authenticates to gcloud so VMs and Kube cluster can be deployed"
+  copy-files:
+    desc: "Copies files from host directory to /mnt inside container.
+           Files: gcp-evocloud.pem, gcp-evocloud.pub, ansible-vault-pass.txt, secret-store.yml and root.hcl
+           Task only runs if one or more status commands not satisfied"
+    status:
+      - "ls -al /etc/pki/tls | grep gcp-evocloud.pem"
+      - "ls -al /etc/pki/tls | grep gcp-evocloud.pub"
+      - "ls -al Ansible/secret-vault | grep ansible-vault-pass.txt"
+      - "ls -al Ansible/secret-vault | grep secret-store.yml"
+      #- root.hcl
     cmds:
-      - echo "EvoCloud container authenticating to gcloud"
-      - | 
-        gcloud auth activate-service-account --key-file "{{.MNTDIR}}/{{.KEYFILE}}" && \
-        export GOOGLE_APPLICATION_CREDENTIALS="{{.MNTDIR}}/{{.KEYFILE}}"
+      - cp {{.MNTDIR}}/gcp-evocloud.pem {{.MNTDIR}}/gcp-evocloud.pub /etc/pki/tls
+      - cp {{.MNTDIR}}/ansible-vault-pass.txt {{.MNTDIR}}/secret-store.yml Ansible/secret-vault
+      - rm -f {{.DEPLOY_DIR}}/root.hcl
+      - cp {{.MNTDIR}}/root.hcl {{.DEPLOY_DIR}}
 
   build-evo-master:
     desc: "Deploys evo-master Server"
-    deps: [gcloud-auth]
+    deps: [copy-files]
     cmds:
       - echo "Deploying evo-master"
       - |
-        cd /opt/EVOCLOUD/Terraform/gcp/deployment/server-01-dmz-deployer/ && \
-        terragrunt apply --all --auto-approve
+        {{.GLCOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
+        {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
+        cd {{.DEPLOY_DIR}}/server-01-dmz-deployer/ && \
+        {{.TERRAGRUNT_RUN}}
 
   build-idm:
     desc: "Deploys IdM Server"
-    deps: [gcloud-auth, build-evo-master]
+    deps: [copy-files, build-evo-master]
     cmds:
       - echo "Deploying IdM Server"
       - |
-        gcloud auth activate-service-account --key-file {{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}} && \
-        export GOOGLE_APPLICATION_CREDENTIALS={{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}} && \
-        cd {{.HOMEDIR}}/EVOCLOUD/Terraform/gcp/deployment/server-02-admin-idam/ && \
-        terragrunt apply -auto-approve
+        {{.GLCOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
+        {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
+        cd {{.DEPLOY_DIR}}/server-02-admin-idam/ && \
+        {{.TERRAGRUNT_RUN}}
 
   build-idm-replica:
     desc: "Deploys IdM Replica Server"
-    deps: [gcloud-auth, build-evo-master, build-idm]
+    deps: [copy-files, build-evo-master]
     cmds:
       - echo "Deploying IdM Replica Server"
       - |
-        gcloud auth activate-service-account --key-file {{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}} && \
-        export GOOGLE_APPLICATION_CREDENTIALS={{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}} && \
-        cd {{.HOMEDIR}}/EVOCLOUD/Terraform/gcp/deployment/server-03-admin-idam_replica/ && \
-        terragrunt apply -auto-approve
+        {{.GLCOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
+        {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
+        cd {{.DEPLOY_DIR}}/server-03-admin-idam_replica/ && \
+        {{.TERRAGRUNT_RUN}}
 
   build-talos-single:
     desc: "Deploys Single Node Talos Cluster"
-    deps: [gcloud-auth, build-evo-master]
+    deps: [copy-files, build-evo-master]
     cmds:
       - echo "Deploying Talos Single Node Kube Cluster"
       - |
-        gcloud auth activate-service-account --key-file {{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}} && \
-        export GOOGLE_APPLICATION_CREDENTIALS={{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}} && \
-        cd {{.HOMEDIR}}/EVOCLOUD/Terraform/gcp/deployment/cluster-talos-standalone/ && \
-        terragrunt apply -auto-approve
+        {{.GLCOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
+        {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
+        cd {{.DEPLOY_DIR}}/cluster-talos-standalone/ && \
+        {{.TERRAGRUNT_RUN}}
 
   build-talos-cluster:
     desc: "Deploys Full Talos Cluster"
-    deps: [gcloud-auth, build-evo-master]
+    deps: [copy-files, build-evo-master]
     cmds:
       - echo "Deploying Full Talos Kube Cluster"
       - |
-        gcloud auth activate-service-account --key-file {{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}} && \
-        export GOOGLE_APPLICATION_CREDENTIALS={{.HOMEDIR}}/EVOCLOUD/Keys/{{.KEYFILE}} && \
-        cd {{.HOMEDIR}}/EVOCLOUD/Terraform/gcp/deployment/cluster-admin-talos/ && \
-        terragrunt apply -auto-approve
+        {{.GLCOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
+        {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
+        cd {{.DEPLOY_DIR}}/cluster-admin-talos/ && \
+        {{.TERRAGRUNT_RUN}}
