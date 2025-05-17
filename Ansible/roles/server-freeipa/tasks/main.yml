@@ -177,11 +177,11 @@
     ipa_timeout: 30
     validate_certs: no
   register: dns_reverse_zone
-  failed_when: "not 'no modifications to be performed' in dns_reverse_zone.msg"
+  failed_when: "'no modifications to be performed' not in dns_reverse_zone.msg"
   become: true
 
 - ansible.builtin.debug:
-    msg: "{{ dns_reverse_zone }}"
+    msg: "{{ dns_reverse_zone.msg }}"
 
 - name: Creating PTR record for a reverse DNS record...
   community.general.ipa_dnsrecord:

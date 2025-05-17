@@ -96,12 +96,12 @@ resource "terraform_data" "staging_automation_code" {
 
   provisioner "file" {
     source        = var.PRIVATE_KEY_PAIR
-    destination   = "/etc/pki/tls/gcp-evocloud.pem"
+    destination   = "/home/${var.CLOUD_USER}/gcp-evocloud.pem"
   }
 
   provisioner "file" {
     source        = var.PUBLIC_KEY_PAIR
-    destination   = "/etc/pki/tls/gcp-evocloud.pub"
+    destination   = "/home/${var.CLOUD_USER}/gcp-evocloud.pub"
   }
 
   provisioner "file" {
@@ -111,11 +111,15 @@ resource "terraform_data" "staging_automation_code" {
 
   provisioner "remote-exec" {
     inline = [
-      "chmod 600 /etc/pki/tls/gcp-evocloud.pem",
-      "chmod 644 /etc/pki/tls/gcp-evocloud.pub",
+      "sudo mv /home/${var.CLOUD_USER}/gcp-evocloud.pem /etc/pki/tls",
+      "sudo mv /home/${var.CLOUD_USER}/gcp-evocloud.pub /etc/pki/tls",
+      "sudo chmod 0600 /etc/pki/tls/gcp-evocloud.pem",
+      "sudo chmod 0644 /etc/pki/tls/gcp-evocloud.pub",
+      "sudo chown ${var.CLOUD_USER}:${var.CLOUD_USER} /etc/pki/tls/gcp-evocloud.pem",
+      "sudo chown ${var.CLOUD_USER}:${var.CLOUD_USER} /etc/pki/tls/gcp-evocloud.pub",
       "sudo yum update -y",
       "hostnamectl status",
-      "mkdir -p /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault",
+      "mkdir -p /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault"
     ]
   }
 
