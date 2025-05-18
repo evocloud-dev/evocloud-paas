@@ -41,3 +41,4 @@ RUN mkdir -p $HOMEDIR && \
     touch $HOMEDIR/.env
 
 WORKDIR $HOMEDIR
+ENTRYPOINT ["task"]
