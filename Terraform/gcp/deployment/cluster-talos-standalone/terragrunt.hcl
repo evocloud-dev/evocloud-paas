@@ -9,7 +9,7 @@ inputs = {
   cluster_name        = "evotalos-workstation"
   talos_version       = "v1.9.5"
   kubernetes_version  = "v1.32.3"
-  create_talos_img    = false
+  create_talos_img    = true
 }
 
 #--------------------------------------------------
