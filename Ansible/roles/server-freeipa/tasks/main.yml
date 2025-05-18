@@ -180,9 +180,6 @@
   ignore_errors: true
   become: true
 
-- ansible.builtin.debug:
-    msg: "{{ dns_reverse_zone.msg }}"
-
 - name: Creating PTR record for a reverse DNS record...
   community.general.ipa_dnsrecord:
     record_type: "PTR"
