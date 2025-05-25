@@ -18,7 +18,7 @@
     path: '{{ flux_cli_install_dir }}/flux'
     state: absent
   become: true
-  when: (flux_cli_binary.stat.exists) and (flux_force_update | bool)
+  when: (flux_cli_binary.stat.exists) and (flux_cli_force_update | bool)
 
 - when: (not flux_cli_binary.stat.exists) or (flux_cli_force_update | bool)
   block:
