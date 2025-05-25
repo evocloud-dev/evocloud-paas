@@ -36,7 +36,7 @@ RUN mkdir -p $HOMEDIR/{Keys,Logs,Ansible} && \
     tar -xzf /tmp/evocloud-$PAAS_VERSION.tar.gz --strip-components=1 -C $HOMEDIR && \
     rm -rf /tmp/* && \
     chmod 0660 $HOMEDIR/Logs && \
-    touch $HOMEDIR/.env
 
 WORKDIR $HOMEDIR
 ENTRYPOINT ["task"]
+CMD ["copy-files"]
