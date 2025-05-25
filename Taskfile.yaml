@@ -5,7 +5,7 @@ silent: true
 vars:
   # Common across tasks
   DEPLOY_DIR:     "/opt/EVOCLOUD/Terraform/gcp/deployment"
-  GLCOUD_AUTH:    "gcloud auth activate-service-account --key-file"
+  GCLOUD_AUTH:    "gcloud auth activate-service-account --key-file"
   GCLOUD_EXPORT:  "export GOOGLE_APPLICATION_CREDENTIALS"
   KEYS_DIR:       "/opt/EVOCLOUD/Keys"
   TERRAGRUNT_RUN: "terragrunt run-all apply --terragrunt-non-interactive --terragrunt-include-external-dependencies -auto-approve"
@@ -37,7 +37,7 @@ tasks:
     cmds:
       - echo "Deploying evo-master"
       - |
-        {{.GLCOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
+        {{.GCLOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
         {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
         cd {{.DEPLOY_DIR}}/server-01-dmz-deployer/ && \
         {{.TERRAGRUNT_RUN}}
@@ -48,7 +48,7 @@ tasks:
     cmds:
       - echo "Deploying IdM Server"
       - |
-        {{.GLCOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
+        {{.GCLOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
         {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
         cd {{.DEPLOY_DIR}}/server-02-admin-idam-helper/ && \
         {{.TERRAGRUNT_RUN}}
@@ -59,7 +59,7 @@ tasks:
     cmds:
       - echo "Deploying IdM Replica Server"
       - |
-        {{.GLCOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
+        {{.GCLOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
         {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
         cd {{.DEPLOY_DIR}}/server-03-admin-idam_replica-helper/ && \
         {{.TERRAGRUNT_RUN}}
@@ -70,7 +70,7 @@ tasks:
     cmds:
       - echo "Deploying Talos Single Node Kube Cluster"
       - |
-        {{.GLCOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
+        {{.GCLOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
         {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
         cd {{.DEPLOY_DIR}}/cluster-talos-standalone-helper/ && \
         {{.TERRAGRUNT_RUN}}
@@ -81,7 +81,7 @@ tasks:
     cmds:
       - echo "Deploying Full Talos Kube Cluster"
       - |
-        {{.GLCOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
+        {{.GCLOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
         {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
         cd {{.DEPLOY_DIR}}/cluster-admin-talos-helper/ && \
         {{.TERRAGRUNT_RUN}}

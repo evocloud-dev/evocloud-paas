@@ -30,9 +30,7 @@ FROM build-stage AS final-stage
 
 ARG PAAS_VERSION="0.1.0"
 ARG HOMEDIR="/opt/EVOCLOUD"
-RUN mkdir -p $HOMEDIR && \
-    mkdir -p $HOMEDIR/Keys && \
-    mkdir -p $HOMEDIR/Logs && \
+RUN mkdir -p $HOMEDIR/{Keys,Logs,Ansible} && \
     mkdir -p $HOMEDIR/Ansible/secret-vault && \
     curl -L -k "https://github.com/evocloud-dev/evocloud-paas/archive/refs/tags/v$PAAS_VERSION.tar.gz" > "/tmp/evocloud-$PAAS_VERSION.tar.gz" && \
     tar -xzf /tmp/evocloud-$PAAS_VERSION.tar.gz --strip-components=1 -C $HOMEDIR && \
