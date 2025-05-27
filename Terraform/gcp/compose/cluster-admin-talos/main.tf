@@ -298,9 +298,6 @@ data "talos_machine_configuration" "talos_controlplane" {
           var.TALOS_EXTRA_MANIFESTS["gateway_api_std"],
           var.TALOS_EXTRA_MANIFESTS["gateway_api_tls"],
           var.TALOS_EXTRA_MANIFESTS["cilium_manifest"],
-          var.TALOS_EXTRA_MANIFESTS["rook_ceph_operator"],
-          var.TALOS_EXTRA_MANIFESTS["rook_ceph_cluster"],
-          var.TALOS_EXTRA_MANIFESTS["headlamp_ui"],
           var.TALOS_EXTRA_MANIFESTS["kubelet_serving_cert"],
           var.TALOS_EXTRA_MANIFESTS["kube-metric_server"],
           var.TALOS_EXTRA_MANIFESTS["local-storage_class"],
@@ -489,7 +486,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     serviceAccount: flux-install
                     serviceAccountName: flux-install
               ---
-              #Deploying Flux Instance
+              #Deploying Flux Instance with Multi-tenancy Disabled
               apiVersion: fluxcd.controlplane.io/v1
               kind: FluxInstance
               metadata:
@@ -497,8 +494,8 @@ data "talos_machine_configuration" "talos_controlplane" {
                 namespace: flux-system
                 annotations:
                   fluxcd.controlplane.io/reconcileEvery: "1h"
-                  fluxcd.controlplane.io/reconcileArtifactEvery: "10m"
-                  fluxcd.controlplane.io/reconcileTimeout: "5m"
+                  fluxcd.controlplane.io/reconcileArtifactEvery: "15m"
+                  fluxcd.controlplane.io/reconcileTimeout: "15m"
               spec:
                 distribution:
                   version: "2.x"
@@ -513,8 +510,8 @@ data "talos_machine_configuration" "talos_controlplane" {
                   - image-automation-controller
                 cluster:
                   type: kubernetes
-                  multitenant: true
-                  networkPolicy: true
+                  multitenant: false
+                  networkPolicy: false
                   domain: "cluster.local"
                 kustomize:
                   patches:
@@ -528,6 +525,275 @@ data "talos_machine_configuration" "talos_controlplane" {
                         - op: add
                           path: /spec/template/spec/containers/0/args/-
                           value: --requeue-dependency=15s
+              ---
+              ############################################
+              #DEPLOYING ROOK STORAGE SOLUTION
+              ############################################
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: rook-ceph
+                labels:
+                  pod-security.kubernetes.io/enforce: privileged #Talos default PodSecurity configuration prevents execution of priviledged pods. Adding a label to the namespace will allow ceph to start
+              ---
+              #Dedicated service account for flux in rook-ceph namespace
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRoleBinding
+              metadata:
+                name: flux-rook-ceph
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: cluster-admin
+              subjects:
+              - kind: ServiceAccount
+                name: flux-rook-ceph-sa
+                namespace: rook-ceph
+              ---
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: flux-rook-ceph-sa
+                namespace: rook-ceph
+              ---
+              apiVersion: source.toolkit.fluxcd.io/v1
+              kind: HelmRepository
+              metadata:
+                name: rook-release
+                namespace: rook-ceph
+              spec:
+                interval: 24h
+                url: https://charts.rook.io/release
+              ---
+              apiVersion: helm.toolkit.fluxcd.io/v2
+              kind: HelmRelease
+              metadata:
+                name: rook-ceph-operator
+                namespace: rook-ceph
+              spec:
+                chart:
+                  spec:
+                    chart: rook-ceph
+                    sourceRef:
+                      kind: HelmRepository
+                      name: rook-release
+                    version: "v1.17.*"
+                serviceAccountName: flux-rook-ceph-sa
+                interval: 30m0s
+                install:
+                  remediation:
+                    retries: 3
+                upgrade:
+                  remediation:
+                    retries: 3
+                driftDetection:
+                  mode: enabled
+                values:
+                  enableDiscoveryDaemon: true
+                  discoveryDaemonInterval: 15m
+                  monitoring:
+                    enabled: false
+              ---
+              apiVersion: helm.toolkit.fluxcd.io/v2
+              kind: HelmRelease
+              metadata:
+                name: rook-ceph-cluster
+                namespace: rook-ceph
+              spec:
+                dependsOn:
+                  - name: rook-ceph-operator
+                chart:
+                  spec:
+                    chart: rook-ceph-cluster
+                    sourceRef:
+                      kind: HelmRepository
+                      name: rook-release
+                    version: "v1.17.*"
+                serviceAccountName: flux-rook-ceph-sa
+                interval: 35m0s
+                install:
+                  remediation:
+                    retries: 3
+                upgrade:
+                  remediation:
+                    retries: 3
+                driftDetection:
+                  mode: enabled
+                values:
+                  toolbox:
+                    enabled: true
+                  monitoring:
+                    enabled: false
+                    createPrometheusRules: false
+
+              ---
+              ############################################
+              #HEADLAMP DEPLOYMENT
+              ############################################
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: headlamp
+              ---
+              #Dedicated service account for headlamp in headlamp namespace
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRoleBinding
+              metadata:
+                name: flux-headlamp
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: cluster-admin
+              subjects:
+              - kind: ServiceAccount
+                name: flux-headlamp-sa
+                namespace: headlamp
+              ---
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: flux-headlamp-sa
+                namespace: headlamp
+              ---
+              apiVersion: source.toolkit.fluxcd.io/v1
+              kind: HelmRepository
+              metadata:
+                name: headlamp-release
+                namespace: headlamp
+              spec:
+                interval: 24h
+                url: https://kubernetes-sigs.github.io/headlamp
+              ---
+              apiVersion: helm.toolkit.fluxcd.io/v2
+              kind: HelmRelease
+              metadata:
+                name: headlamp
+                namespace: headlamp
+              spec:
+                chart:
+                  spec:
+                    chart: headlamp
+                    sourceRef:
+                      kind: HelmRepository
+                      name: headlamp-release
+                    version: "0.30.*"
+                serviceAccountName: flux-headlamp-sa
+                interval: 30m0s
+                timeout: 25m0s
+                driftDetection:
+                  mode: enabled
+                values:
+                  serviceAccount:
+                    name: "headlamp-admin"
+                  ingress:
+                    enabled: false
+                  config:
+                    pluginsDir: /build/plugins
+                  initContainers:
+                    - command:
+                        - /bin/sh
+                        - -c
+                        - mkdir -p /build/plugins && cp -r /plugins/* /build/plugins/
+                      image: ghcr.io/headlamp-k8s/headlamp-plugin-flux:v0.2.0 #https://github.com/headlamp-k8s/plugins/pkgs/container/headlamp-plugin-flux
+                      imagePullPolicy: Always
+                      name: headlamp-plugins
+                      securityContext:
+                        runAsNonRoot: false
+                        privileged: false
+                        runAsUser: 0
+                        runAsGroup: 101
+                      volumeMounts:
+                        - mountPath: /build/plugins
+                          name: headlamp-plugins
+                  persistentVolumeClaim:
+                    enabled: true
+                    accessModes:
+                      - ReadWriteOnce
+                    size: 1Gi
+                  volumeMounts:
+                    - mountPath: /build/plugins
+                      name: headlamp-plugins
+                  volumes:
+                    - name: headlamp-plugins
+                      persistentVolumeClaim:
+                        claimName: headlamp
+
+              ---
+              ###################################################
+              #KUBE PROMETHEUS STACK
+              ###################################################
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: monitoring
+                labels:
+                  pod-security.kubernetes.io/enforce: privileged #Talos default PodSecurity configuration prevents execution of priviledged pods. Adding a label to the namespace will allow deamonsets to start
+              ---
+              #Dedicated service account for headlamp in headlamp namespace
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRoleBinding
+              metadata:
+                name: flux-kube-promstack
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: cluster-admin
+              subjects:
+              - kind: ServiceAccount
+                name: flux-kube-promstack-sa
+                namespace: monitoring
+              ---
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: flux-kube-promstack-sa
+                namespace: monitoring
+              ---
+              apiVersion: source.toolkit.fluxcd.io/v1
+              kind: HelmRepository
+              metadata:
+                name: kube-promstack-release
+                namespace: monitoring
+              spec:
+                interval: 24h
+                url: https://prometheus-community.github.io/helm-charts
+              ---
+              apiVersion: helm.toolkit.fluxcd.io/v2beta1
+              kind: HelmRelease
+              metadata:
+                name: kube-promstack-stack
+                namespace: monitoring
+              spec:
+                chart:
+                  spec:
+                    chart: kube-prometheus-stack
+                    sourceRef:
+                      kind: HelmRepository
+                      name: kube-promstack-release
+                    version: "71.2.*"
+                interval: 30m0s
+                timeout: 25m0s
+                serviceAccountName: flux-kube-promstack-sa
+                install:
+                  remediation:
+                    retries: 3
+                upgrade:
+                  remediation:
+                    retries: 2
+                driftDetection:
+                  mode: enabled
+                values:
+                  grafana:
+                    adminPassword: prom-operator
+                  nodeExporter:
+                    enabled: true
+                    operatingSystems:
+                      linux:
+                        enabled: true
+                      aix:
+                        enabled: false
+                      darwin:
+                        enabled: false
 
             EOT
           },

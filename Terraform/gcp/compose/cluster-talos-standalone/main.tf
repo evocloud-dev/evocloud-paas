@@ -453,11 +453,6 @@ data "talos_machine_configuration" "talos_controlplane" {
                         - op: add
                           path: /spec/template/spec/containers/0/args/-
                           value: --requeue-dependency=15s
-
-              ---
-              #Deploying Flux App: KRO
-
-
             EOT
           },
           {
@@ -638,4 +633,3 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
 # --set operatorNamespace=rook-ceph \
 # --set toolbox.enabled=true \
 # --set monitoring.enabled=true rook-release/rook-ceph-cluster > /home/mlkroot/rook-cluster-v1.17.1.yaml
-
