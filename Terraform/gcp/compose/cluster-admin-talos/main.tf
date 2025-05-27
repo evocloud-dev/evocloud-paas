@@ -486,16 +486,16 @@ data "talos_machine_configuration" "talos_controlplane" {
                     serviceAccount: flux-install
                     serviceAccountName: flux-install
               ---
-              #Deploying Flux Instance with Multi-tenancy Enforcement
+              #Deploying Flux Instance with Multi-tenancy Disabled
               apiVersion: fluxcd.controlplane.io/v1
               kind: FluxInstance
               metadata:
                 name: flux
                 namespace: flux-system
                 annotations:
-                  fluxcd.controlplane.io/reconcileEvery: "30m"
+                  fluxcd.controlplane.io/reconcileEvery: "1h"
                   fluxcd.controlplane.io/reconcileArtifactEvery: "15m"
-                  fluxcd.controlplane.io/reconcileTimeout: "10m"
+                  fluxcd.controlplane.io/reconcileTimeout: "15m"
               spec:
                 distribution:
                   version: "2.x"
