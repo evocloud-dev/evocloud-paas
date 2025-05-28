@@ -104,13 +104,9 @@ resource "terraform_data" "staging_automation_code" {
     destination   = "/home/${var.CLOUD_USER}/gcp-evocloud.pub"
   }
 
-  #provisioner "file" {
-  #  source        = "/opt/EVOCLOUD/evocloud.tar.gz"
-  #  destination   = "/home/${var.CLOUD_USER}/EVOCLOUD"
-  #}
-
-  provisioner "local-exec" {
-    command = "scp -i /etc/pki/tls/gcp-evocloud.pem evocloud.tar.gz mlkroot@34.162.56.192:/home/mlkroot/"
+  provisioner "file" {
+    source        = "/opt/EVOCLOUD/evocloud.tar.gz"
+    destination   = "/home/${var.CLOUD_USER}/EVOCLOUD"
   }
 
   provisioner "remote-exec" {
