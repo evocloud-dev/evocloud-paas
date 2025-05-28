@@ -111,7 +111,7 @@ resource "terraform_data" "staging_automation_code" {
 
   provisioner "remote-exec" {
     inline = [
-      "tar -xzf ${var.AUTOMATION_FOLDER}/evocloud.tar.gz --strip-components=1 -C ${var.AUTOMATION_FOLDER}",
+      "tar -xzf /home/${var.CLOUD_USER}/EVOCLOUD/evocloud.tar.gz --strip-components=1 -C /home/${var.CLOUD_USER}/EVOCLOUD/",
       "sudo mv /home/${var.CLOUD_USER}/gcp-evocloud.pem /etc/pki/tls",
       "sudo mv /home/${var.CLOUD_USER}/gcp-evocloud.pub /etc/pki/tls",
       "sudo chmod 0600 /etc/pki/tls/gcp-evocloud.pem",
