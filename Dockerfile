@@ -25,17 +25,18 @@ RUN dnf install -y epel-release && \
     chmod u+x /usr/local/bin/task && \
     ln -s /opt/google-cloud-sdk/bin/gcloud /usr/local/bin/gcloud
 
+
 # Stage 2: Runtime Environment \
 FROM build-stage AS final-stage
 
 ARG PAAS_VERSION="0.1.0"
 ARG HOMEDIR="/opt/EVOCLOUD"
-RUN mkdir -p $HOMEDIR/{Keys,Logs,Ansible} && \
-    mkdir -p $HOMEDIR/Ansible/secret-vault && \
-    curl -L -k "https://github.com/evocloud-dev/evocloud-paas/archive/refs/tags/v$PAAS_VERSION.tar.gz" > "/tmp/evocloud-$PAAS_VERSION.tar.gz" && \
-    tar -xzf /tmp/evocloud-$PAAS_VERSION.tar.gz --strip-components=1 -C $HOMEDIR && \
-    rm -rf /tmp/* && \
-    chmod 0660 $HOMEDIR/Logs
+RUN mkdir -p $HOMEDIR/{Keys,Logs} && \
+    curl -L -k "https://github.com/evocloud-dev/evocloud-paas/archive/refs/tags/v$PAAS_VERSION.tar.gz" > "/tmp/evocloud.tar.gz" && \
+    tar -xzf /tmp/evocloud.tar.gz --strip-components=1 -C $HOMEDIR && \
+    mv /tmp/evocloud.tar.gz $HOMEDIR && \
+    chmod 0660 $HOMEDIR/Logs && \
+    rm -rf /tmp/*
 
 WORKDIR $HOMEDIR
 ENTRYPOINT ["task"]
