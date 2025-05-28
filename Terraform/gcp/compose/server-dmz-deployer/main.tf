@@ -106,12 +106,12 @@ resource "terraform_data" "staging_automation_code" {
 
   provisioner "file" {
     source        = "/opt/EVOCLOUD/evocloud.tar.gz"
-    destination   = "/home/${var.CLOUD_USER}/EVOCLOUD"
+    destination   = "/home/${var.CLOUD_USER}/evocloud.tar.gz"
   }
 
   provisioner "remote-exec" {
     inline = [
-      "tar -xzf /home/${var.CLOUD_USER}/EVOCLOUD/evocloud.tar.gz --strip-components=1 -C /home/${var.CLOUD_USER}/EVOCLOUD",
+      "tar -xzf /home/${var.CLOUD_USER}/evocloud.tar.gz --strip-components=1 -C /home/${var.CLOUD_USER}/EVOCLOUD",
       "sudo mv /home/${var.CLOUD_USER}/gcp-evocloud.pem /etc/pki/tls",
       "sudo mv /home/${var.CLOUD_USER}/gcp-evocloud.pub /etc/pki/tls",
       "sudo chmod 0600 /etc/pki/tls/gcp-evocloud.pem",
@@ -119,7 +119,8 @@ resource "terraform_data" "staging_automation_code" {
       "sudo chown ${var.CLOUD_USER}:${var.CLOUD_USER} /etc/pki/tls/gcp-evocloud.pem",
       "sudo chown ${var.CLOUD_USER}:${var.CLOUD_USER} /etc/pki/tls/gcp-evocloud.pub",
       "sudo yum update -y",
-      "hostnamectl status"
+      "hostnamectl status",
+      "rm -f /home/${var.CLOUD_USER}/evocloud.tar.gz"
       #"mkdir -p /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault"
     ]
   }
