@@ -124,6 +124,11 @@ resource "terraform_data" "staging_automation_code" {
     destination   = "/home/${var.CLOUD_USER}/secret-store.yml"
   }
 
+  provisioner "file" {
+    source        = "${var.AUTOMATION_FOLDER}/Terraform/gcp/deployment/root.hcl"
+    destination   = "/home/${var.CLOUD_USER}/root.hcl"
+  }
+
   provisioner "remote-exec" {
     inline = [
       # Unpacks tarball and cleans up
@@ -145,6 +150,9 @@ resource "terraform_data" "staging_automation_code" {
 
       # Moves GCP Key to Keys folder
       "mv /home/${var.CLOUD_USER}/${var.GCP_JSON_CREDS} /home/${var.CLOUD_USER}/EVOCLOUD/Keys/${var.GCP_JSON_CREDS}",
+
+      # Move root.hcl into deployment folder
+      "mv /home/${var.CLOUD_USER}/root.hcl /home/${var.CLOUD_USER}/EVOCLOUD/Terraform/gcp/deployment/root.hcl",
 
       "sudo yum update -y",
       "hostnamectl status"
