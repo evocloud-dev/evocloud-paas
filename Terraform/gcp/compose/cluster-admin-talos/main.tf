@@ -363,7 +363,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install kro-orchestrator oci://ghcr.io/kro-run/kro/kro \
                             --namespace kro \
                             --create-namespace \
-                            --version 0.2.3 \
+                            --version 0.3.0 \
                             --wait
                     restartPolicy: Never
                     serviceAccount: kro-install
@@ -622,6 +622,10 @@ data "talos_machine_configuration" "talos_controlplane" {
                 values:
                   toolbox:
                     enabled: true
+                  mgr:
+                    modules:
+                      - name: rook
+                        enabled: true
                   monitoring:
                     enabled: false
                     createPrometheusRules: false
@@ -694,7 +698,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                         - /bin/sh
                         - -c
                         - mkdir -p /build/plugins && cp -r /plugins/* /build/plugins/
-                      image: ghcr.io/headlamp-k8s/headlamp-plugin-flux:v0.2.0 #https://github.com/headlamp-k8s/plugins/pkgs/container/headlamp-plugin-flux
+                      image: ghcr.io/evocloud-dev/headlamp/evo-headlamp-plugins:0.1.0 #custom-built plugin image
                       imagePullPolicy: Always
                       name: headlamp-plugins
                       securityContext:
@@ -794,7 +798,151 @@ data "talos_machine_configuration" "talos_controlplane" {
                         enabled: false
                       darwin:
                         enabled: false
+              ---
+              ###################################################
+              #OpenCost Billing
+              ###################################################
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: opencost
+              ---
+              #Dedicated service account for opencost in opencost namespace
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRoleBinding
+              metadata:
+                name: flux-opencost
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: cluster-admin
+              subjects:
+              - kind: ServiceAccount
+                name: flux-opencost-sa
+                namespace: opencost
+              ---
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: flux-opencost-sa
+                namespace: opencost
+              ---
+              apiVersion: source.toolkit.fluxcd.io/v1
+              kind: HelmRepository
+              metadata:
+                name: kube-opencost-release
+                namespace: opencost
+              spec:
+                interval: 24h
+                url: https://opencost.github.io/opencost-helm-chart
+              ---
+              #https://opencost.io/docs/configuration/gcp
+              apiVersion: helm.toolkit.fluxcd.io/v2beta1
+              kind: HelmRelease
+              metadata:
+                name: kube-opencost-stack
+                namespace: opencost
+              spec:
+                chart:
+                  spec:
+                    chart: opencost
+                    sourceRef:
+                      kind: HelmRepository
+                      name: kube-opencost-release
+                    version: "2.1.*"
+                interval: 30m0s
+                timeout: 25m0s
+                serviceAccountName: flux-opencost-sa
+                install:
+                  remediation:
+                    retries: 3
+                upgrade:
+                  remediation:
+                    retries: 2
+                driftDetection:
+                  mode: enabled
+                values:
+                  networkPolicies:
+                    prometheus:
+                      namespace: monitoring
+                  opencost:
+                    exporter:
+                      cloudProviderApiKey: "op3nco57op3Nco57OP3Nco57op3nco57op3Nco57"
+                    prometheus:
+                      internal:
+                        enabled: true
+                        namespaceName: monitoring
+                        port: 9090
+                        serviceName: kube-promstack-stack-kube-prometheus
+              ---
+              ###################################################
+              #KubeScape Vulnerability Scanner
+              ###################################################
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: kubescape
+                labels:
+                  pod-security.kubernetes.io/enforce: privileged #Talos default PodSecurity configuration prevents execution of priviledged pods.
+              ---
+              #Dedicated service account for kubescape in kubescape namespace
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRoleBinding
+              metadata:
+                name: flux-kubescape
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: cluster-admin
+              subjects:
+              - kind: ServiceAccount
+                name: flux-kubescape-sa
+                namespace: kubescape
+              ---
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: flux-kubescape-sa
+                namespace: kubescape
+              ---
+              apiVersion: source.toolkit.fluxcd.io/v1
+              kind: HelmRepository
+              metadata:
+                name: kubescape-release
+                namespace: kubescape
+              spec:
+                interval: 24h
+                url: https://kubescape.github.io/helm-charts
+              ---
+              apiVersion: helm.toolkit.fluxcd.io/v2beta1
+              kind: HelmRelease
+              metadata:
+                name: kubescape-stack
+                namespace: kubescape
+              spec:
+                chart:
+                  spec:
+                    chart: kubescape-operator
+                    sourceRef:
+                      kind: HelmRepository
+                      name: kubescape-release
+                    version: "1.27.*"
+                interval: 30m0s
+                timeout: 25m0s
+                serviceAccountName: flux-kubescape-sa
+                install:
+                  remediation:
+                    retries: 3
+                upgrade:
+                  remediation:
+                    retries: 2
+                driftDetection:
+                  mode: enabled
+                values:
+                  capabilities:
+                    continuousScan: enable
 
+              ---
             EOT
           },
           {
