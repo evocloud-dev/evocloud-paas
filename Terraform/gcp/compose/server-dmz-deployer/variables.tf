@@ -81,3 +81,8 @@ variable "dmz_subnet_name" {
 variable "deployer_revision" {
   description = "Deployer revision version"
 }
+
+variable "GCP_JSON_CREDS" {
+  description = "GCP Secret Json Key File"
+  type        = string
+}

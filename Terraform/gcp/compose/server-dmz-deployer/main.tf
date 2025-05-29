@@ -105,23 +105,49 @@ resource "terraform_data" "staging_automation_code" {
   }
 
   provisioner "file" {
-    source        = "/opt/EVOCLOUD/evocloud.tar.gz"
+    source        = "${var.AUTOMATION_FOLDER}/evocloud.tar.gz"
     destination   = "/home/${var.CLOUD_USER}/evocloud.tar.gz"
+  }
+
+  provisioner "file" {
+    source        = "${var.AUTOMATION_FOLDER}/Keys/${var.GCP_JSON_CREDS}"
+    destination   = "/home/${var.CLOUD_USER}/${var.GCP_JSON_CREDS}"
+  }
+
+  provisioner "file" {
+    source        = "${var.AUTOMATION_FOLDER}/Ansible/secret-vault/ansible-vault-pass.txt"
+    destination   = "/home/${var.CLOUD_USER}/ansible-vault-pass.txt"
+  }
+
+  provisioner "file" {
+    source        = "${var.AUTOMATION_FOLDER}/Ansible/secret-vault/secret-store.yml"
+    destination   = "/home/${var.CLOUD_USER}/secret-store.yml"
   }
 
   provisioner "remote-exec" {
     inline = [
+      # Unpacks tarball and cleans up
       "tar -xzf /home/${var.CLOUD_USER}/evocloud.tar.gz --strip-components=1 -C /home/${var.CLOUD_USER}/EVOCLOUD",
+      "rm -f /home/${var.CLOUD_USER}/evocloud.tar.gz",
+
+      # Moves public and private keys to /etc/pki/tls folder
+      # and gives proper ownership and permissions
       "sudo mv /home/${var.CLOUD_USER}/gcp-evocloud.pem /etc/pki/tls",
       "sudo mv /home/${var.CLOUD_USER}/gcp-evocloud.pub /etc/pki/tls",
       "sudo chmod 0600 /etc/pki/tls/gcp-evocloud.pem",
       "sudo chmod 0644 /etc/pki/tls/gcp-evocloud.pub",
       "sudo chown ${var.CLOUD_USER}:${var.CLOUD_USER} /etc/pki/tls/gcp-evocloud.pem",
       "sudo chown ${var.CLOUD_USER}:${var.CLOUD_USER} /etc/pki/tls/gcp-evocloud.pub",
+
+      # Moves Ansible secret-store and vault-pass to Ansible/secret-vault folder
+      "mv /home/${var.CLOUD_USER}/secret-store.yml /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml",
+      "mv /home/${var.CLOUD_USER}/ansible-vault-pass.txt /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt",
+
+      # Moves GCP Key to Keys folder
+      "mv /home/${var.CLOUD_USER}/${var.GCP_JSON_CREDS} /home/${var.CLOUD_USER}/EVOCLOUD/Keys/${var.GCP_JSON_CREDS}",
+
       "sudo yum update -y",
-      "hostnamectl status",
-      "rm -f /home/${var.CLOUD_USER}/evocloud.tar.gz"
-      #"mkdir -p /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault"
+      "hostnamectl status"
     ]
   }
 
