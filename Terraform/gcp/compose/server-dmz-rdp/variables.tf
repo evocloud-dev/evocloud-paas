@@ -33,6 +33,11 @@ variable "ANSIBLE_DEBUG_FLAG" {
   type        = bool
 }
 
+variable "AUTOMATION_FOLDER" {
+  description = "Ansible Code Root Folder"
+  type        = string
+}
+
 variable "DOMAIN_TLD" {
   description = "Platform Domain Name"
   type        = string
