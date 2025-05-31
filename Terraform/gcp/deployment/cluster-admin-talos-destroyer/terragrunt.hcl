@@ -13,6 +13,13 @@ include "root" {
 }
 
 #--------------------------------------------------
+# Set server-dmz-deployer module dependency
+#--------------------------------------------------
+dependency "server-dmz-deployer" {
+  config_path   = "${get_terragrunt_dir()}/../server-01-dmz-deployer"
+}
+
+#--------------------------------------------------
 # Load cluster-admin-talos-destroyer module
 #--------------------------------------------------
 terraform {

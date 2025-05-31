@@ -25,15 +25,6 @@ tasks:
         cd {{.DEPLOY_DIR}}/{{.SERVER}}/ && \
         {{.ACTION}}  
 
-  #destroy-vm:
-  #  internal: true
-  #  cmds:
-  #    - |
-  #      {{.GCLOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
-  #      {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
-  #      cd {{.DEPLOY_DIR}}/{{.SERVER}}/ && \
-  #      {{.DESTROY_CMD}}
-
   ###############################
   # Neutral/Dependency Tasks
   ###############################
@@ -68,7 +59,7 @@ tasks:
       - task: vm-operation
         vars:
             SERVER: server-01-dmz-deployer
-            ACTION: {{.BUILD_CMD}}
+            ACTION: "{{.BUILD_CMD}}"
 
   build-idm:
     desc: "Deploys IdM Server"
@@ -78,7 +69,7 @@ tasks:
       - task: vm-operation
         vars:
           SERVER: server-02-admin-idam-helper
-          ACTION: {{.BUILD_CMD}}
+          ACTION: "{{.BUILD_CMD}}"
 
   build-idm-replica:
     desc: "Deploys IdM Replica Server"
@@ -88,27 +79,7 @@ tasks:
       - task: vm-operation
         vars:
           SERVER: server-03-admin-idam_replica-helper
-          ACTION: {{.BUILD_CMD}}
-
-  build-talos-single:
-    desc: "Deploys Single Node Talos Cluster"
-    deps: [copy-files]
-    cmds:
-      - echo "Deploying Talos Single Node Kube Cluster"
-      - task: vm-operation
-        vars:
-          SERVER: cluster-talos-standalone-helper
-          ACTION: {{.BUILD_CMD}}
-
-  build-talos-cluster:
-    desc: "Deploys Full Talos Cluster"
-    deps: [copy-files]
-    cmds:
-      - echo "Deploying Full Talos Kube Cluster"
-      - task: vm-operation
-        vars:
-          SERVER: cluster-admin-talos-helper
-          ACTION: {{.BUILD_CMD}}
+          ACTION: "{{.BUILD_CMD}}"
 
   build-rdp:
     desc: "Deploys Remote Desktop Server"
@@ -118,7 +89,27 @@ tasks:
       - task: vm-operation
         vars:
           SERVER: server-dmz-rdp
-          ACTION: {{.BUILD_CMD}}
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-talos-single:
+    desc: "Deploys Single Node Talos Cluster"
+    deps: [copy-files]
+    cmds:
+      - echo "Deploying Talos Single Node Kube Cluster"
+      - task: vm-operation
+        vars:
+          SERVER: cluster-talos-standalone-helper
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-talos-cluster:
+    desc: "Deploys Full Talos Cluster"
+    deps: [copy-files]
+    cmds:
+      - echo "Deploying Full Talos Kube Cluster"
+      - task: vm-operation
+        vars:
+          SERVER: cluster-admin-talos-helper
+          ACTION: "{{.BUILD_CMD}}"
 
   ###############################
   # Destroy Tasks
@@ -131,7 +122,7 @@ tasks:
       - task: vm-operation
         vars:
           SERVER: server-01-dmz-deployer
-          ACTION: {{.DESTROY_CMD}}
+          ACTION: "{{.DESTROY_CMD}}"
 
   destroy-idm:
     desc: "Destroy IdM Server"
@@ -141,7 +132,7 @@ tasks:
       - task: vm-operation
         vars:
           SERVER: server-02-admin-idam
-          ACTION: {{.DESTROY_CMD}}
+          ACTION: "{{.DESTROY_CMD}}"
 
   destroy-idm-replica:
     desc: "Destroy IdM Replica Server"
@@ -151,27 +142,7 @@ tasks:
       - task: vm-operation
         vars:
           SERVER: server-03-admin-idam_replica
-          ACTION: {{.DESTROY_CMD}}
-
-  destroy-talos-single:
-    desc: "Destroy Talos Single Node Kube Cluster"
-    deps: [copy-files]
-    cmds:
-      - echo "/n/nDestroying Talos Single Node Kube Cluster/n/n"
-      - task: vm-operation
-        vars:
-          SERVER: cluster-talos-standalone-destroyer
-          ACTION: {{.DESTROY_CMD}}
-
-  destroy-talos-cluster:
-    desc: "Destroy Full Talos Kube Cluster"
-    deps: [copy-files]
-    cmds:
-      - echo "Destroying Full Talos Kube Cluster"
-      - task: vm-operation
-        vars:
-          SERVER: cluster-admin-talos-destroyer
-          ACTION: {{.DESTROY_CMD}}
+          ACTION: "{{.DESTROY_CMD}}"
 
   destroy-rdp:
     desc: "Destroy Remote Desktop Server"
@@ -181,4 +152,24 @@ tasks:
       - task: vm-operation
         vars:
           SERVER: server-dmz-rdp
-          ACTION: {{.DESTROY_CMD}}
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-talos-single:
+    desc: "Destroy Talos Single Node Kube Cluster"
+    deps: [copy-files]
+    cmds:
+      - echo "Destroying Talos Single Node Kube Cluster"
+      - task: vm-operation
+        vars:
+          SERVER: cluster-talos-standalone-destroyer
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-talos-cluster:
+    desc: "Destroy Full Talos Kube Cluster"
+    deps: [copy-files]
+    cmds:
+      - echo "Destroying Full Talos Kube Cluster"
+      - task: vm-operation
+        vars:
+          SERVER: cluster-admin-talos-destroyer
+          ACTION: "{{.DESTROY_CMD}}"
