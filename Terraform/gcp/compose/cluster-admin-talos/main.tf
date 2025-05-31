@@ -284,7 +284,7 @@ data "talos_machine_configuration" "talos_controlplane" {
         #A bug with Talos prevents discovery mechanism to work properly: https://github.com/siderolabs/talos/issues/9980
         #https://www.talos.dev/v1.9/talos-guides/discovery/
         discovery = {
-          enabled = true
+          enabled = false
           registries = {
             kubernetes = {
               disabled = false
@@ -297,13 +297,129 @@ data "talos_machine_configuration" "talos_controlplane" {
         extraManifests = [
           var.TALOS_EXTRA_MANIFESTS["gateway_api_std"],
           var.TALOS_EXTRA_MANIFESTS["gateway_api_tls"],
-          var.TALOS_EXTRA_MANIFESTS["cilium_manifest"],
           var.TALOS_EXTRA_MANIFESTS["kubelet_serving_cert"],
           var.TALOS_EXTRA_MANIFESTS["kube-metric_server"],
           var.TALOS_EXTRA_MANIFESTS["local-storage_class"],
           var.TALOS_EXTRA_MANIFESTS["kube-buildpack"]
         ]
         inlineManifests = [
+          {
+            name     = "cilium-helm-deploy"
+            contents = <<-EOT
+              ---
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRoleBinding
+              metadata:
+                name: cilium-install
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes CRB after 24 hours (86400 seconds)
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: cluster-admin
+              subjects:
+              - kind: ServiceAccount
+                name: cilium-install-sa
+                namespace: kube-system
+              ---
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: cilium-install-sa
+                namespace: kube-system
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes SA after 24 hours (86400 seconds)
+              ---
+              apiVersion: batch/v1
+              kind: Job
+              metadata:
+                name: cilium-deployer
+                namespace: kube-system
+              spec:
+                backoffLimit: 10
+                template:
+                  metadata:
+                    labels:
+                      job: cilium-deployment
+                  spec:
+                    restartPolicy: OnFailure
+                    tolerations:
+                      - operator: Exists
+                      - effect: NoSchedule
+                        operator: Exists
+                      - effect: NoExecute
+                        operator: Exists
+                      - effect: PreferNoSchedule
+                        operator: Exists
+                      - key: node-role.kubernetes.io/control-plane
+                        operator: Exists
+                        effect: NoSchedule
+                      - key: node-role.kubernetes.io/control-plane
+                        operator: Exists
+                        effect: NoExecute
+                      - key: node-role.kubernetes.io/control-plane
+                        operator: Exists
+                        effect: PreferNoSchedule
+                    affinity:
+                      nodeAffinity:
+                        requiredDuringSchedulingIgnoredDuringExecution:
+                          nodeSelectorTerms:
+                            - matchExpressions:
+                                - key: node-role.kubernetes.io/control-plane
+                                  operator: Exists
+                    containers:
+                    - name: cilium-install
+                      image: alpine/helm:3
+                      env:
+                      - name: KUBERNETES_SERVICE_HOST
+                        valueFrom:
+                          fieldRef:
+                            apiVersion: v1
+                            fieldPath: status.podIP
+                      - name: KUBERNETES_SERVICE_PORT
+                        value: "6443"
+                      command:
+                        - sh
+                        - -c
+                        - |
+                          helm repo add cilium https://helm.cilium.io/
+                          helm repo update
+                          helm upgrade --install cilium cilium/cilium \
+                          --version 1.17.4 \
+                          --namespace kube-system \
+                          --set k8sServiceHost=localhost \
+                          --set k8sServicePort=7445 \
+                          --set k8sClientRateLimit.qps=50 \
+                          --set k8sClientRateLimit.burst=200 \
+                          --set cluster.name=cluster-manager \
+                          --set cluster.id=0 \
+                          --set rollOutCiliumPods=true \
+                          --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
+                          --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
+                          --set l2announcements.enabled=true \
+                          --set envoyConfig.enabled=true \
+                          --set ingressController.enabled=true \
+                          --set gatewayAPI.enabled=true \
+                          --set gatewayAPI.enableAppProtocol=true \
+                          --set gatewayAPI.enableAlpn=true \
+                          --set-string gatewayAPI.gatewayClass.create=true \
+                          --set externalIPs.enabled=true \
+                          --set hubble.relay.enabled=true \
+                          --set hubble.ui.enabled=true \
+                          --set hubble.ui.rollOutPods=true \
+                          --set ipam.mode=kubernetes \
+                          --set kubeProxyReplacement=true \
+                          --set maglev.tableSize=65521 \
+                          --set loadBalancer.algorithm=maglev \
+                          --set operator.rollOutPods=true \
+                          --set cgroup.autoMount.enabled=false \
+                          --set cgroup.hostRoot=/sys/fs/cgroup \
+                          --set envoy.securityContext.capabilities.keepCapNetBindService=true
+                    serviceAccount: cilium-install-sa
+                    serviceAccountName: cilium-install-sa
+                    hostNetwork: true
+            EOT
+          },
           {
             name     = "evocloud-ns"
             contents = <<-EOT
@@ -343,7 +459,7 @@ data "talos_machine_configuration" "talos_controlplane" {
               apiVersion: batch/v1
               kind: Job
               metadata:
-                name: kro-helm-app-deployer
+                name: kro-app-deployer
                 namespace: kube-system
               spec:
                 backoffLimit: 10
@@ -365,7 +481,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                             --create-namespace \
                             --version 0.3.0 \
                             --wait
-                    restartPolicy: Never
+                    restartPolicy: OnFailure
                     serviceAccount: kro-install
                     serviceAccountName: kro-install
             EOT
@@ -422,9 +538,9 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install kubevela kubevela/vela-core \
                             --namespace vela-system \
                             --create-namespace \
-                            --version 1.10.2 \
+                            --version 1.10.3 \
                             --wait
-                    restartPolicy: Never
+                    restartPolicy: OnFailure
                     serviceAccount: vela-install
                     serviceAccountName: vela-install
             EOT
@@ -460,7 +576,7 @@ data "talos_machine_configuration" "talos_controlplane" {
               apiVersion: batch/v1
               kind: Job
               metadata:
-                name: flux-helm-operator
+                name: flux-operator-deploy
                 namespace: kube-system
               spec:
                 backoffLimit: 10
@@ -480,9 +596,9 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install flux-operator oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator \
                             --namespace flux-system \
                             --create-namespace \
-                            --version 0.19.0 \
+                            --version 0.21.0 \
                             --wait
-                    restartPolicy: Never
+                    restartPolicy: OnFailure
                     serviceAccount: flux-install
                     serviceAccountName: flux-install
               ---
@@ -592,7 +708,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                   enableDiscoveryDaemon: true
                   discoveryDaemonInterval: 15m
                   monitoring:
-                    enabled: false
+                    enabled: true
               ---
               apiVersion: helm.toolkit.fluxcd.io/v2
               kind: HelmRelease
@@ -627,8 +743,8 @@ data "talos_machine_configuration" "talos_controlplane" {
                       - name: rook
                         enabled: true
                   monitoring:
-                    enabled: false
-                    createPrometheusRules: false
+                    enabled: true
+                    createPrometheusRules: true
 
               ---
               ############################################
@@ -680,7 +796,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: headlamp-release
-                    version: "0.30.*"
+                    version: "0.31.*"
                 serviceAccountName: flux-headlamp-sa
                 interval: 30m0s
                 timeout: 25m0s
@@ -762,7 +878,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                 interval: 24h
                 url: https://prometheus-community.github.io/helm-charts
               ---
-              apiVersion: helm.toolkit.fluxcd.io/v2beta1
+              apiVersion: helm.toolkit.fluxcd.io/v2
               kind: HelmRelease
               metadata:
                 name: kube-promstack-stack
@@ -774,7 +890,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: kube-promstack-release
-                    version: "71.2.*"
+                    version: "72.*"
                 interval: 30m0s
                 timeout: 25m0s
                 serviceAccountName: flux-kube-promstack-sa
@@ -837,7 +953,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                 url: https://opencost.github.io/opencost-helm-chart
               ---
               #https://opencost.io/docs/configuration/gcp
-              apiVersion: helm.toolkit.fluxcd.io/v2beta1
+              apiVersion: helm.toolkit.fluxcd.io/v2
               kind: HelmRelease
               metadata:
                 name: kube-opencost-stack
@@ -914,7 +1030,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                 interval: 24h
                 url: https://kubescape.github.io/helm-charts
               ---
-              apiVersion: helm.toolkit.fluxcd.io/v2beta1
+              apiVersion: helm.toolkit.fluxcd.io/v2
               kind: HelmRelease
               metadata:
                 name: kubescape-stack
@@ -1005,7 +1121,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                             --set cleanupController.replicas=2 \
                             --set reportsController.replicas=2 \
                             --wait
-                    restartPolicy: Never
+                    restartPolicy: OnFailure
                     serviceAccount: kyverno-install
                     serviceAccountName: kyverno-install
             EOT
@@ -1050,6 +1166,9 @@ data "talos_machine_configuration" "talos_worker" {
           extraArgs = {
             rotate-server-certificates = true
           }
+        }
+        install = {
+          extraKernelArgs = ["talos.dashboard.disabled=1"]
         }
         systemDiskEncryption = {
           ephemeral = {
@@ -1123,42 +1242,8 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
 #Documentation: https://docs.cilium.io/en/stable/
 #Parameter options: https://docs.cilium.io/en/stable/cmdref/cilium-agent/
 #helm repo add cilium https://helm.cilium.io/
-#Basic Cilium Deployment with no kube-prometheus monitoring integration
-#helm template cilium cilium/cilium \
-#--version 1.17.3 \
-#--namespace kube-system \
-#--set k8sServiceHost=localhost \
-#--set k8sServicePort=7445 \
-#--set k8sClientRateLimit.qps=50 \
-#--set k8sClientRateLimit.burst=200 \
-#--set cluster.name=evokube-mgr \
-#--set cluster.id=0 \
-#--set rollOutCiliumPods=true \
-#--set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
-#--set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
-#--set l2announcements.enabled=true \
-#--set envoyConfig.enabled=true \
-#--set ingressController.enabled=true \
-#--set gatewayAPI.enabled=true \
-#--set gatewayAPI.enableAppProtocol=true \
-#--set gatewayAPI.enableAlpn=true \
-#--set-string gatewayAPI.gatewayClass.create=true \
-#--set externalIPs.enabled=true \
-#--set hubble.relay.enabled=true \
-#--set hubble.ui.enabled=true \
-#--set hubble.ui.rollOutPods=true \
-#--set ipam.mode=kubernetes \
-#--set kubeProxyReplacement=true \
-#--set maglev.tableSize=65521 \
-#--set loadBalancer.algorithm=maglev \
-#--set operator.rollOutPods=true \
-#--set cgroup.autoMount.enabled=false \
-#--set cgroup.hostRoot=/sys/fs/cgroup \
-#--set envoy.securityContext.capabilities.keepCapNetBindService=true > /home/mlkroot/cilium-1.17.3.yaml
-
-
+#
 ##To add kube-prometheus monitoring integration:
-##
 ##
 #--set operator.prometheus.enabled=true \
 #--set operator.prometheus.serviceMonitor.enabled=true \
@@ -1182,15 +1267,3 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
 
 #When performing cilium upgrade, include this required parameter:
 #--set preflight.enabled=true
-
-############### ROOK-CEPH HELM TEMPLATE GENERATION CODE ############################
-# https://www.talos.dev/v1.9/kubernetes-guides/configuration/ceph-with-rook/
-#Talos Kubernetes Cluster requires to label namespace rook-ceph with 'pod-security.kubernetes.io/enforce=privileged' for it to work
-#
-#helm template --create-namespace --namespace rook-ceph rook-ceph rook-release/rook-ceph \
-#--set monitoring.enabled=true > /home/mlkroot/rook-operator-v1.17.1.yaml
-#
-#helm template --create-namespace --namespace rook-ceph rook-ceph-cluster \
-# --set operatorNamespace=rook-ceph \
-# --set toolbox.enabled=true \
-# --set monitoring.enabled=true rook-release/rook-ceph-cluster > /home/mlkroot/rook-cluster-v1.17.1.yaml
