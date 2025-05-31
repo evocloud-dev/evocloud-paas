@@ -1,7 +1,7 @@
 #--------------------------------------------------
-# Ansible Configuration Management Code
+# Terragrunt Destroy Code
 #--------------------------------------------------
-resource "terraform_data" "evotalos_standalone_deployment" {
+resource "terraform_data" "evotalos_standalone_destroy" {
   #Connection to bastion host (DEPLOYER_Server)
   connection {
     host        = var.deployer_server_eip
@@ -15,7 +15,7 @@ resource "terraform_data" "evotalos_standalone_deployment" {
       "export GOOGLE_APPLICATION_CREDENTIALS='/home/${var.CLOUD_USER}/EVOCLOUD/Keys/${var.GCP_JSON_CREDS}'",
       "gcloud auth activate-service-account --key-file /home/${var.CLOUD_USER}/EVOCLOUD/Keys/${var.GCP_JSON_CREDS}",
       "cd /home/${var.CLOUD_USER}/EVOCLOUD/Terraform/gcp/deployment/cluster-talos-standalone",
-      "terragrunt run-all apply --non-interactive --queue-include-external -auto-approve",
+      "terragrunt destroy --non-interactive -auto-approve",
     ]
   }
 }
