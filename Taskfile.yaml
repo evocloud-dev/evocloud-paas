@@ -4,12 +4,14 @@ silent: true
 
 vars:
   # Common across tasks
-  DEPLOY_DIR:     "/opt/EVOCLOUD/Terraform/gcp/deployment"
-  GCLOUD_AUTH:    "gcloud auth activate-service-account --key-file"
-  GCLOUD_EXPORT:  "export GOOGLE_APPLICATION_CREDENTIALS"
-  KEYS_DIR:       "/opt/EVOCLOUD/Keys"
-  BUILD_CMD:      "terragrunt run-all apply --non-interactive --queue-include-external -auto-approve"
-  DESTROY_CMD:    "terragrunt apply --non-interactive -auto-approve"
+  DEPLOY_DIR:          "/opt/EVOCLOUD/Terraform/gcp/deployment"
+  GCLOUD_AUTH:         "gcloud auth activate-service-account --key-file"
+  GCLOUD_EXPORT:       "export GOOGLE_APPLICATION_CREDENTIALS"
+  KEYS_DIR:            "/opt/EVOCLOUD/Keys"
+  BUILD_CMD:           "terragrunt run-all apply --non-interactive --queue-include-external -auto-approve"
+  CLUSTER_DESTROY_CMD: "terragrunt apply --non-interactive -auto-approve"
+  DESTROY_CMD:         "terragrunt destroy --non-interactive -auto-approve"
+
 
 tasks:
   # Internal tasks that remove redundant code and simplifies logic
@@ -162,7 +164,7 @@ tasks:
       - task: vm-operation
         vars:
           SERVER: cluster-talos-standalone-helper-destroyer
-          ACTION: "{{.DESTROY_CMD}}"
+          ACTION: "{{.CLUSTER_DESTROY_CMD}}"
 
   destroy-talos-cluster:
     desc: "Destroy Full Talos Kube Cluster"
@@ -172,4 +174,4 @@ tasks:
       - task: vm-operation
         vars:
           SERVER: cluster-admin-talos-helper-destroyer
-          ACTION: "{{.DESTROY_CMD}}"
+          ACTION: "{{.CLUSTER_DESTROY_CMD}}"
