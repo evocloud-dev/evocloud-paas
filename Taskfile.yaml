@@ -9,7 +9,7 @@ vars:
   GCLOUD_EXPORT:  "export GOOGLE_APPLICATION_CREDENTIALS"
   KEYS_DIR:       "/opt/EVOCLOUD/Keys"
   BUILD_CMD:      "terragrunt run-all apply --non-interactive --queue-include-external -auto-approve"
-  DESTROY_CMD:    "terragrunt destroy --non-interactive -auto-approve"
+  DESTROY_CMD:    "terragrunt apply --non-interactive -auto-approve"
 
 tasks:
   # Internal tasks that remove redundant code and simplifies logic
@@ -161,7 +161,7 @@ tasks:
       - echo "Destroying Talos Single Node Kube Cluster"
       - task: vm-operation
         vars:
-          SERVER: cluster-talos-standalone-destroyer
+          SERVER: cluster-talos-standalone-helper-destroyer
           ACTION: "{{.DESTROY_CMD}}"
 
   destroy-talos-cluster:
@@ -171,5 +171,5 @@ tasks:
       - echo "Destroying Full Talos Kube Cluster"
       - task: vm-operation
         vars:
-          SERVER: cluster-admin-talos-destroyer
+          SERVER: cluster-admin-talos-helper-destroyer
           ACTION: "{{.DESTROY_CMD}}"

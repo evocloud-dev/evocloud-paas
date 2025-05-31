@@ -23,5 +23,5 @@ dependency "server-dmz-deployer" {
 # Load cluster-admin-talos-destroyer module
 #--------------------------------------------------
 terraform {
-  source = "${get_terragrunt_dir()}/../../compose//cluster-admin-talos-destroy"
+  source = "${get_terragrunt_dir()}/../../compose//cluster-admin-talos-helper-destroy"
 }

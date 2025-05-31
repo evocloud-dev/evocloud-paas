@@ -21,8 +21,8 @@ dependency "server-dmz-deployer" {
 }
 
 #--------------------------------------------------
-# Load cluster-talos-standalone-destroy module
+# Load cluster-talos-standalone-helper-destroy module
 #--------------------------------------------------
 terraform {
-  source = "${get_terragrunt_dir()}/../../compose//cluster-talos-standalone-destroy"
+  source = "${get_terragrunt_dir()}/../../compose//cluster-talos-standalone-helper-destroy"
 }
