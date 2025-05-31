@@ -14,26 +14,28 @@ vars:
 tasks:
   # Internal tasks that remove redundant code and simplifies logic
   # Internal tasks do not show up available task list.
-  build-vm:
+  # SERVER is the server being operated on.
+  # ACTION is BUILD_CMD or DESTROY_CMD
+  vm-operation:
     internal: true
     cmds:
       - |
         {{.GCLOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
         {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
         cd {{.DEPLOY_DIR}}/{{.SERVER}}/ && \
-        {{.BUILD_CMD}}  
+        {{.ACTION}}  
 
-  destroy-vm:
-    internal: true
-    cmds:
-      - |
-        {{.GCLOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
-        {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
-        cd {{.DEPLOY_DIR}}/{{.SERVER}}/ && \
-        {{.DESTROY_CMD}}  
+  #destroy-vm:
+  #  internal: true
+  #  cmds:
+  #    - |
+  #      {{.GCLOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
+  #      {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
+  #      cd {{.DEPLOY_DIR}}/{{.SERVER}}/ && \
+  #      {{.DESTROY_CMD}}
 
   ###############################
-  # Build Tasks
+  # Neutral/Dependency Tasks
   ###############################
   copy-files:
     desc: "Copies files from /mnt inside container to their respective locations.
@@ -55,107 +57,128 @@ tasks:
       - chmod 0600 /etc/pki/tls/*.pem
       - chmod 0644 /etc/pki/tls/*.pub
 
+  ###############################
+  # Build Tasks
+  ###############################
   build-evo-master:
     desc: "Deploys evo-master Server"
     deps: [copy-files]
     cmds:
       - echo "Deploying evo-master"
-      - task: build-vm
+      - task: vm-operation
         vars:
             SERVER: server-01-dmz-deployer
+            ACTION: {{.BUILD_CMD}}
 
   build-idm:
     desc: "Deploys IdM Server"
     deps: [copy-files]
     cmds:
       - echo "Deploying IdM Server"
-      - task: build-vm
+      - task: vm-operation
         vars:
           SERVER: server-02-admin-idam-helper
+          ACTION: {{.BUILD_CMD}}
 
   build-idm-replica:
     desc: "Deploys IdM Replica Server"
     deps: [copy-files]
     cmds:
       - echo "Deploying IdM Replica Server"
-      - task: build-vm
+      - task: vm-operation
         vars:
           SERVER: server-03-admin-idam_replica-helper
+          ACTION: {{.BUILD_CMD}}
 
   build-talos-single:
     desc: "Deploys Single Node Talos Cluster"
     deps: [copy-files]
     cmds:
       - echo "Deploying Talos Single Node Kube Cluster"
-      - task: build-vm
+      - task: vm-operation
         vars:
           SERVER: cluster-talos-standalone-helper
+          ACTION: {{.BUILD_CMD}}
 
   build-talos-cluster:
     desc: "Deploys Full Talos Cluster"
     deps: [copy-files]
     cmds:
       - echo "Deploying Full Talos Kube Cluster"
-      - task: build-vm
+      - task: vm-operation
         vars:
           SERVER: cluster-admin-talos-helper
+          ACTION: {{.BUILD_CMD}}
 
   build-rdp:
     desc: "Deploys Remote Desktop Server"
     deps: [copy-files]
     cmds:
       - echo "Deploying Remote Desktop Server"
-      - task: build-vm
+      - task: vm-operation
         vars:
           SERVER: server-dmz-rdp
+          ACTION: {{.BUILD_CMD}}
 
   ###############################
   # Destroy Tasks
   ###############################
   destroy-evo-master:
     desc: "Destroy evo-master"
+    deps: [copy-files]
     cmds:
       - echo "Destroying evo-master"
-      - task: destroy-vm
+      - task: vm-operation
         vars:
           SERVER: server-01-dmz-deployer
+          ACTION: {{.DESTROY_CMD}}
 
   destroy-idm:
     desc: "Destroy IdM Server"
+    deps: [copy-files]
     cmds:
       - echo "Destroying IdM Server"
-      - task: destroy-vm
+      - task: vm-operation
         vars:
           SERVER: server-02-admin-idam
+          ACTION: {{.DESTROY_CMD}}
 
   destroy-idm-replica:
     desc: "Destroy IdM Replica Server"
+    deps: [copy-files]
     cmds:
       - echo "Destroying IdM Replica Server"
-      - task: destroy-vm
+      - task: vm-operation
         vars:
           SERVER: server-03-admin-idam_replica
+          ACTION: {{.DESTROY_CMD}}
 
   destroy-talos-single:
     desc: "Destroy Talos Single Node Kube Cluster"
+    deps: [copy-files]
     cmds:
-      - echo "Destroying Talos Single Node Kube Cluster"
-      - task: destroy-vm
+      - echo "/n/nDestroying Talos Single Node Kube Cluster/n/n"
+      - task: vm-operation
         vars:
           SERVER: cluster-talos-standalone-destroyer
+          ACTION: {{.DESTROY_CMD}}
 
   destroy-talos-cluster:
     desc: "Destroy Full Talos Kube Cluster"
+    deps: [copy-files]
     cmds:
       - echo "Destroying Full Talos Kube Cluster"
-      - task: destroy-vm
+      - task: vm-operation
         vars:
           SERVER: cluster-admin-talos-destroyer
+          ACTION: {{.DESTROY_CMD}}
 
   destroy-rdp:
     desc: "Destroy Remote Desktop Server"
+    deps: [copy-files]
     cmds:
       - echo "Destroying Remote Desktop Server"
-      - task: destroy-vm
+      - task: vm-operation
         vars:
           SERVER: server-dmz-rdp
+          ACTION: {{.DESTROY_CMD}}
