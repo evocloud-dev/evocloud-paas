@@ -8,11 +8,35 @@ vars:
   GCLOUD_AUTH:    "gcloud auth activate-service-account --key-file"
   GCLOUD_EXPORT:  "export GOOGLE_APPLICATION_CREDENTIALS"
   KEYS_DIR:       "/opt/EVOCLOUD/Keys"
-  TERRAGRUNT_RUN: "terragrunt run-all apply --terragrunt-non-interactive --terragrunt-include-external-dependencies -auto-approve"
+  BUILD_CMD:      "terragrunt run-all apply --terragrunt-non-interactive --terragrunt-include-external-dependencies -auto-approve"
+  DESTROY_CMD:    "terragrunt destroy --non-interactive -auto-approve"
 
 tasks:
+  # Internal tasks that remove redundant code and simplifies logic
+  # Internal tasks do not show up available task list.
+  build-vm:
+    internal: true
+    cmds:
+      - |
+        {{.GCLOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
+        {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
+        cd {{.DEPLOY_DIR}}/{{.SERVER}}/ && \
+        {{.BUILD_CMD}}  
+
+  destroy-vm:
+    internal: true
+    cmds:
+      - |
+        {{.GCLOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
+        {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
+        cd {{.DEPLOY_DIR}}/{{.SERVER}}/ && \
+        {{.DESTROY_CMD}}  
+
+  ###############################
+  # Build Tasks
+  ###############################
   copy-files:
-    desc: "Copies files from host directory to /mnt inside container.
+    desc: "Copies files from /mnt inside container to their respective locations.
            Files: gcp-evocloud.pem, gcp-evocloud.pub, ansible-vault-pass.txt, secret-store.yml and root.hcl
            Task only runs if one or more status commands not satisfied"
     status:
@@ -36,52 +60,102 @@ tasks:
     deps: [copy-files]
     cmds:
       - echo "Deploying evo-master"
-      - |
-        {{.GCLOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
-        {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
-        cd {{.DEPLOY_DIR}}/server-01-dmz-deployer/ && \
-        {{.TERRAGRUNT_RUN}}
+      - task: build-vm
+        vars:
+            SERVER: server-01-dmz-deployer
 
   build-idm:
     desc: "Deploys IdM Server"
-    deps: [build-evo-master]
+    deps: [copy-files]
     cmds:
       - echo "Deploying IdM Server"
-      - |
-        {{.GCLOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
-        {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
-        cd {{.DEPLOY_DIR}}/server-02-admin-idam-helper/ && \
-        {{.TERRAGRUNT_RUN}}
+      - task: build-vm
+        vars:
+          SERVER: server-02-admin-idam-helper
 
   build-idm-replica:
     desc: "Deploys IdM Replica Server"
-    deps: [build-evo-master]
+    deps: [copy-files]
     cmds:
       - echo "Deploying IdM Replica Server"
-      - |
-        {{.GCLOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
-        {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
-        cd {{.DEPLOY_DIR}}/server-03-admin-idam_replica-helper/ && \
-        {{.TERRAGRUNT_RUN}}
+      - task: build-vm
+        vars:
+          SERVER: server-03-admin-idam_replica-helper
 
   build-talos-single:
     desc: "Deploys Single Node Talos Cluster"
-    deps: [build-evo-master]
+    deps: [copy-files]
     cmds:
       - echo "Deploying Talos Single Node Kube Cluster"
-      - |
-        {{.GCLOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
-        {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
-        cd {{.DEPLOY_DIR}}/cluster-talos-standalone-helper/ && \
-        {{.TERRAGRUNT_RUN}}
+      - task: build-vm
+        vars:
+          SERVER: cluster-talos-standalone-helper
 
   build-talos-cluster:
     desc: "Deploys Full Talos Cluster"
-    deps: [build-evo-master]
+    deps: [copy-files]
     cmds:
       - echo "Deploying Full Talos Kube Cluster"
-      - |
-        {{.GCLOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
-        {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
-        cd {{.DEPLOY_DIR}}/cluster-admin-talos-helper/ && \
-        {{.TERRAGRUNT_RUN}}
+      - task: build-vm
+        vars:
+          SERVER: cluster-admin-talos-helper
+
+  build-rdp:
+    desc: "Deploys Remote Desktop Server"
+    deps: [copy-files]
+    cmds:
+      - echo "Deploying Remote Desktop Server"
+      - task: build-vm
+        vars:
+          SERVER: server-dmz-rdp
+
+  ###############################
+  # Destroy Tasks
+  ###############################
+  destroy-evo-master:
+    desc: "Destroy evo-master"
+    cmds:
+      - echo "Destroying evo-master"
+      - task: destroy-vm
+        vars:
+          SERVER: server-01-dmz-deployer
+
+  destroy-idm:
+    desc: "Destroy IdM Server"
+    cmds:
+      - echo "Destroying IdM Server"
+      - task: destroy-vm
+        vars:
+          SERVER: server-02-admin-idam
+
+  destroy-idm-replica:
+    desc: "Destroy IdM Replica Server"
+    cmds:
+      - echo "Destroying IdM Replica Server"
+      - task: destroy-vm
+        vars:
+          SERVER: server-03-admin-idam_replica
+
+  destroy-talos-single:
+    desc: "Destroy Talos Single Node Kube Cluster"
+    cmds:
+      - echo "Destroying Talos Single Node Kube Cluster"
+      - task: destroy-vm
+        vars:
+          SERVER: cluster-talos-standalone-destroyer
+
+  destroy-talos-cluster:
+    desc: "Destroy Full Talos Kube Cluster"
+    cmds:
+      - echo "Destroying Full Talos Kube Cluster"
+      - task: destroy-vm
+        vars:
+          SERVER: cluster-admin-talos-destroyer
+
+  destroy-rdp:
+    desc: "Destroy Remote Desktop Server"
+    cmds:
+      - echo "Destroying Remote Desktop Server"
+      - task: destroy-vm
+        vars:
+          SERVER: server-dmz-rdp

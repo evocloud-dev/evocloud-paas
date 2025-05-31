@@ -1,5 +1,5 @@
 LABEL maintainer="maintainers@evocloud.dev"
-LABEL evocloud-bootstrapper="0.1.0"
+LABEL evo-deployer="0.1.0"
 LABEL release-date=""
 
 # Stage 1: Build Environment
