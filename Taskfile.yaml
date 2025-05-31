@@ -90,7 +90,7 @@ tasks:
       - echo "Deploying Remote Desktop Server"
       - task: vm-operation
         vars:
-          SERVER: server-dmz-rdp
+          SERVER: server-dmz-rdp-helper
           ACTION: "{{.BUILD_CMD}}"
 
   build-talos-single:
