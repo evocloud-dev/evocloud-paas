@@ -231,6 +231,7 @@ data "talos_machine_configuration" "talos_controlplane" {
         }
         kubelet = {
           extraArgs = {
+            cloud-provider = "external"
             rotate-server-certificates = true
           }
           extraConfig = {
@@ -238,6 +239,13 @@ data "talos_machine_configuration" "talos_controlplane" {
               UserNamespacesSupport = true
               UserNamespacesPodSecurityStandards = true
             }
+          }
+        }
+        features = {
+          kubernetesTalosAPIAccess = {
+            enabled = true
+            allowedRoles = ["os:reader"]
+            allowedKubernetesNamespaces = ["kube-system"]
           }
         }
         systemDiskEncryption = {
@@ -284,7 +292,7 @@ data "talos_machine_configuration" "talos_controlplane" {
         #A bug with Talos prevents discovery mechanism to work properly: https://github.com/siderolabs/talos/issues/9980
         #https://www.talos.dev/v1.9/talos-guides/discovery/
         discovery = {
-          enabled = false
+          enabled = true
           registries = {
             kubernetes = {
               disabled = false
@@ -304,7 +312,7 @@ data "talos_machine_configuration" "talos_controlplane" {
         ]
         inlineManifests = [
           {
-            name     = "cilium-helm-deploy"
+            name     = "cilium-and-talos-ccm-deploy"
             contents = <<-EOT
               ---
               apiVersion: rbac.authorization.k8s.io/v1
@@ -382,6 +390,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                         - sh
                         - -c
                         - |
+                          helm upgrade --install --namespace kube-system talos-cloud-controller-manager oci://ghcr.io/siderolabs/charts/talos-cloud-controller-manager -f https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/talos-ccm-gcp.yaml
                           helm repo add cilium https://helm.cilium.io/
                           helm repo update
                           helm upgrade --install cilium cilium/cilium \
@@ -1164,6 +1173,7 @@ data "talos_machine_configuration" "talos_worker" {
         }
         kubelet = {
           extraArgs = {
+            cloud-provider = "external"
             rotate-server-certificates = true
           }
         }
