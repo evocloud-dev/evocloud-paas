@@ -67,7 +67,7 @@
 
     - name: Deploying cert-manager-issuer...
       ansible.builtin.shell: |
-        KUBECONFIG={{ kubeconfig }} kubectl get clusterissuer evoidp -n {{ certmanager_namespace }} || KUBECONFIG={{ kubeconfig }} kubectl apply -f cert-manager-issuer.yaml
+        KUBECONFIG={{ kubeconfig }} kubectl apply -f cert-manager-issuer.yaml
       args:
         executable: /bin/bash
         chdir: "{{ kubeapp_dir }}/cert-manager"
