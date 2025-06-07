@@ -13,7 +13,7 @@
 resource "google_compute_image" "talos_img" {
   count       = var.create_talos_img ? 1 : 0
 
-  name        = "evocloud-talos19-b010"
+  name        = var.TALOS_AMI_NAME
   description = "Talos Base AMI Image"
   family      = "evocloud-talos19"
   labels = {
@@ -194,8 +194,9 @@ data "talos_client_configuration" "talosconfig" {
     [for xvalue in google_compute_instance.talos_workload : xvalue.network_interface[0].network_ip],
   )
 }
-
-## Generate the Controlplane configuration and instantiate the Talos Controlplane VMs
+################################################################################
+## Talos Controlplane VMs: Generate and apply configs on controlplane nodes
+################################################################################
 data "talos_machine_configuration" "talos_controlplane" {
   depends_on = [google_compute_instance.talos_ctrlplane]
 
@@ -885,7 +886,8 @@ data "talos_machine_configuration" "talos_controlplane" {
                 namespace: monitoring
               spec:
                 interval: 24h
-                url: https://prometheus-community.github.io/helm-charts
+                type: oci
+                url: oci://ghcr.io/prometheus-community/charts
               ---
               apiVersion: helm.toolkit.fluxcd.io/v2
               kind: HelmRelease
@@ -1068,6 +1070,79 @@ data "talos_machine_configuration" "talos_controlplane" {
                     continuousScan: enable
 
               ---
+              ############################################
+              #DEPLOYING KEDA
+              ############################################
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: keda
+              ---
+              #Dedicated service account for keda
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRoleBinding
+              metadata:
+                name: flux-keda
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: cluster-admin
+              subjects:
+              - kind: ServiceAccount
+                name: flux-keda-sa
+                namespace: keda
+              ---
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: flux-keda-sa
+                namespace: keda
+              ---
+              apiVersion: source.toolkit.fluxcd.io/v1
+              kind: HelmRepository
+              metadata:
+                name: keda-release
+                namespace: keda
+              spec:
+                interval: 24h
+                url: https://kedacore.github.io/charts
+              ---
+              apiVersion: helm.toolkit.fluxcd.io/v2
+              kind: HelmRelease
+              metadata:
+                name: keda-stack
+                namespace: keda
+              spec:
+                chart:
+                  spec:
+                    chart: keda
+                    sourceRef:
+                      kind: HelmRepository
+                      name: keda-release
+                    version: "2.17.*"
+                interval: 30m0s
+                timeout: 25m0s
+                serviceAccountName: flux-keda-sa
+                install:
+                  remediation:
+                    retries: 3
+                upgrade:
+                  remediation:
+                    retries: 2
+                  #cleanupOnFail: true
+                driftDetection:
+                  mode: enabled
+                values:
+                  clusterName: cluster-manager
+                  clusterDomain: cluster.local
+                  priorityClassName: system-node-critical
+                  nodeSelector:
+                    node-role.kubernetes.io/control-plane: ""
+                  tolerations:
+                    - key: node-role.kubernetes.io/control-plane
+                      effect: NoSchedule
+              ---
+
             EOT
           },
           {
@@ -1150,8 +1225,9 @@ resource "talos_machine_configuration_apply" "controlplane" {
   endpoint                    = each.value.network_interface[0].network_ip
   node                        = each.value.network_interface[0].network_ip
 }
-
-## Generate the Worker configuration and instantiate the Talos Worker VMs
+################################################################################
+## Talos Worker VMs: Generate and apply configs on worker nodes
+################################################################################
 data "talos_machine_configuration" "talos_worker" {
   depends_on = [google_compute_instance.talos_workload]
 
@@ -1214,10 +1290,22 @@ resource "talos_machine_configuration_apply" "worker" {
   endpoint                    = each.value.network_interface[0].network_ip
   node                        = each.value.network_interface[0].network_ip
 }
-
+################################################################################
 ## Start the bootstraping of the Talos Kubernetes Cluster
+################################################################################
 resource "talos_machine_bootstrap" "bootstrap_cluster" {
-  depends_on           = [talos_machine_configuration_apply.worker]
+  depends_on           = [talos_machine_configuration_apply.controlplane]
+
+  client_configuration = talos_machine_secrets.talos_vm.client_configuration
+  endpoint             = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
+  node                 = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
+}
+
+## Collect the Talos Kubeconfig
+resource "talos_cluster_kubeconfig" "kubeconfig" {
+  depends_on           = [
+    talos_machine_bootstrap.bootstrap_cluster,
+  ]
 
   client_configuration = talos_machine_secrets.talos_vm.client_configuration
   endpoint             = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
@@ -1228,25 +1316,55 @@ resource "talos_machine_bootstrap" "bootstrap_cluster" {
 #data "talos_cluster_health" "cluster_health" {
 #  depends_on = [talos_machine_bootstrap.bootstrap_cluster]
 
-#  client_configuration    = talos_machine_secrets.talos_vm.client_configuration
+#  skip_kubernetes_checks  = false
 #  control_plane_nodes     = [for xvalue in google_compute_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip]
 #  worker_nodes            = [for xvalue in google_compute_instance.talos_workload : xvalue.network_interface[0].network_ip]
 #  endpoints               = [for xvalue in google_compute_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip]
-#  skip_kubernetes_checks  = true
+#  client_configuration    = talos_machine_secrets.talos_vm.client_configuration
+#  timeouts                = { read = "15m" }
 #}
 
-## Collect the Talos Kubeconfig
-resource "talos_cluster_kubeconfig" "kubeconfig" {
-  depends_on           = [
-    talos_machine_bootstrap.bootstrap_cluster,
-    #data.talos_cluster_health.cluster_health,
-  ]
+#--------------------------------------------------
+# Write out Kubeconfig and Talosconfig to a file
+#--------------------------------------------------
+resource "local_file" "talos_kubeconfig_file" {
+  depends_on  = [talos_cluster_kubeconfig.kubeconfig]
 
-  client_configuration = talos_machine_secrets.talos_vm.client_configuration
-  endpoint             = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
-  node                 = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
+  filename    = "/home/${var.CLOUD_USER}/kubeconfig/kubeconfig-${var.cluster_name}.yaml"
+  directory_permission = "0740"
+  file_permission      = "0640"
+  content     = <<-EOF
+    ${talos_cluster_kubeconfig.kubeconfig.kubeconfig_raw}
+  EOF
 }
 
+resource "local_file" "talos_talosconfig_file" {
+  depends_on  = [talos_cluster_kubeconfig.kubeconfig]
+
+  filename    = "/home/${var.CLOUD_USER}/talosconfig/talosconfig-${var.cluster_name}.yaml"
+  directory_permission = "0740"
+  file_permission      = "0640"
+  content     = <<-EOF
+    ${data.talos_client_configuration.talosconfig.talos_config}
+  EOF
+}
+
+#--------------------------------------------------
+# Ansible Configuration Management Code
+#--------------------------------------------------
+resource "terraform_data" "cluster_post_configuration" {
+  depends_on = [local_file.talos_kubeconfig_file]
+
+  provisioner "local-exec" {
+    command = <<EOF
+      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapps-admin-talos.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name}'
+    EOF
+    #Ansible logs
+    environment = {
+      ANSIBLE_LOG_PATH = "${var.AUTOMATION_FOLDER}/Logs/server-admin-idam-ansible.log"
+    }
+  }
+}
 
 ############### CILIUM HELM TEMPLATE GENERATION CODE ############################
 #Documentation: https://docs.cilium.io/en/stable/

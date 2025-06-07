@@ -1,0 +1,20 @@
+---
+cloud_user: ""
+
+domain_tld: ""
+
+idam_server_ip: ""
+
+idam_short_hostname: ""
+
+kube_cluster_name: ""
+
+kubeapp_dir: '/home/{{ cloud_user }}/kubeapps'
+
+kubeconfig: '/home/{{ cloud_user }}/kubeconfig/kubeconfig-{{ kube_cluster_name }}.yaml'
+
+certmanager_minor_ver: v1.17
+
+certmanager_namespace: cert-manager
+
+tsig_secret_name: ipa-tsig

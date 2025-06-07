@@ -1,0 +1,56 @@
+---
+############################################
+#DEPLOYING Cert-Manager
+############################################
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: jetstack
+  namespace: {{ certmanager_namespace }}
+spec:
+  interval: 24h
+  url: https://charts.jetstack.io
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cert-manager-stack
+  namespace: {{ certmanager_namespace }}
+spec:
+  chart:
+    spec:
+      chart: cert-manager
+      sourceRef:
+        kind: HelmRepository
+        name: jetstack
+      version: "{{ certmanager_minor_ver }}.*"
+  interval: 30m0s
+  timeout: 25m0s
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 2
+    #cleanupOnFail: true
+  driftDetection:
+    mode: enabled
+  values:
+    global:
+      leaderElection:
+        namespace: {{ certmanager_namespace }}
+    crds:
+      enabled: true
+    config:
+      apiVersion: "controller.config.cert-manager.io/v1alpha1"
+      kind: "ControllerConfiguration"
+      enableGatewayAPI: true
+    volumes:
+      - name: ca-bundle
+        configMap:
+          name: ca-bundle
+    volumeMounts:
+      - name: ca-bundle
+        mountPath: /etc/ssl/certs/ca-certificates.crt
+        subPath: ca-certificates.crt
+        readOnly: false

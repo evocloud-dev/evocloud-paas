@@ -1,0 +1,73 @@
+---
+#This playbook will deploy Cert-Manager with integration with IPA to provide automatic certificate issuance for Kubernetes
+#References:
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubedeploy-cert-manager ##############"
+
+- name: Verifying if Kubernetes cluster is fully bootstrapped...
+  ansible.builtin.shell: |
+    KUBECONFIG={{ kubeconfig }} kubectl get nodes -o jsonpath='{.items[*].status.conditions[?(@.type=="Ready")].status}' | grep "True"
+  ignore_errors: yes  # Ignore errors if Flux is not bootstrapped
+  register: kube_deploy_check
+  until: kube_deploy_check.rc == 0
+  retries: 10
+  delay: 60
+
+- when: kube_deploy_check.rc == 0  # RC (return code) 0 means Kubernetes is fully bootstrapped
+  block:
+    - name: Staging directory for cert-manager...
+      ansible.builtin.file:
+        path: "{{ kubeapp_dir }}/cert-manager"
+        state: directory
+
+    - name: Creating a namespace for cert-manager...
+      ansible.builtin.shell: |
+        KUBECONFIG={{ kubeconfig }} kubectl get namespace {{ certmanager_namespace }} || KUBECONFIG={{ kubeconfig }} kubectl create namespace {{ certmanager_namespace }}
+      args:
+        executable: /bin/bash
+
+    - name: Creating a kubernetes configmap for storing the ipa ca-bundle... #(if the installer joins ipa it must have the ipa ca-bundle)
+      ansible.builtin.shell: |
+        cat /etc/pki/tls/certs/ca-bundle.crt > {{ kubeapp_dir }}/cert-manager/ca-certificates.crt
+        KUBECONFIG={{ kubeconfig }} kubectl create configmap ca-bundle --from-file {{ kubeapp_dir }}/cert-manager/ca-certificates.crt -n {{ certmanager_namespace }}
+      args:
+        executable: /bin/bash
+        creates: '{{ kubeapp_dir }}/cert-manager/ca-certificates.crt'
+
+    - name: Saving tsig_secret_value for later use...
+      ansible.builtin.shell: |
+        cat /etc/pki/tls/certs/tsig_secret_value
+      become: true
+      register: tsig_secret_value
+      delegate_to: '{{ idam_server_ip }}'
+
+    - name: Creating a kubernetes secret for ipa-tsig...
+      ansible.builtin.shell: |
+        KUBECONFIG={{ kubeconfig }} kubectl get secret {{ tsig_secret_name }} -n {{ certmanager_namespace }} || KUBECONFIG={{ kubeconfig }} kubectl create secret generic {{ tsig_secret_name }} --from-literal=secret="{{ tsig_secret_value.stdout }}" -n {{ certmanager_namespace }}
+      args:
+        executable: /bin/bash
+
+    - name: Staging cert-manager manifests...
+      ansible.builtin.template:
+        src: '{{ item.f }}.j2'
+        dest: '{{ item.d }}/{{ item.f }}'
+      with_items:
+        - f: 'cert-manager-issuer.yaml'
+          d: "{{ kubeapp_dir }}/cert-manager"
+        - f: 'flux-cert-manager.yaml'
+          d: "{{ kubeapp_dir }}/cert-manager"
+
+    - name: Deploying cert-manager using flux-controller...
+      ansible.builtin.shell: |
+        KUBECONFIG={{ kubeconfig }} kubectl get hr cert-manager-stack -n {{ certmanager_namespace }} || KUBECONFIG={{ kubeconfig }} kubectl apply -f flux-cert-manager.yaml
+      args:
+        executable: /bin/bash
+        chdir: "{{ kubeapp_dir }}/cert-manager"
+
+    - name: Deploying cert-manager-issuer...
+      ansible.builtin.shell: |
+        KUBECONFIG={{ kubeconfig }} kubectl get clusterissuer evoidp -n {{ certmanager_namespace }} || KUBECONFIG={{ kubeconfig }} kubectl apply -f cert-manager-issuer.yaml
+      args:
+        executable: /bin/bash
+        chdir: "{{ kubeapp_dir }}/cert-manager"
