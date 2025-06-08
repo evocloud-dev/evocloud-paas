@@ -1,0 +1,23 @@
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: evoidp
+spec:
+  acme:
+    server: https://{{ idam_short_hostname }}.{{ domain_tld }}/acme/directory
+    email: hostmaster@{{ domain_tld }}
+    privateKeySecretRef:
+      name: ipa-acme-account-key
+    solvers:
+      - dns01:
+          rfc2136:
+            nameserver: {{ idam_server_ip }}
+            tsigKeyName: cert-manager-acme
+            tsigAlgorithm: HMACSHA512
+            tsigSecretSecretRef:
+              name: {{ tsig_secret_name }}
+              key: secret
+        selector:
+          dnsZones:
+            - {{ domain_tld }}

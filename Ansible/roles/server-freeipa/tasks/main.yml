@@ -228,6 +228,7 @@
   become: true
 
 #Enabling IPA as an ACME provider
+#https://www.hamzahkhan.com/using-freeipa-ca-as-an-acme-provider-for-cert-manager/
 - name: Enabling ACME support...
   ansible.builtin.command: "/usr/sbin/ipa-acme-manage enable"
   become: true
@@ -238,31 +239,43 @@
   register: grep_tsig_result
   become: true
 
-- name: Generating TSIG key for cert-manager-acme to use...
-  ansible.builtin.command: "/usr/sbin/tsig-keygen -a hmac-sha512 cert-manager-acme"
-  register: tsig_acme_key
-  become: true
-  when: grep_tsig_result.rc != 0
+- when: grep_tsig_result.rc != 0
+  block:
+    - name: Generating TSIG key for cert-manager-acme to use...
+      ansible.builtin.command: "/usr/sbin/tsig-keygen -a hmac-sha512 cert-manager-acme"
+      register: tsig_acme_key
+      become: true
 
-- ansible.builtin.debug:
-    msg: "{{ tsig_acme_key.stdout }}"
+    - ansible.builtin.debug:
+        msg: "{{ tsig_acme_key.stdout }}"
 
-- name: Extract secret value
-  set_fact:
-    tsig_secret_value: "{{ tsig_acme_key.stdout | regex_search('secret \"([^\"]+)\";', '\\1') }}"
+    - name: Append TSIG key to named configuration...
+      ansible.builtin.lineinfile:
+        path: /etc/named/ipa-ext.conf
+        line: "{{ tsig_acme_key.stdout}}"
+        create: yes
+      become: true
 
-- ansible.builtin.debug:
-    msg: "{{ tsig_secret_value }}"
+    - name: Extract secret value...
+      set_fact:
+        tsig_secret_value: "{{ tsig_acme_key.stdout | regex_search('secret \"([^\"]+)\";', '\\1') }}"
 
-- name: Append TSIG key to named configuration
-  ansible.builtin.lineinfile:
-    path: /etc/named/ipa-ext.conf
-    line: "{{ tsig_acme_key.stdout}}"
-    create: yes
-  become: true
+    - ansible.builtin.debug:
+        msg: "{{ tsig_secret_value }}"
+
+    - name: Saving tsig_secret_value for later use...
+      ansible.builtin.shell: |
+        echo "{{ tsig_secret_value[0] }}" > /etc/pki/tls/certs/tsig_secret_value
+      become: true
 
 - name: Starting DNS service...
   ansible.builtin.systemd:
     name: named-pkcs11.service
     state: restarted
+  become: true
+
+- name: Enabling dynamic updates for the IPA DNS domain or sub-domain
+  ansible.builtin.shell: |
+    /bin/kinit admin <<< {{ freeipa_admin_passwd }}
+    ipa dnszone-mod {{ domain_tld }} --dynamic-update=True --update-policy='grant cert-manager-acme wildcard * TXT;'
   become: true

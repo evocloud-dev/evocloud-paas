@@ -1,15 +1,13 @@
-# Takes approximately  hours to complete
+# Takes approximately 8 minutes to complete
 #--------------------------------------------------
 # Input Variables
 #--------------------------------------------------
 inputs = {
-  dmz_subnet_name     = dependency.network-subnet.outputs.dmz_subnet_name
+  deployer_server_eip = dependency.server-dmz-deployer.outputs.public_ip
+  deployer_private_ip = dependency.server-dmz-deployer.outputs.private_ip
   idam_server_ip      = dependency.server-admin-idam.outputs.private_ip
   idam_replica_ip     = dependency.server-admin-idam_replica.outputs.private_ip
-  cluster_name        = "evotalos-workstation"
-  talos_version       = "v1.10.3"
-  kubernetes_version  = "v1.33.1"
-  create_talos_img    = true
+  ipaclient_revision  = "0.0.1"
 }
 
 #--------------------------------------------------
@@ -24,6 +22,14 @@ include "root" {
 #--------------------------------------------------
 dependency "network-subnet" {
   config_path   = "${get_terragrunt_dir()}/../network-02-subnet"
+  skip_outputs  = true
+}
+
+#--------------------------------------------------
+# Set server-dmz-deployer module dependency
+#--------------------------------------------------
+dependency "server-dmz-deployer" {
+  config_path   = "${get_terragrunt_dir()}/../server-01-dmz-deployer"
 }
 
 #--------------------------------------------------
@@ -38,8 +44,8 @@ dependency "server-admin-idam_replica" {
 }
 
 #--------------------------------------------------
-# Load Talos Kubernetes module
+# Load dmz-deployer helper module
 #--------------------------------------------------
 terraform {
-  source = "${get_terragrunt_dir()}/../../compose//cluster-talos-standalone"
+  source = "${get_terragrunt_dir()}/../../compose//server-dmz-deployer-idpclient"
 }
