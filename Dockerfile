@@ -3,7 +3,7 @@ LABEL evo-deployer="0.1.0"
 LABEL release-date=""
 
 # Stage 1: Build Environment
-ARG ROCKY_VERSION="8.9"
+ARG ROCKY_VERSION="9.3"
 FROM rockylinux:$ROCKY_VERSION AS build-stage
 
 ARG ANSIBLE_VERSION="2.16.3"
