@@ -11,6 +11,27 @@
   "ignorePaths": [
     "assets/"
   ],
+  "regexManagers": [
+    {
+      "fileMatch": ["Ansible/vars/roles/app-flux-cli/vars/main.yml"],
+      "matchStrings": [
+        "flux_cli_ver: \"(?<currentValue>\\d+\\.\\d+\\.\\d+)\"",
+        "flux_cli_checksum: \"sha256:(?<currentValue>[a-f0-9]{64})\""
+      ],
+      "depNameTemplate": "fluxcd/flux2",
+      "datasourceTemplate": "github-releases",
+      "packageNameTemplate": "fluxcd/flux2",
+      "versioningTemplate": "semver"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchDepNames": ["fluxcd/flux2"],
+      "matchUpdateTypes": ["major", "minor", "patch"],
+      "commitMessageExtra": "Updated Flux to v{{newVersion}}",
+      "commitBody": "EvoCloud-bot updated Flux CD to version {{newVersion}}\n\nRelease notes: https://github.com/fluxcd/flux2/releases/tag/v{{newVersion}}"
+    }
+  ],
   "ansible": {
     "fileMatch": [
        "Ansible/.+\\.ya?ml$"
