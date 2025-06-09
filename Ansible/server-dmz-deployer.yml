@@ -27,4 +27,5 @@
     - app-nerdctl
     - app-cosign
     - app-task
+    - app-kubevela
     - app-fail2ban
