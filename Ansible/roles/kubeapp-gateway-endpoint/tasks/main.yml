@@ -3,7 +3,7 @@
 #References:
 
 - ansible.builtin.debug:
-    msg: "########### STARTING ANSIBLE ROLE: kubeapp-dnsrecord ##############"
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-gateway-endpoint ##############"
 
 - name: Initializing Kerberos token with kinit...
   ansible.builtin.shell: "/bin/kinit admin <<< {{ freeipa_admin_passwd }}"
