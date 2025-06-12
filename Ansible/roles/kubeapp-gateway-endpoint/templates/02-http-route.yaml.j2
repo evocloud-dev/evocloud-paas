@@ -33,11 +33,7 @@ spec:
   hostnames:
     - {{ kubeapp_shortname }}.{{ domain_tld }}
   rules:
-    - matches:
-        - path:
-            type: Exact
-            value: /
-      backendRefs:
+    - backendRefs:
         - name: {{ kubeapp_backend_svc }}
           port: {{ kubeapp_backend_svc_port }}
           kind: Service
