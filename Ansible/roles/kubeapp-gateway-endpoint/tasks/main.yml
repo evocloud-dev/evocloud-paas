@@ -41,7 +41,7 @@
     - f: '02-http-route.yaml'
       d: "{{ kubeapp_dir }}/gateway-endpoints"
 
-- name: Deploying cert-manager using flux-controller...
+- name: Deploying gateway and httproutes...
   ansible.builtin.shell: |
     KUBECONFIG={{ kubeconfig }} kubectl apply -f {{ item }}
   loop:
