@@ -1,0 +1,26 @@
+---
+cloud_user: ''
+
+domain_tld: ''
+
+ingress_lb_ip: ''
+
+kubeapp_shortname: ''
+
+kubeapp_namespace: ''
+
+kubeapp_backend_svc: ''
+
+kubeapp_backend_svc_port: ''
+
+idam_server_ip: ''
+
+idam_short_hostname: ''
+
+kube_cluster_name: ''
+
+kubeconfig: '/home/{{ cloud_user }}/kubeconfig/kubeconfig-{{ kube_cluster_name }}.yaml'
+
+kubeapp_dir: '/home/{{ cloud_user }}/kubeapps'
+
+freeipa_admin_passwd: "{{ creds_store.freeipa_admin_passwd }}"

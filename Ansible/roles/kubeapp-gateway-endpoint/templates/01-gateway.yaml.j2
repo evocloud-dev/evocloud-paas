@@ -1,0 +1,29 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: gateway-{{ kubeapp_shortname }}
+  namespace: {{ kubeapp_namespace }}
+  annotations:
+    cert-manager.io/cluster-issuer: evoidp-issuer #needed for automatic certs generation by cert-manager
+spec:
+  gatewayClassName: cilium
+  listeners:
+    - name: nginx-http
+      hostname: {{ kubeapp_shortname }}.{{ domain_tld }}
+      port: 80
+      protocol: HTTP
+
+    - name: nginx-https
+      hostname: {{ kubeapp_shortname }}.{{ domain_tld }}
+      port: 443
+      protocol: HTTPS
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate   #Passthrough mode is not supported yet.
+        certificateRefs:
+          - name: {{ kubeapp_shortname }}-default-tls
+            kind: Secret            #https://github.com/cert-manager/cert-manager/issues/5610
+            namespace: {{ kubeapp_namespace }}      #Automatic cert provisioning will fail if the requested cert is in a different namespace than the Gateway.

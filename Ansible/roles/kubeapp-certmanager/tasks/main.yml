@@ -3,7 +3,7 @@
 #References:
 
 - ansible.builtin.debug:
-    msg: "########### STARTING ANSIBLE ROLE: kubedeploy-cert-manager ##############"
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-certmanager ##############"
 
 - name: Verifying if Kubernetes cluster is fully bootstrapped...
   ansible.builtin.shell: |
@@ -27,13 +27,17 @@
       args:
         executable: /bin/bash
 
-    - name: Creating a kubernetes configmap for storing the ipa ca-bundle... #(if the installer joins ipa it must have the ipa ca-bundle)
+    - name: Creating ipa ca-bundle certificates... #(if the installer joins ipa it must have the ipa ca-bundle)
       ansible.builtin.shell: |
         cat /etc/pki/tls/certs/ca-bundle.crt > {{ kubeapp_dir }}/cert-manager/ca-certificates.crt
+      args:
+        executable: /bin/bash
+
+    - name: Creating a kubernetes configmap for storing the ipa ca-bundle...
+      ansible.builtin.shell: |
         KUBECONFIG={{ kubeconfig }} kubectl create configmap ca-bundle --from-file {{ kubeapp_dir }}/cert-manager/ca-certificates.crt -n {{ certmanager_namespace }}
       args:
         executable: /bin/bash
-        creates: '{{ kubeapp_dir }}/cert-manager/ca-certificates.crt'
 
     - name: Saving tsig_secret_value for later use...
       ansible.builtin.shell: |
@@ -57,6 +61,8 @@
           d: "{{ kubeapp_dir }}/cert-manager"
         - f: 'flux-cert-manager.yaml'
           d: "{{ kubeapp_dir }}/cert-manager"
+        - f: 'cilium-ip-pool.yaml'
+          d: "{{ kubeapp_dir }}/cert-manager"
 
     - name: Deploying cert-manager using flux-controller...
       ansible.builtin.shell: |
@@ -68,6 +74,18 @@
     - name: Deploying cert-manager-issuer...
       ansible.builtin.shell: |
         KUBECONFIG={{ kubeconfig }} kubectl apply -f cert-manager-issuer.yaml
+      args:
+        executable: /bin/bash
+        chdir: "{{ kubeapp_dir }}/cert-manager"
+      ignore_errors: yes
+      register: cert_manager_check
+      until: cert_manager_check.rc == 0
+      retries: 10
+      delay: 60
+
+    - name: Deploying cilium-ip-pool for the load-balancer...
+      ansible.builtin.shell: |
+        KUBECONFIG={{ kubeconfig }} kubectl apply -f cilium-ip-pool.yaml
       args:
         executable: /bin/bash
         chdir: "{{ kubeapp_dir }}/cert-manager"
