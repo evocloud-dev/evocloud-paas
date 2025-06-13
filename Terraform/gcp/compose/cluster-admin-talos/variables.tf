@@ -188,3 +188,11 @@ variable "create_talos_img" {
   type        = bool
   default     = false
 }
+
+variable "cluster_post_config_revision" {
+  description = "Cluster Admin Post Configs version"
+}
+
+variable "kubeapp_gateway_revision" {
+  description = "Kubernetes Application Gateway Endpoint version"
+}

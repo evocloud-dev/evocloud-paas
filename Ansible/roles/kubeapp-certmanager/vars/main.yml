@@ -9,6 +9,8 @@ idam_short_hostname: ""
 
 kube_cluster_name: ""
 
+ingress_lb_ip: ""
+
 kubeapp_dir: '/home/{{ cloud_user }}/kubeapps'
 
 kubeconfig: '/home/{{ cloud_user }}/kubeconfig/kubeconfig-{{ kube_cluster_name }}.yaml'

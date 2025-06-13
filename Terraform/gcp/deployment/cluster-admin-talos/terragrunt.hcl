@@ -11,7 +11,9 @@ inputs = {
   talos_version       = "v1.10.3"
   kubernetes_version  = "v1.33.1"
   taloslb_revision    = "0.1.0"
-  create_talos_img    = true
+  cluster_post_config_revision = "0.1.0"
+  kubeapp_gateway_revision  = "0.1.0"
+  create_talos_img          = true
 }
 
 #--------------------------------------------------

@@ -2,7 +2,7 @@
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
-  name: evoidp
+  name: evoidp-issuer
 spec:
   acme:
     server: https://{{ idam_short_hostname }}.{{ domain_tld }}/acme/directory

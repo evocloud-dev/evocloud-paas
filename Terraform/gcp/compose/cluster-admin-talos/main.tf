@@ -408,7 +408,6 @@ data "talos_machine_configuration" "talos_controlplane" {
                           --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
                           --set l2announcements.enabled=true \
                           --set envoyConfig.enabled=true \
-                          --set ingressController.enabled=true \
                           --set gatewayAPI.enabled=true \
                           --set gatewayAPI.enableAppProtocol=true \
                           --set gatewayAPI.enableAlpn=true \
@@ -1299,6 +1298,9 @@ resource "talos_machine_bootstrap" "bootstrap_cluster" {
   client_configuration = talos_machine_secrets.talos_vm.client_configuration
   endpoint             = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
   node                 = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
+  timeouts             = {
+    creates = "5m"
+  }
 }
 
 ## Collect the Talos Kubeconfig
@@ -1352,16 +1354,52 @@ resource "local_file" "talos_talosconfig_file" {
 #--------------------------------------------------
 # Ansible Configuration Management Code
 #--------------------------------------------------
+resource "terraform_data" "redeploy_cluster_post_configuration" {
+  input = var.cluster_post_config_revision
+}
+
 resource "terraform_data" "cluster_post_configuration" {
   depends_on = [local_file.talos_kubeconfig_file]
 
+  #Uncomment below if we want to run Triggers when VM ID changes
+  #triggers_replace = [google_compute_instance.idam_server]
+  #Uncomment below if we want to run Triggers on Revision number increase
+  lifecycle {
+    replace_triggered_by = [terraform_data.redeploy_cluster_post_configuration]
+  }
+
   provisioner "local-exec" {
     command = <<EOF
-      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapps-admin-talos.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name}'
+      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapps-admin-talos.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} ingress_lb_ip=${google_compute_address.ingress_lb_ip.address}'
     EOF
     #Ansible logs
     environment = {
-      ANSIBLE_LOG_PATH = "${var.AUTOMATION_FOLDER}/Logs/server-admin-idam-ansible.log"
+      ANSIBLE_LOG_PATH = "/home/${var.CLOUD_USER}/Logs/cluster_post_configuration-ansible.log"
+    }
+  }
+}
+
+resource "terraform_data" "redeploy_kubeapp_gateway" {
+  input = var.kubeapp_gateway_revision
+}
+
+resource "terraform_data" "kubeapp_gateway" {
+  depends_on = [terraform_data.cluster_post_configuration]
+
+  #Uncomment below if we want to run Triggers when VM ID changes
+  #triggers_replace = [google_compute_instance.idam_server]
+  #Uncomment below if we want to run Triggers on Revision number increase
+  lifecycle {
+    replace_triggered_by = [terraform_data.redeploy_kubeapp_gateway]
+  }
+
+  provisioner "local-exec" {
+    command = <<EOF
+      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapp-gateway-endpoint.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} kubeapp_shortname=evomon kubeapp_namespace=monitoring kubeapp_backend_svc=kube-promstack-stack-grafana kubeapp_backend_svc_port=80 ingress_lb_ip=${google_compute_address.ingress_lb_ip.address}'
+    EOF
+    #Ansible logs
+    environment = {
+      ANSIBLE_LOG_PATH = "/home/${var.CLOUD_USER}/EVOCLOUD/Logs/kubeapp_gateway-ansible.log"
     }
   }
 }

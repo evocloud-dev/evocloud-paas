@@ -1,0 +1,9 @@
+---
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: "cilium-ip-pool-01"
+spec:
+  blocks:
+    - start: "{{ ingress_lb_ip }}"
+      stop: "{{ ingress_lb_ip }}"
