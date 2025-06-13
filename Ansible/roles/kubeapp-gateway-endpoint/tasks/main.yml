@@ -26,7 +26,7 @@
   become: true
   delegate_to: '{{ idam_server_ip }}'
 
-- name: Staging directory for cert-manager...
+- name: Staging directory for gateway-endpoint manifests...
   ansible.builtin.file:
     path: "{{ kubeapp_dir }}/gateway-endpoints"
     state: directory

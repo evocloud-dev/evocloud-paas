@@ -408,7 +408,6 @@ data "talos_machine_configuration" "talos_controlplane" {
                           --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
                           --set l2announcements.enabled=true \
                           --set envoyConfig.enabled=true \
-                          --set ingressController.enabled=true \
                           --set gatewayAPI.enabled=true \
                           --set gatewayAPI.enableAppProtocol=true \
                           --set gatewayAPI.enableAlpn=true \
@@ -1299,6 +1298,9 @@ resource "talos_machine_bootstrap" "bootstrap_cluster" {
   client_configuration = talos_machine_secrets.talos_vm.client_configuration
   endpoint             = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
   node                 = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
+  timeouts             = {
+    creates = "5m"
+  }
 }
 
 ## Collect the Talos Kubeconfig
