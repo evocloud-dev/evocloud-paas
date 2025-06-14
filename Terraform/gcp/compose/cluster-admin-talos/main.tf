@@ -1214,6 +1214,8 @@ data "talos_machine_configuration" "talos_controlplane" {
                 name: dapr-dashboard-stack
                 namespace: dapr-system
               spec:
+                dependsOn:
+                  - name: dapr-stack
                 chart:
                   spec:
                     chart: dapr-dashboard
@@ -1233,7 +1235,6 @@ data "talos_machine_configuration" "talos_controlplane" {
                   #cleanupOnFail: true
                 driftDetection:
                   mode: enabled
-
               ---
             EOT
           },
