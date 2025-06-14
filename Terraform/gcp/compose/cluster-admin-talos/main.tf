@@ -1141,7 +1141,101 @@ data "talos_machine_configuration" "talos_controlplane" {
                     - key: node-role.kubernetes.io/control-plane
                       effect: NoSchedule
               ---
-
+              ############################################
+              #DEPLOYING DAPR RUNTIME
+              ############################################
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: dapr-system
+              ---
+              #Dedicated service account for keda
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRoleBinding
+              metadata:
+                name: flux-dapr
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: cluster-admin
+              subjects:
+              - kind: ServiceAccount
+                name: flux-dapr-sa
+                namespace: dapr-system
+              ---
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: flux-dapr-sa
+                namespace: dapr-system
+              ---
+              apiVersion: source.toolkit.fluxcd.io/v1
+              kind: HelmRepository
+              metadata:
+                name: dapr-release
+                namespace: dapr-system
+              spec:
+                interval: 24h
+                url: https://dapr.github.io/helm-charts
+              ---
+              apiVersion: helm.toolkit.fluxcd.io/v2
+              kind: HelmRelease
+              metadata:
+                name: dapr-stack
+                namespace: dapr-system
+              spec:
+                chart:
+                  spec:
+                    chart: dapr
+                    sourceRef:
+                      kind: HelmRepository
+                      name: dapr-release
+                    version: "1.15.*"
+                interval: 30m0s
+                timeout: 25m0s
+                serviceAccountName: flux-dapr-sa
+                install:
+                  remediation:
+                    retries: 3
+                upgrade:
+                  remediation:
+                    retries: 2
+                  #cleanupOnFail: true
+                driftDetection:
+                  mode: enabled
+                values:
+                  global:
+                    ha:
+                      enabled: true
+              ---
+              apiVersion: helm.toolkit.fluxcd.io/v2
+              kind: HelmRelease
+              metadata:
+                name: dapr-dashboard-stack
+                namespace: dapr-system
+              spec:
+                dependsOn:
+                  - name: dapr-stack
+                chart:
+                  spec:
+                    chart: dapr-dashboard
+                    sourceRef:
+                      kind: HelmRepository
+                      name: dapr-release
+                    version: "0.15.*"
+                interval: 30m0s
+                timeout: 25m0s
+                serviceAccountName: flux-dapr-sa
+                install:
+                  remediation:
+                    retries: 3
+                upgrade:
+                  remediation:
+                    retries: 2
+                  #cleanupOnFail: true
+                driftDetection:
+                  mode: enabled
+              ---
             EOT
           },
           {
