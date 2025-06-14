@@ -32,21 +32,94 @@ resource "google_compute_image" "talos_img" {
 }
 
 #--------------------------------------------------
-# Talos Virtual IP
+# Loadbalancer VMs
 #--------------------------------------------------
-resource "google_compute_address" "talos_vip" {
-  name         = "${var.cluster_name}-talos-vip"
-  subnetwork   = var.admin_subnet_name
-  address_type = "INTERNAL"
+# random_integer resource is needed to be able to assign different zones to google_compute_instance
+resource "random_integer" "zone_selector_loadbalancer" {
+  for_each     = var.TALOS_LB_NODES
+  min = 0
+  max = length(var.GCP_REGIONS) - 1
 }
 
-#--------------------------------------------------
-# Ingress Load balancer IP Pool
-#--------------------------------------------------
-resource "google_compute_address" "ingress_lb_ip" {
-  name         = "${var.cluster_name}-talos-ingress-lb"
-  subnetwork   = var.admin_subnet_name
-  address_type = "INTERNAL"
+resource "google_compute_instance" "talos_loadbalancer" {
+
+  for_each     = var.TALOS_LB_NODES
+  name         = format("%s", each.value)
+  machine_type = var.TALOS_LB_INSTANCE_SIZE #custom-6-20480 | custom-6-15360-ext
+  description  = "Talos LoadBalancer VM Instance"
+  zone         = element(var.GCP_REGIONS, random_integer.zone_selector_loadbalancer[each.key].result)
+  hostname     = format("%s.%s", each.value, var.DOMAIN_TLD)
+
+  boot_disk {
+    initialize_params {
+      image = var.BASE_AMI_NAME
+      size  = var.BASE_VOLUME_SIZE
+      type  = var.TALOS_LB_BASE_VOLUME_TYPE
+      labels = {
+        name = format("%s-%s", "base-volume", each.value)
+      }
+    }
+  }
+
+  network_interface {
+    subnetwork  = var.admin_subnet_name
+  }
+
+  allow_stopping_for_update = true
+
+  labels = {
+    server = format("%s", each.value)
+  }
+
+  metadata = {
+    #enable-oslogin = "TRUE"
+    ssh-keys       = "${var.CLOUD_USER}:${file("/etc/pki/tls/gcp-evocloud.pub")}"
+  }
+
+  metadata_startup_script = "/usr/bin/date"
+
+  #For selecting Spot Instances - Remove this snippet in production
+  scheduling {
+    preemptible = true
+    automatic_restart = false
+    provisioning_model = "SPOT" #SPOT | STANDARD
+    instance_termination_action = "STOP" #DELETE | STOP
+  }
+}
+
+####### Ansible Configuration Code - Talos Controlplane LoabBalancer VM Configuration #######
+resource "terraform_data" "redeploy_talos_lb" {
+  input = var.taloslb_revision
+}
+
+resource "terraform_data" "talos_lb_configuration" {
+  depends_on = [
+    google_compute_instance.talos_loadbalancer,
+    google_compute_instance.talos_ctrlplane
+  ]
+
+  lifecycle {
+    replace_triggered_by = [terraform_data.redeploy_talos_lb]
+  }
+
+  for_each = google_compute_instance.talos_loadbalancer
+  #Connection to bastion host (DEPLOYER_Server)
+  connection {
+    host        = var.deployer_server_eip
+    type        = "ssh"
+    user        = var.CLOUD_USER
+    private_key = file(var.PRIVATE_KEY_PAIR)
+  }
+
+  provisioner "local-exec" {
+    command = <<EOF
+      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/talos-kube-lb.yml --forks 10 --inventory ${each.value.network_interface[0].network_ip}, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml server_ip=${each.value.network_interface[0].network_ip} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} server_short_hostname=${each.value.name} domain_tld=${var.DOMAIN_TLD} server_timezone=${var.DEFAULT_TIMEZONE} cloud_user=${var.CLOUD_USER} metadata_ns_ip=${var.GCP_METADATA_NS} idam_replica_ip=${var.idam_replica_ip} upstream_servers=${join(",", values(google_compute_instance.talos_ctrlplane)[*].network_interface[0].network_ip)} ports_list=[80,443,6443,50000]',
+    EOF
+    #Ansible logs
+    environment = {
+      ANSIBLE_LOG_PATH = "/home/${var.CLOUD_USER}/EVOCLOUD/Logs/server-admin-talos_loadbalancer.log"
+    }
+  }
 }
 
 #--------------------------------------------------
@@ -201,7 +274,7 @@ data "talos_machine_configuration" "talos_controlplane" {
   depends_on = [google_compute_instance.talos_ctrlplane]
 
   cluster_name       = var.cluster_name
-  cluster_endpoint   = "https://${google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip}:6443"
+  cluster_endpoint   = "https://${google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip}:6443"
   machine_type       = "controlplane"
   machine_secrets    = talos_machine_secrets.talos_vm.machine_secrets
   talos_version      = var.talos_version
@@ -224,12 +297,12 @@ data "talos_machine_configuration" "talos_controlplane" {
             {
               interface = "eth0"
               dhcp      = false
-              vip       = {
-                ip = google_compute_address.talos_vip.address
-              }
             }
           ]
         }
+        certSANs = [
+          google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip,
+        ]
         kubelet = {
           extraArgs = {
             cloud-provider = "external"
@@ -276,7 +349,7 @@ data "talos_machine_configuration" "talos_controlplane" {
             feature-gates = "UserNamespacesSupport=true,UserNamespacesPodSecurityStandards=true"
           }
           certSANs = [
-            google_compute_address.talos_vip.address,
+            google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip,
           ]
         }
         network = {
@@ -1325,7 +1398,7 @@ data "talos_machine_configuration" "talos_worker" {
   depends_on = [google_compute_instance.talos_workload]
 
   cluster_name       = var.cluster_name
-  cluster_endpoint   = "https://${google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip}:6443"
+  cluster_endpoint   = "https://${google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip}:6443"
   machine_type       = "worker"
   machine_secrets    = talos_machine_secrets.talos_vm.machine_secrets
   talos_version      = var.talos_version
@@ -1352,6 +1425,7 @@ data "talos_machine_configuration" "talos_worker" {
         systemDiskEncryption = {
           ephemeral = {
             provider = "luks2"
+            options = ["no_read_workqueue", "no_write_workqueue"]
             keys = [
               {
                 nodeID = {}
@@ -1361,6 +1435,7 @@ data "talos_machine_configuration" "talos_worker" {
           }
           state = {
             provider = "luks2"
+            options = ["no_read_workqueue", "no_write_workqueue"]
             keys = [
               {
                 nodeID = {}
@@ -1387,14 +1462,11 @@ resource "talos_machine_configuration_apply" "worker" {
 ## Start the bootstraping of the Talos Kubernetes Cluster
 ################################################################################
 resource "talos_machine_bootstrap" "bootstrap_cluster" {
-  depends_on           = [talos_machine_configuration_apply.controlplane]
+  depends_on           = [talos_machine_configuration_apply.controlplane, terraform_data.talos_lb_configuration]
 
   client_configuration = talos_machine_secrets.talos_vm.client_configuration
-  endpoint             = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
-  node                 = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
-  timeouts             = {
-    creates = "5m"
-  }
+  node                 = google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip
+  endpoint             = google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip
 }
 
 ## Collect the Talos Kubeconfig
@@ -1404,8 +1476,8 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
   ]
 
   client_configuration = talos_machine_secrets.talos_vm.client_configuration
-  endpoint             = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
-  node                 = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
+  node                 = google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip
+  endpoint             = google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip
 }
 
 ## Check whether the Talos Kubernetes Cluster is in a healthy state
@@ -1464,7 +1536,7 @@ resource "terraform_data" "cluster_post_configuration" {
 
   provisioner "local-exec" {
     command = <<EOF
-      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapps-admin-talos.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} ingress_lb_ip=${google_compute_address.ingress_lb_ip.address}'
+      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapps-admin-talos.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} ingress_lb_ip=${google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip}'
     EOF
     #Ansible logs
     environment = {
@@ -1489,7 +1561,7 @@ resource "terraform_data" "kubeapp_gateway" {
 
   provisioner "local-exec" {
     command = <<EOF
-      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapp-gateway-endpoint.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} kubeapp_shortname=evomon kubeapp_namespace=monitoring kubeapp_backend_svc=kube-promstack-stack-grafana kubeapp_backend_svc_port=80 ingress_lb_ip=${google_compute_address.ingress_lb_ip.address}'
+      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapp-gateway-endpoint.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} kubeapp_shortname=evomonitoring kubeapp_namespace=monitoring kubeapp_backend_svc=kube-promstack-stack-grafana kubeapp_backend_svc_port=80 ingress_lb_ip=${google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip}'
     EOF
     #Ansible logs
     environment = {

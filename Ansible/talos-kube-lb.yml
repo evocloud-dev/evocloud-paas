@@ -1,0 +1,16 @@
+---
+#---------------------------------------------------------------------------------------
+# This role will configure a LoadBalancer server for Talos Cluster
+#---------------------------------------------------------------------------------------
+- hosts: all
+  gather_facts: false
+  strategy: free
+  vars:
+    creds_store: "{{ lookup('file', ansible_secret) | from_yaml }}"
+
+  roles:
+    - app-dnsmasq #Needed by GCP Compute Instances
+    - config-freeipa-client
+    - config-freeipa-certs
+    - server-nginx-lb
+    - app-fail2ban

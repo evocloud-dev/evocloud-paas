@@ -187,7 +187,7 @@ resource "terraform_data" "deployer_server_configuration" {
     EOF
     #Ansible logs
     environment = {
-      ANSIBLE_LOG_PATH = "${var.AUTOMATION_FOLDER}/Logs/deployer_server-ansible.log"
+      ANSIBLE_LOG_PATH = "/home/${var.CLOUD_USER}/EVOCLOUD/Logs/deployer_server-ansible.log"
     }
   }
 }
