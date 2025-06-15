@@ -69,7 +69,7 @@ resource "terraform_data" "idam_server_configuration" {
     EOF
     #Ansible logs
     environment = {
-      ANSIBLE_LOG_PATH = "${var.AUTOMATION_FOLDER}/Logs/server-admin-idam-ansible.log"
+      ANSIBLE_LOG_PATH = "/home/${var.CLOUD_USER}/EVOCLOUD/Logs/server-admin-idam-ansible.log"
     }
   }
 }

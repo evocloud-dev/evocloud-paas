@@ -95,7 +95,7 @@ resource "terraform_data" "rdp_server_configuration" {
     EOF
     #Ansible logs
     environment = {
-      ANSIBLE_LOG_PATH = "${var.AUTOMATION_FOLDER}/Logs/server-dmz-rdp-ansible.log"
+      ANSIBLE_LOG_PATH = "/home/${var.CLOUD_USER}/EVOCLOUD/Logs/server-dmz-rdp-ansible.log"
     }
   }
 }

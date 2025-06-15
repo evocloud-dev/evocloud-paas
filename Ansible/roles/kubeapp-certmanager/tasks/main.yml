@@ -38,6 +38,11 @@
         KUBECONFIG={{ kubeconfig }} kubectl create configmap ca-bundle --from-file {{ kubeapp_dir }}/cert-manager/ca-certificates.crt -n {{ certmanager_namespace }}
       args:
         executable: /bin/bash
+      ignore_errors: yes
+      register: cabundle_check
+      until: cabundle_check.rc == 0
+      retries: 10
+      delay: 60
 
     - name: Saving tsig_secret_value for later use...
       ansible.builtin.shell: |
@@ -89,3 +94,8 @@
       args:
         executable: /bin/bash
         chdir: "{{ kubeapp_dir }}/cert-manager"
+      ignore_errors: yes
+      register: ippool_check
+      until: ippool_check.rc == 0
+      retries: 10
+      delay: 60

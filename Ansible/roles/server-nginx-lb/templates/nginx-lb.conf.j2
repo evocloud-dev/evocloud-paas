@@ -1,0 +1,67 @@
+{{ ansible_managed | comment }}
+user                    {{ nginx_user }};
+worker_processes        auto;
+worker_rlimit_nofile    40000;
+
+error_log               /var/log/nginx/error.log warn;
+pid                     /var/run/nginx.pid;
+
+events {
+    worker_connections  8192;
+}
+
+#stream block handles Layer 4 (TCP) load balancer configuration
+stream {
+#Layer 4 (TCP) load balancer for kubernetes apiserver
+	upstream backend_kubeapi {
+        least_conn;
+      {% for server in upstream_servers.split(',') %}
+        server {{ server }}:{{ kubeapi_port | default(6443) }} max_fails=3 fail_timeout=5s;
+      {% endfor %}
+    }
+
+    server {
+        listen     {{ kubeapi_port | default(6443) }};
+        proxy_pass backend_kubeapi;
+    }
+
+#Layer 4 (TCP) load balancer for talosd api
+    upstream backend_talosapi {
+        least_conn;
+      {% for server in upstream_servers.split(',') %}
+        server {{ server }}:{{ talos_port | default(50000) }} max_fails=3 fail_timeout=5s;
+      {% endfor %}
+    }
+
+    server {
+        listen     {{ talos_port | default(50000) }};
+        proxy_pass backend_talosapi;
+    }
+
+#Layer 4 (TCP) load balancer for http gateway
+    upstream gateway_http {
+        least_conn;
+      {% for server in upstream_servers.split(',') %}
+        server {{ server }}:{{ http_port | default(80) }} max_fails=3 fail_timeout=5s;
+      {% endfor %}
+    }
+
+    server {
+        listen     {{ http_port | default(80) }};
+        proxy_pass gateway_http;
+    }
+
+#Layer 4 (TCP) load balancer for http gateway
+    upstream gateway_https {
+        least_conn;
+      {% for server in upstream_servers.split(',') %}
+        server {{ server }}:{{ https_port | default(443) }} max_fails=3 fail_timeout=5s;
+      {% endfor %}
+    }
+
+    server {
+        listen     {{ http_port | default(443) }};
+        proxy_pass gateway_https;
+    }
+
+}

@@ -36,16 +36,9 @@ output "talos_worker_config" {
   sensitive = true
 }
 
-# Retrieve Talos Virtual IP Address
-output "talos_vip" {
-  description = "Talos Virtual IP Address"
-  value = google_compute_address.talos_vip.address
-  sensitive = true
-}
-
-# Retrieve Talos Virtual IP Address
+# Retrieve Talos Load-balancer IP Address
 output "ingress_lb_ip" {
-  description = "Talos Virtual IP Address"
-  value = google_compute_address.ingress_lb_ip.address
+  description = "Talos Load-balancer IP Address"
+  value = google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip
   sensitive = true
 }
