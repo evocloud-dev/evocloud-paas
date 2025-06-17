@@ -25,6 +25,12 @@ resource "google_compute_subnetwork" "admin_subnet" {
   ip_cidr_range     = var.ADMIN_SUBNET_CIDR
   network           = data.google_compute_network.main_vpc.id
   private_ip_google_access = true
+
+  # Use by Cilium Loadbalancer LB-IPAM
+  secondary_ip_range {
+    range_name    = "admin-cilium-lb-ipam"
+    ip_cidr_range = var.ADMIN_SUBNET_CIDR_LBIPAM
+  }
 }
 
 #--------------------------------------------------

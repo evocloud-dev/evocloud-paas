@@ -32,16 +32,18 @@ inputs = {
   ###########################################################################
   # Ansible/Automation Runtime Environment Configurations
   ###########################################################################
-  ANSIBLE_DEBUG_FLAG = false
-  AUTOMATION_FOLDER = "/opt/EVOCLOUD"
-  AUTOMATION_LOGS = "/opt/EVOCLOUD/Logs"
+  ANSIBLE_DEBUG_FLAG  = false
+  AUTOMATION_FOLDER   = "/opt/EVOCLOUD"
+  AUTOMATION_LOGS     = "/opt/EVOCLOUD/Logs"
 
   ###########################################################################
   # Network Configurations
   ###########################################################################
-  DMZ_SUBNET_CIDR = "10.10.10.0/24"
-  ADMIN_SUBNET_CIDR = "10.10.20.0/24"
-  BACKEND_SUBNET_CIDR = "10.10.30.0/24"
+  DMZ_SUBNET_CIDR           = "10.10.10.0/24"
+  ADMIN_SUBNET_CIDR         = "10.10.20.0/24"
+  BACKEND_SUBNET_CIDR       = "10.10.30.0/24"
+  #Cilium Loadbalancer LB-IPAM
+  ADMIN_SUBNET_CIDR_LBIPAM  = "10.10.21.0/24"
 
   ###########################################################################
   # DMZ Controller Host

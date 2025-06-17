@@ -16,7 +16,7 @@
     name: "{{ kubeapp_shortname }}"
     record_type: "A"
     zone_name: "{{ domain_tld }}"
-    record_value: "{{ ingress_lb_ip }}"
+    record_value: "{{ gateway_lb_ip }}"
     state: present
     ipa_host: "{{ idam_short_hostname }}.{{ domain_tld }}"
     ipa_user: "admin"
@@ -26,7 +26,7 @@
   become: true
   delegate_to: '{{ idam_server_ip }}'
 
-- name: Staging directory for gateway-endpoint manifests...
+- name: Staging directory for gateway-endpoints...
   ansible.builtin.file:
     path: "{{ kubeapp_dir }}/gateway-endpoints"
     state: directory
@@ -34,19 +34,19 @@
 - name: Staging gateway-endpoint manifests...
   ansible.builtin.template:
     src: '{{ item.f }}.j2'
-    dest: '{{ item.d }}/{{ item.f }}'
+    dest: '{{ item.d }}/{{ kubeapp_shortname }}-{{ item.f }}'
   with_items:
-    - f: '01-gateway.yaml'
+    - f: 'gateway.yaml'
       d: "{{ kubeapp_dir }}/gateway-endpoints"
-    - f: '02-http-route.yaml'
+    - f: 'http-route.yaml'
       d: "{{ kubeapp_dir }}/gateway-endpoints"
 
 - name: Deploying gateway and httproutes...
   ansible.builtin.shell: |
     KUBECONFIG={{ kubeconfig }} kubectl apply -f {{ item }}
   loop:
-    - '01-gateway.yaml'
-    - '02-http-route.yaml'
+    - '{{ kubeapp_shortname }}-gateway.yaml'
+    - '{{ kubeapp_shortname }}-http-route.yaml'
   args:
     executable: /bin/bash
     chdir: "{{ kubeapp_dir }}/gateway-endpoints"

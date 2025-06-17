@@ -28,6 +28,11 @@ variable "BACKEND_SUBNET_CIDR" {
   type        = string
 }
 
+variable "ADMIN_SUBNET_CIDR_LBIPAM" {
+  description = "ADMIN Subnet CIDR for Cilium Loadbalancer LB-IPAM"
+  type        = string
+}
+
 variable "DOMAIN_TLD" {
   description = "Platform Domain Name"
   type        = string

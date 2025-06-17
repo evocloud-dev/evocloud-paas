@@ -8,6 +8,7 @@
 #           https://www.talos.dev/v1.9/introduction/prodnotes/
 #           https://www.talos.dev/v1.9/kubernetes-guides/configuration/deploy-metrics-server/
 #           https://www.talos.dev/v1.9/talos-guides/configuration/disk-encryption/
+#           https://medium.com/@tijmen.vandenbrink/ciliums-load-balancing-the-l2-way-0fdbc8bbeb60
 # Talos Machine Config Parameters: https://www.talos.dev/v1.9/reference/configuration/v1alpha1/config/
 
 resource "google_compute_image" "talos_img" {
@@ -29,6 +30,15 @@ resource "google_compute_image" "talos_img" {
   guest_os_features {
     type = "VIRTIO_SCSI_MULTIQUEUE"
   }
+}
+
+#--------------------------------------------------
+# Talos Virtual IP
+#--------------------------------------------------
+resource "google_compute_address" "talos_vip" {
+  name         = "${var.cluster_name}-talos-vip"
+  subnetwork   = var.admin_subnet_name
+  address_type = "INTERNAL"
 }
 
 #--------------------------------------------------
@@ -480,6 +490,9 @@ data "talos_machine_configuration" "talos_controlplane" {
                           --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
                           --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
                           --set l2announcements.enabled=true \
+                          --set l2announcements.leaseDuration=10s \
+                          --set l2announcements.leaseRenewDeadline=5s \
+                          --set l2announcements.leaseRetryPeriod=1s \
                           --set envoyConfig.enabled=true \
                           --set gatewayAPI.enabled=true \
                           --set gatewayAPI.enableAppProtocol=true \
@@ -496,6 +509,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           --set operator.rollOutPods=true \
                           --set cgroup.autoMount.enabled=false \
                           --set cgroup.hostRoot=/sys/fs/cgroup \
+                          --set envoy.securityContext.capabilities.envoy="{NET_ADMIN,NET_BIND_SERVICE,PERFMON,BPF}" \
                           --set envoy.securityContext.capabilities.keepCapNetBindService=true
                     serviceAccount: cilium-install-sa
                     serviceAccountName: cilium-install-sa
@@ -1536,7 +1550,7 @@ resource "terraform_data" "cluster_post_configuration" {
 
   provisioner "local-exec" {
     command = <<EOF
-      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapps-admin-talos.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} ingress_lb_ip=${google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip}'
+      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapps-admin-talos.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} admin_cilium_lbipam_cidr=${var.ADMIN_SUBNET_CIDR_LBIPAM}'
     EOF
     #Ansible logs
     environment = {
@@ -1561,7 +1575,8 @@ resource "terraform_data" "kubeapp_gateway" {
 
   provisioner "local-exec" {
     command = <<EOF
-      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapp-gateway-endpoint.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} kubeapp_shortname=evomonitoring kubeapp_namespace=monitoring kubeapp_backend_svc=kube-promstack-stack-grafana kubeapp_backend_svc_port=80 ingress_lb_ip=${google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip}'
+      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapp-gateway-endpoint.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} kubeapp_shortname=evomonitoring kubeapp_namespace=monitoring kubeapp_backend_svc=kube-promstack-stack-grafana kubeapp_backend_svc_port=80 gateway_lb_ip=10.10.21.2'
+      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapp-gateway-endpoint.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} kubeapp_shortname=evodashboard kubeapp_namespace=headlamp kubeapp_backend_svc=headlamp kubeapp_backend_svc_port=80 gateway_lb_ip=10.10.21.3'
     EOF
     #Ansible logs
     environment = {
@@ -1569,6 +1584,10 @@ resource "terraform_data" "kubeapp_gateway" {
     }
   }
 }
+
+#      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapp-gateway-endpoint.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} kubeapp_shortname=evoprometheus kubeapp_namespace=monitoring kubeapp_backend_svc=kube-promstack-stack-kube-prometheus kubeapp_backend_svc_port=9090 ingress_lb_ip=${google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip}'
+#      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapp-gateway-endpoint.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} kubeapp_shortname=evoalert kubeapp_namespace=monitoring kubeapp_backend_svc=kube-promstack-stack-kube-alertmanager kubeapp_backend_svc_port=9093 ingress_lb_ip=${google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip}'
+# --set gatewayAPI.hostNetwork.enabled=true \
 
 ############### CILIUM HELM TEMPLATE GENERATION CODE ############################
 #Documentation: https://docs.cilium.io/en/stable/

@@ -38,30 +38,4 @@ stream {
         proxy_pass backend_talosapi;
     }
 
-#Layer 4 (TCP) load balancer for http gateway
-    upstream gateway_http {
-        least_conn;
-      {% for server in upstream_servers.split(',') %}
-        server {{ server }}:{{ http_port | default(80) }} max_fails=3 fail_timeout=5s;
-      {% endfor %}
-    }
-
-    server {
-        listen     {{ http_port | default(80) }};
-        proxy_pass gateway_http;
-    }
-
-#Layer 4 (TCP) load balancer for http gateway
-    upstream gateway_https {
-        least_conn;
-      {% for server in upstream_servers.split(',') %}
-        server {{ server }}:{{ https_port | default(443) }} max_fails=3 fail_timeout=5s;
-      {% endfor %}
-    }
-
-    server {
-        listen     {{ http_port | default(443) }};
-        proxy_pass gateway_https;
-    }
-
 }

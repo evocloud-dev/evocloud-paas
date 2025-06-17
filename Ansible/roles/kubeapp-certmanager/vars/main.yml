@@ -9,7 +9,7 @@ idam_short_hostname: ""
 
 kube_cluster_name: ""
 
-ingress_lb_ip: ""
+admin_cilium_lbipam_cidr: ""
 
 kubeapp_dir: '/home/{{ cloud_user }}/kubeapps'
 
