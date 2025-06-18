@@ -8,6 +8,9 @@ metadata:
     cert-manager.io/cluster-issuer: evoidp-issuer #needed for automatic certs generation by cert-manager
 spec:
   gatewayClassName: cilium
+  addresses:
+    - type: IPAddress
+      value: {{ gateway_lb_ip }}
   listeners:
     - name: nginx-http
       hostname: {{ kubeapp_shortname }}.{{ domain_tld }}

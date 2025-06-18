@@ -56,6 +56,11 @@
         KUBECONFIG={{ kubeconfig }} kubectl get secret {{ tsig_secret_name }} -n {{ certmanager_namespace }} || KUBECONFIG={{ kubeconfig }} kubectl create secret generic {{ tsig_secret_name }} --from-literal=secret="{{ tsig_secret_value.stdout }}" -n {{ certmanager_namespace }}
       args:
         executable: /bin/bash
+      ignore_errors: yes
+      register: ipa_tsig_secret
+      until: ipa_tsig_secret.rc == 0
+      retries: 10
+      delay: 60
 
     - name: Staging cert-manager manifests...
       ansible.builtin.template:
@@ -68,6 +73,8 @@
           d: "{{ kubeapp_dir }}/cert-manager"
         - f: 'cilium-ip-pool.yaml'
           d: "{{ kubeapp_dir }}/cert-manager"
+        - f: 'cilium-l2announcement-policy.yaml'
+          d: "{{ kubeapp_dir }}/cert-manager"
 
     - name: Deploying cert-manager using flux-controller...
       ansible.builtin.shell: |
@@ -75,6 +82,11 @@
       args:
         executable: /bin/bash
         chdir: "{{ kubeapp_dir }}/cert-manager"
+      ignore_errors: yes
+      register: flux_certmanager_deploy
+      until: flux_certmanager_deploy.rc == 0
+      retries: 10
+      delay: 60
 
     - name: Deploying cert-manager-issuer...
       ansible.builtin.shell: |
@@ -88,7 +100,7 @@
       retries: 10
       delay: 60
 
-    - name: Deploying cilium-ip-pool for the load-balancer...
+    - name: Deploying cilium-ip-pool for LB-IPAM...
       ansible.builtin.shell: |
         KUBECONFIG={{ kubeconfig }} kubectl apply -f cilium-ip-pool.yaml
       args:
@@ -97,5 +109,17 @@
       ignore_errors: yes
       register: ippool_check
       until: ippool_check.rc == 0
+      retries: 10
+      delay: 60
+
+    - name: Deploying cilium-l2-announcement-policy for LB-IPAM...
+      ansible.builtin.shell: |
+        KUBECONFIG={{ kubeconfig }} kubectl apply -f cilium-l2announcement-policy.yaml
+      args:
+        executable: /bin/bash
+        chdir: "{{ kubeapp_dir }}/cert-manager"
+      ignore_errors: yes
+      register: l2announcement_check
+      until: l2announcement_check.rc == 0
       retries: 10
       delay: 60

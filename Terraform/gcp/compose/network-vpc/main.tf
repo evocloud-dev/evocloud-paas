@@ -32,7 +32,7 @@ resource "google_compute_firewall" "firewall_rules_ingress_internal" {
   description = "Allow internal traffic on Main VPC"
   network     = google_compute_network.main.name
   direction   = "INGRESS"
-  source_ranges = ["${var.DMZ_SUBNET_CIDR}", "${var.ADMIN_SUBNET_CIDR}", "${var.BACKEND_SUBNET_CIDR}"]
+  source_ranges = ["${var.DMZ_SUBNET_CIDR}", "${var.ADMIN_SUBNET_CIDR}", "${var.BACKEND_SUBNET_CIDR}", "${var.ADMIN_SUBNET_CIDR_LBIPAM}"]
 
   allow {
     protocol = "icmp"

@@ -146,6 +146,11 @@ variable "GCP_METADATA_NS" {
   type        = string
 }
 
+variable "ADMIN_SUBNET_CIDR_LBIPAM" {
+  description = "ADMIN Subnet CIDR for Cilium Loadbalancer LB-IPAM"
+  type        = string
+}
+
 variable "admin_subnet_name" {
   description = "Output for ADMIN Subnet Name"
   type        = string
