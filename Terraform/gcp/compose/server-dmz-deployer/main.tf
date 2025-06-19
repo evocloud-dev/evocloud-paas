@@ -95,6 +95,11 @@ resource "terraform_data" "staging_automation_code" {
   }
 
   provisioner "file" {
+    source        = "/etc/ansible/ansible.cfg"
+    destination   = "/home/${var.CLOUD_USER}/ansible.cfg"
+  }
+
+  provisioner "file" {
     source        = var.PRIVATE_KEY_PAIR
     destination   = "/home/${var.CLOUD_USER}/gcp-evocloud.pem"
   }
