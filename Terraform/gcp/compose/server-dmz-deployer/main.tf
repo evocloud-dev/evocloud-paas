@@ -96,7 +96,7 @@ resource "terraform_data" "staging_automation_code" {
 
   provisioner "file" {
     source        = "/etc/ansible/ansible.cfg"
-    destination   = "/home/${var.CLOUD_USER}/ansible.cfg"
+    destination   = "/tmp/ansible.cfg"
   }
 
   provisioner "file" {
