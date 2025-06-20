@@ -25,3 +25,13 @@
 - name: Installing Ansible Community.mysql Collection...
   ansible.builtin.shell: "/usr/bin/ansible-galaxy collection install community.mysql"
   #become: true #Commented this out to enable installation of collection in /home/mlkroot/.ansible
+
+- name: Copy ansible.cfg to /etc/ansible
+  ansible.builtin.copy:
+    src: "/home/{{ cloud_user }}/ansible.cfg"
+    dest: "/etc/ansible/ansible.cfg"
+    owner: root
+    group: root
+    mode: '0644'
+    remote_src: yes
+  become: true
