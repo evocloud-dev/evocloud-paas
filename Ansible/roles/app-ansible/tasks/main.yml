@@ -28,10 +28,16 @@
 
 - name: Copy ansible.cfg to /etc/ansible
   ansible.builtin.copy:
-    src: "/home/{{ cloud_user }}/ansible.cfg"
+    src: "/tmp/ansible.cfg"
     dest: "/etc/ansible/ansible.cfg"
     owner: root
     group: root
     mode: '0644'
     remote_src: yes
+  become: true
+
+- name: Remove ansible.cfg in /tmp
+  ansible.builtin.file:
+    path: /tmp/ansible.cfg
+    state: absent
   become: true
