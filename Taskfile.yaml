@@ -104,7 +104,7 @@ tasks:
           ACTION: "{{.BUILD_CMD}}"
 
   build-evo-cluster-mgr:
-    desc: "Build Full EvoCloud Kube Cluster"
+    desc: "Build EvoCloud Full Kube Cluster"
     deps: [copy-files]
     cmds:
       - echo "Building Full EvoCloud Kube Cluster"
@@ -167,7 +167,7 @@ tasks:
           ACTION: "{{.CLUSTER_DESTROY_CMD}}"
 
   destroy-evo-cluster-mgr:
-    desc: "Destroy Full EvoCloud Kube Cluster"
+    desc: "Destroy EvoCloud Full  Kube Cluster"
     deps: [copy-files]
     cmds:
       - echo "Destroying EvoCloud Full Kube Cluster"
