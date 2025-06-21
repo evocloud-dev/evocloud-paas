@@ -33,7 +33,7 @@ tasks:
   copy-files:
     # Task only runs if one or more status commands not satisfied"
     # Files: gcp-evocloud.pem, gcp-evocloud.pub, ansible-vault-pass.txt, secret-store.yml and root.hcl
-    desc: "Copies files from /mnt inside container to their respective locations."
+    desc: "Copies files from mount directory inside container to their respective locations."
     status:
       - "ls -al /etc/pki/tls | grep gcp-evocloud.pem"
       - "ls -al /etc/pki/tls | grep gcp-evocloud.pub"
