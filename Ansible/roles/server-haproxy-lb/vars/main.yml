@@ -1,0 +1,8 @@
+---
+upstream_servers: '' #backend server IPs in comma separated with no space. ie: server1.ip,server2.ip
+
+ports_list: [] #This variable takes a list of port numbers
+
+haproxy_version: '1.8.31'
+
+haproxy_package: 'https://packages.zenetys.com/latest/redhat/8/RPMS/x86_64/haproxy18z-{{ haproxy_version }}-2.el8.zenetys.x86_64.rpm'

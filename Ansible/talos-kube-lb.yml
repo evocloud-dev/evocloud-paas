@@ -12,5 +12,5 @@
     - app-dnsmasq #Needed by GCP Compute Instances
     - config-freeipa-client
     - config-freeipa-certs
-    - server-nginx-lb
+    - server-haproxy-lb
     - app-fail2ban
