@@ -1,0 +1,9 @@
+---
+- name: Restarting haproxy...
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: restarted
+    enabled: true
+  loop:
+    - 'haproxy'
+  become: true

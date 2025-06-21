@@ -1,0 +1,69 @@
+---
+#Reference: https://itnext.io/create-a-highly-available-kubernetes-cluster-using-keepalived-and-haproxy-37769d0a65ba
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: server-haproxy-lb ##################"
+
+# Installing haproxy packages
+- name: Installing haproxy packages...
+  ansible.builtin.dnf:
+    name: '{{ haproxy_package }}'
+    state: present
+    disable_gpg_check: yes
+  become: true
+
+#Reverse DNS Entry
+- name: Fetching the server IP...
+  ansible.builtin.shell: "/usr/bin/hostname -I | awk '{print $1}'"
+  register: fetched_ip
+  become: true
+
+- name: Printing IP for host to register...
+  ansible.builtin.debug:
+    msg: "{{ fetched_ip.stdout | trim }}"
+
+# Set SELinux boolean for haproxy
+- name: Setting SELinux booleans for haproxy...
+  ansible.posix.seboolean:
+    name: "{{ item }}"
+    state: yes
+    persistent: yes
+  loop:
+    - httpd_can_network_connect
+    - httpd_can_network_connect_db
+    - httpd_setrlimit
+  become: true
+
+- name: Adding required ports to http_port_t...
+  community.general.seport:
+    ports: "{{ item }}"
+    proto: tcp
+    setype: http_port_t
+    state: present
+  with_items: "{{ ports_list }}"
+  become: true
+
+# Setting up haproxy.cfg
+- name: Configuring haproxy.cfg as a load balancer...
+  ansible.builtin.template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+  become: true
+  notify: Restarting haproxy...
+
+#Enable and start haproxy
+- name: Enabling and starting haproxy...
+  ansible.builtin.systemd:
+    name: haproxy
+    state: started
+    enabled: true
+  become: true
+
+# Enable firewall rules
+- name: Enabling firewall rules...
+  ansible.posix.firewalld:
+    port: "{{ item }}/tcp"
+    permanent: yes
+    immediate: yes
+    state: enabled
+  with_items: "{{ ports_list }}"
+  become: true
