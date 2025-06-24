@@ -368,7 +368,7 @@ data "talos_machine_configuration" "talos_controlplane" {
           }
           dnsDomain = "cluster.local"
           podSubnets = ["10.244.0.0/16"]
-          serviceSubnets = ["10.96.0.0/12"]
+          serviceSubnets = ["10.96.0.0/18"]
         }
         proxy = {
           disabled = true
@@ -478,7 +478,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm repo add cilium https://helm.cilium.io/
                           helm repo update
                           helm upgrade --install cilium cilium/cilium \
-                          --version 1.17.4 \
+                          --version 1.17.5 \
                           --namespace kube-system \
                           --set k8sServiceHost=localhost \
                           --set k8sServicePort=7445 \
@@ -490,7 +490,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
                           --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
                           --set l2announcements.enabled=true \
-                          --set l2announcements.leaseDuration=10s \
+                          --set l2announcements.leaseDuration=15s \
                           --set l2announcements.leaseRenewDeadline=5s \
                           --set l2announcements.leaseRetryPeriod=1s \
                           --set envoyConfig.enabled=true \
@@ -504,6 +504,12 @@ data "talos_machine_configuration" "talos_controlplane" {
                           --set hubble.ui.rollOutPods=true \
                           --set ipam.mode=kubernetes \
                           --set kubeProxyReplacement=true \
+                          --set bpf.masquerade=true \
+                          --set bpf.preallocateMaps=true \
+                          --set bpf.tproxy=true \
+                          --set bandwidthManager.enabled=true \
+                          --set bandwidthManager.bbr=true \
+                          --set bpf.datapathMode=netkit \
                           --set maglev.tableSize=65521 \
                           --set loadBalancer.algorithm=maglev \
                           --set operator.rollOutPods=true \
@@ -692,7 +698,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install flux-operator oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator \
                             --namespace flux-system \
                             --create-namespace \
-                            --version 0.21.0 \
+                            --version 0.23.0 \
                             --wait
                     restartPolicy: OnFailure
                     serviceAccount: flux-install
@@ -1379,7 +1385,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install kyverno kyverno/kyverno \
                             --namespace kyverno \
                             --create-namespace \
-                            --version 3.4.1 \
+                            --version 3.4.3 \
                             --set admissionController.replicas=3 \
                             --set backgroundController.replicas=2 \
                             --set cleanupController.replicas=2 \
