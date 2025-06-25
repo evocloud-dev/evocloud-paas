@@ -499,9 +499,6 @@ data "talos_machine_configuration" "talos_controlplane" {
                           --set gatewayAPI.enableAlpn=true \
                           --set-string gatewayAPI.gatewayClass.create=true \
                           --set externalIPs.enabled=true \
-                          --set hubble.relay.enabled=true \
-                          --set hubble.ui.enabled=true \
-                          --set hubble.ui.rollOutPods=true \
                           --set ipam.mode=kubernetes \
                           --set kubeProxyReplacement=true \
                           --set bpf.masquerade=true \
@@ -510,6 +507,8 @@ data "talos_machine_configuration" "talos_controlplane" {
                           --set bandwidthManager.enabled=true \
                           --set bandwidthManager.bbr=true \
                           --set bpf.datapathMode=netkit \
+                          --set operator.prometheus.enabled=true \
+                          --set prometheus.enabled=true \
                           --set maglev.tableSize=65521 \
                           --set loadBalancer.algorithm=maglev \
                           --set operator.rollOutPods=true \
