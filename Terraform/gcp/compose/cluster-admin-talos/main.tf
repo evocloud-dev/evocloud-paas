@@ -367,8 +367,8 @@ data "talos_machine_configuration" "talos_controlplane" {
             name = "none"
           }
           dnsDomain = "cluster.local"
-          podSubnets = ["10.244.0.0/16"]
-          serviceSubnets = ["10.96.0.0/18"]
+          podSubnets = ["10.17.0.0/17"]
+          serviceSubnets = ["10.17.128.0/17"]
         }
         proxy = {
           disabled = true
@@ -509,7 +509,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           --set bpf.datapathMode=netkit \
                           --set routingMode=native \
                           --set autoDirectNodeRoutes=true \
-                          --set ipv4NativeRoutingCIDR="10.10.20.0/24" \
+                          --set ipv4NativeRoutingCIDR="10.100.0.0/16" \
                           --set endpointRoutes.enabled=true \
                           --set operator.prometheus.enabled=true \
                           --set prometheus.enabled=true \
