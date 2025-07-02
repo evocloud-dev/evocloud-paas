@@ -44,6 +44,19 @@ resource "google_compute_instance" "idam_replica_server" {
     provisioning_model = "SPOT" #SPOT | STANDARD
     instance_termination_action = "STOP" #DELETE | STOP
   }
+
+  # This ensures cloud-init completes before considering the resource created
+  provisioner "remote-exec" {
+    inline = [
+      "echo 'Instance is ready'",
+    ]
+    connection {
+      host        = self.network_interface[0].network_ip
+      type        = "ssh"
+      user        = var.CLOUD_USER
+      private_key = file(var.PRIVATE_KEY_PAIR)
+    }
+  }
 }
 
 #--------------------------------------------------
