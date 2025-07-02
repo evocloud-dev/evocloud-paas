@@ -39,11 +39,11 @@ inputs = {
   ###########################################################################
   # Network Configurations
   ###########################################################################
-  DMZ_SUBNET_CIDR           = "10.10.10.0/24"
-  ADMIN_SUBNET_CIDR         = "10.10.20.0/24"
-  BACKEND_SUBNET_CIDR       = "10.10.30.0/24"
+  DMZ_SUBNET_CIDR           = "10.10.0.0/16"
+  ADMIN_SUBNET_CIDR         = "10.100.0.0/16"
+  BACKEND_SUBNET_CIDR       = "10.200.0.0/16"
   #Cilium Loadbalancer LB-IPAM
-  ADMIN_SUBNET_CIDR_LBIPAM  = "10.10.21.0/24"
+  ADMIN_SUBNET_CIDR_LBIPAM  = "10.250.0.0/16"
 
   ###########################################################################
   # DMZ Controller Host
@@ -59,7 +59,7 @@ inputs = {
   ###########################################################################
   IDAM_SHORT_HOSTNAME   = "evoidp"
   BASE_IPASERVER_IMG    = "evocloud-rocky8-b0-1-0"
-  IDAM_PRIVATE_IP       = "10.10.20.5"
+  IDAM_PRIVATE_IP       = "10.100.20.5"
   IDAM_INSTANCE_SIZE    = "e2-medium"
   IDAM_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
@@ -67,7 +67,7 @@ inputs = {
   # IDAM Identity and Access Management Replica Server
   ###########################################################################
   IDAM_REPLICA_SHORT_HOSTNAME   = "evoidpr"
-  IDAM_REPLICA_PRIVATE_IP       = "10.10.20.10"
+  IDAM_REPLICA_PRIVATE_IP       = "10.100.20.10"
   IDAM_REPLICA_INSTANCE_SIZE    = "e2-medium"
   IDAM_REPLICA_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
