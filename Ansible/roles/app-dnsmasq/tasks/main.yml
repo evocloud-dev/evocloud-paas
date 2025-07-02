@@ -9,7 +9,7 @@
   ansible.builtin.dnf:
     name: "{{ item }}"
     state: present
-    update_cache: yes
+    #update_cache: yes
     #download_only: true
     #download_dir: /tmp
   loop: "{{ dnsmasq_packages }}"

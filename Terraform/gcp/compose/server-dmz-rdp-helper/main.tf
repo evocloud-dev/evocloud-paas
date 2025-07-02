@@ -1,7 +1,15 @@
 #--------------------------------------------------
 # Ansible Configuration Management Code
 #--------------------------------------------------
+resource "terraform_data" "force_helper" {
+  input = timestamp()
+}
+
 resource "terraform_data" "rdp_deployment" {
+  lifecycle {
+    replace_triggered_by = [terraform_data.force_helper]
+  }
+
   #Connection to bastion host (DEPLOYER_Server)
   connection {
     host        = var.deployer_server_eip
