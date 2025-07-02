@@ -7,7 +7,7 @@
   ansible.builtin.dnf:
     name: "{{ item }}"
     state: present
-    update_cache: yes
+    #update_cache: yes
   loop: "{{ required_packages }}"
   register: packages_install
   until: packages_install is succeeded

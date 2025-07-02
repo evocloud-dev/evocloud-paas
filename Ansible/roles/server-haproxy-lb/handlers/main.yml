@@ -3,7 +3,7 @@
   ansible.builtin.service:
     name: "{{ item }}"
     state: restarted
-    enabled: true
+    enabled: yes
   loop:
     - 'haproxy'
   become: true

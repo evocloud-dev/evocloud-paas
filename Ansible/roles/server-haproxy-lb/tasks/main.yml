@@ -55,7 +55,7 @@
   ansible.builtin.systemd:
     name: haproxy
     state: started
-    enabled: true
+    enabled: yes
   become: true
 
 # Enable firewall rules

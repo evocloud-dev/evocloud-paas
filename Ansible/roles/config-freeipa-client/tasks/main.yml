@@ -39,7 +39,7 @@
   ansible.builtin.dnf:
     name: "{{ freeipa_module }}"
     state: present
-    update_cache: yes
+    #update_cache: yes
     #download_only: true
     #download_dir: /tmp/freeipa-packages
   register: freeipa_module_succeeded

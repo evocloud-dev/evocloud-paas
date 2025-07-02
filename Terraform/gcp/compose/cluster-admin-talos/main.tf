@@ -507,6 +507,10 @@ data "talos_machine_configuration" "talos_controlplane" {
                           --set bandwidthManager.enabled=true \
                           --set bandwidthManager.bbr=true \
                           --set bpf.datapathMode=netkit \
+                          --set routingMode=native \
+                          --set autoDirectNodeRoutes=true \
+                          --set ipv4NativeRoutingCIDR="10.10.20.0/24" \
+                          --set endpointRoutes.enabled=true \
                           --set operator.prometheus.enabled=true \
                           --set prometheus.enabled=true \
                           --set maglev.tableSize=65521 \
