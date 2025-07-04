@@ -328,9 +328,6 @@ data "talos_machine_configuration" "talos_controlplane" {
               UserNamespacesPodSecurityStandards = true
             }
           }
-          #nodeIP = {
-          #  validSubnets = ["10.100.0.0/16"]
-          #}
         }
         features = {
           kubernetesTalosAPIAccess = {
@@ -508,6 +505,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           --set externalIPs.enabled=true \
                           --set ipam.mode=kubernetes \
                           --set kubeProxyReplacement=true \
+                          --set kubeProxyReplacementHealthzBindAddr="0.0.0.0:10256" \
                           --set bpf.masquerade=true \
                           --set bpf.preallocateMaps=true \
                           --set bpf.tproxy=true \
