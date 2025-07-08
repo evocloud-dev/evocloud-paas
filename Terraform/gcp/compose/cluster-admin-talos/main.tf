@@ -505,22 +505,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           --set externalIPs.enabled=true \
                           --set ipam.mode=kubernetes \
                           --set kubeProxyReplacement=true \
-                          --set kubeProxyReplacementHealthzBindAddr="0.0.0.0:10256" \
-                          --set bpf.masquerade=true \
-                          --set bpf.preallocateMaps=true \
-                          --set bpf.tproxy=true \
-                          --set bandwidthManager.enabled=true \
-                          --set bandwidthManager.bbr=true \
-                          --set bpf.datapathMode=netkit \
-                          --set routingMode=native \
-                          --set autoDirectNodeRoutes=true \
-                          --set directRoutingSkipUnreachable=true \
-                          --set ipv4NativeRoutingCIDR="10.100.0.0/16" \
-                          --set endpointRoutes.enabled=true \
-                          --set operator.prometheus.enabled=true \
-                          --set prometheus.enabled=true \
                           --set maglev.tableSize=65521 \
-                          --set loadBalancer.algorithm=maglev \
                           --set operator.rollOutPods=true \
                           --set cgroup.autoMount.enabled=false \
                           --set cgroup.hostRoot=/sys/fs/cgroup \
@@ -1601,8 +1586,8 @@ resource "terraform_data" "kubeapp_gateway" {
 
   provisioner "local-exec" {
     command = <<EOF
-      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapp-gateway-endpoint.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} kubeapp_shortname=evomonitoring kubeapp_namespace=monitoring kubeapp_backend_svc=kube-promstack-stack-grafana kubeapp_backend_svc_port=80 gateway_lb_ip=10.250.0.10'
-      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapp-gateway-endpoint.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} kubeapp_shortname=evodashboard kubeapp_namespace=headlamp kubeapp_backend_svc=headlamp kubeapp_backend_svc_port=80 gateway_lb_ip=10.250.0.11'
+      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapp-gateway-endpoint.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} kubeapp_shortname=evomonitoring kubeapp_namespace=monitoring kubeapp_backend_svc=kube-promstack-stack-grafana kubeapp_backend_svc_port=80 gateway_lb_ip=10.100.250.10'
+      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapp-gateway-endpoint.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} kubeapp_shortname=evodashboard kubeapp_namespace=headlamp kubeapp_backend_svc=headlamp kubeapp_backend_svc_port=80 gateway_lb_ip=10.100.250.11'
     EOF
     #Ansible logs
     environment = {
