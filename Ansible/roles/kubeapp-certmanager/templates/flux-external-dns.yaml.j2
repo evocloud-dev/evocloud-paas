@@ -1,0 +1,72 @@
+---
+############################################
+#DEPLOYING External-DNS
+############################################
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: external-dns
+  namespace: {{ certmanager_namespace }}
+spec:
+  interval: 24h
+  url: https://kubernetes-sigs.github.io/external-dns/
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: external-dns-stack
+  namespace: {{ certmanager_namespace }}
+spec:
+  chart:
+    spec:
+      chart: external-dns
+      sourceRef:
+        kind: HelmRepository
+        name: external-dns
+      version: "{{ external_dns_min_ver }}.*"
+  interval: 30m0s
+  timeout: 25m0s
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 2
+    #cleanupOnFail: true
+  driftDetection:
+    mode: enabled
+  values:
+    provider:
+      name: rfc2136
+      env:
+        - name: EXTERNAL_DNS_RFC2136_HOST
+          value: "{{ idam_server_ip }}"
+        - name: EXTERNAL_DNS_RFC2136_PORT
+          value: "53"
+        - name: EXTERNAL_DNS_RFC2136_ZONE
+          value: {{ domain_tld }}
+        - name: EXTERNAL_DNS_RFC2136_TSIG_AXFR
+          value: "true"
+        - name: EXTERNAL_DNS_RFC2136_TSIG_KEYNAME
+          value: {{ tsig_secret_name }}
+        - name: EXTERNAL_DNS_RFC2136_TSIG_SECRET_ALG
+          value: hmac-sha512
+        - name: EXTERNAL_DNS_RFC2136_TSIG_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: {{ tsig_secret_name }}
+              key: secret
+      policy: sync
+      registry: txt
+      txtOwnerId: k8s-external-dns
+      txtPrefix: external-dns-
+      sources:
+        - crd
+        - service
+        - ingress
+        - gateway
+        - gateway-httproute
+      domainFilters:
+        - {{ domain_tld }}
+      serviceMonitor:
+        enabled: true

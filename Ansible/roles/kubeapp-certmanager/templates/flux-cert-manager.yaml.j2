@@ -23,7 +23,7 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: jetstack
-      version: "{{ certmanager_minor_ver }}.*"
+      version: "{{ certmanager_min_ver }}.*"
   interval: 30m0s
   timeout: 25m0s
   install:
