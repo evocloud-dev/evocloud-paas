@@ -285,7 +285,7 @@
   ansible.builtin.shell: |
     /bin/kinit admin <<< {{ freeipa_admin_passwd }}
     ipa dnszone-mod {{ domain_tld }} --dynamic-update=True --update-policy='grant cert-manager-acme wildcard * TXT;'
-    ipa dnszone-mod {{ domain_tld }} --dynamic-update=True --update-policy='grant cert-manager-acme subdomain any;'
+    ipa dnszone-mod {{ domain_tld }} --dynamic-update=True --update-policy='grant cert-manager-acme zonesub ANY;'
   become: true
   no_log: true
 
