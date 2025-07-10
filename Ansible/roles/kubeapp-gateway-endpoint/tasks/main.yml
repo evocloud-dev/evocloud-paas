@@ -5,27 +5,6 @@
 - ansible.builtin.debug:
     msg: "########### STARTING ANSIBLE ROLE: kubeapp-gateway-endpoint ##############"
 
-- name: Initializing Kerberos token with kinit...
-  ansible.builtin.shell: "/bin/kinit admin <<< {{ freeipa_admin_passwd }}"
-  become: true
-  delegate_to: '{{ idam_server_ip }}'
-
-#DNS A Record for Kubernetes App Endpoint
-- name: Creating dns record entry for kubeapp...
-  community.general.ipa_dnsrecord:
-    name: "{{ kubeapp_shortname }}"
-    record_type: "A"
-    zone_name: "{{ domain_tld }}"
-    record_value: "{{ gateway_lb_ip }}"
-    state: present
-    ipa_host: "{{ idam_short_hostname }}.{{ domain_tld }}"
-    ipa_user: "admin"
-    ipa_pass: "{{ freeipa_admin_passwd }}"
-    ipa_timeout: 30
-    validate_certs: no
-  become: true
-  delegate_to: '{{ idam_server_ip }}'
-
 - name: Staging directory for gateway-endpoints...
   ansible.builtin.file:
     path: "{{ kubeapp_dir }}/gateway-endpoints"

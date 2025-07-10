@@ -38,35 +38,40 @@ spec:
   values:
     provider:
       name: rfc2136
-      env:
-        - name: EXTERNAL_DNS_RFC2136_HOST
-          value: "{{ idam_server_ip }}"
-        - name: EXTERNAL_DNS_RFC2136_PORT
-          value: "53"
-        - name: EXTERNAL_DNS_RFC2136_ZONE
-          value: {{ domain_tld }}
-        - name: EXTERNAL_DNS_RFC2136_TSIG_AXFR
-          value: "true"
-        - name: EXTERNAL_DNS_RFC2136_TSIG_KEYNAME
-          value: {{ tsig_secret_name }}
-        - name: EXTERNAL_DNS_RFC2136_TSIG_SECRET_ALG
-          value: hmac-sha512
-        - name: EXTERNAL_DNS_RFC2136_TSIG_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: {{ tsig_secret_name }}
-              key: secret
-      policy: sync
-      registry: txt
-      txtOwnerId: k8s-external-dns
-      txtPrefix: external-dns-
-      sources:
-        - crd
-        - service
-        - ingress
-        - gateway
-        - gateway-httproute
-      domainFilters:
-        - {{ domain_tld }}
-      serviceMonitor:
-        enabled: true
+    env:
+      - name: EXTERNAL_DNS_RFC2136_HOST
+        value: "{{ idam_server_ip }}"
+      - name: EXTERNAL_DNS_RFC2136_PORT
+        value: "53"
+      - name: EXTERNAL_DNS_RFC2136_ZONE
+        value: {{ domain_tld }}
+      - name: EXTERNAL_DNS_RFC2136_TSIG_AXFR
+        value: "true"
+      - name: EXTERNAL_DNS_RFC2136_TSIG_KEYNAME
+        value: cert-manager-acme
+      - name: EXTERNAL_DNS_RFC2136_TSIG_SECRET_ALG
+        value: hmac-sha512
+      - name: EXTERNAL_DNS_RFC2136_INSECURE
+        value: "true"
+      - name: EXTERNAL_DNS_RFC2136_TSIG_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: {{ tsig_secret_name }}
+            key: secret
+    policy: sync
+    registry: txt
+    txtOwnerId: k8s-external-dns
+    txtPrefix: external-dns-
+    sources:
+      - crd
+      - service
+      - ingress
+      - gateway-httproute
+      - gateway-grpcroute
+      - gateway-tlsroute
+      - gateway-tcproute
+      - gateway-udproute
+    domainFilters:
+      - {{ domain_tld }}
+    serviceMonitor:
+      enabled: true
