@@ -43,7 +43,7 @@ inputs = {
   ADMIN_SUBNET_CIDR         = "10.100.0.0/16"
   BACKEND_SUBNET_CIDR       = "10.200.0.0/16"
   #Cilium Loadbalancer LB-IPAM
-  ADMIN_SUBNET_CIDR_LBIPAM  = "10.250.0.0/16"
+  ADMIN_SUBNET_CIDR_LBIPAM  = "10.100.0.0/24"
 
   ###########################################################################
   # DMZ Controller Host
