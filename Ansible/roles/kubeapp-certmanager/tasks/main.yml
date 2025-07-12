@@ -16,10 +16,13 @@
 
 - when: kube_deploy_check.rc == 0  # RC (return code) 0 means Kubernetes is fully bootstrapped
   block:
-    - name: Staging directory for cert-manager...
+    - name: Staging directory for cert-manager and external-dns...
       ansible.builtin.file:
-        path: "{{ kubeapp_dir }}/cert-manager"
+        path: "{{ item }}"
         state: directory
+      loop:
+        - "{{ kubeapp_dir }}/cert-manager"
+        - "{{ kubeapp_dir }}/external-dns"
 
     - name: Creating a namespace for cert-manager...
       ansible.builtin.shell: |
@@ -100,6 +103,28 @@
       retries: 10
       delay: 60
 
+    #Deploying external-dns via flux controller
+    - name: Staging external-dns manifests...
+      ansible.builtin.template:
+        src: '{{ item.f }}.j2'
+        dest: '{{ item.d }}/{{ item.f }}'
+      with_items:
+        - f: 'flux-external-dns.yaml'
+          d: "{{ kubeapp_dir }}/external-dns"
+
+    - name: Deploying external-dns using flux-controller...
+      ansible.builtin.shell: |
+        KUBECONFIG={{ kubeconfig }} kubectl get hr external-dns-stack -n {{ certmanager_namespace }} || KUBECONFIG={{ kubeconfig }} kubectl apply -f flux-external-dns.yaml
+      args:
+        executable: /bin/bash
+        chdir: "{{ kubeapp_dir }}/external-dns"
+      ignore_errors: yes
+      register: flux_externaldns_deploy
+      until: flux_externaldns_deploy.rc == 0
+      retries: 10
+      delay: 60
+
+    #Deploying Cilium Loadbalancer IP Pool and L2Annonouncement
     - name: Deploying cilium-ip-pool for LB-IPAM...
       ansible.builtin.shell: |
         KUBECONFIG={{ kubeconfig }} kubectl apply -f cilium-ip-pool.yaml

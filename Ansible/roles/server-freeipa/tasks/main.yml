@@ -69,6 +69,7 @@
   args:
     creates: /opt/freeipa_installed
   register: freeipa_init_succeeded
+  no_log: true
   become: true
 
 - name: Creating freeipa_installed file after successful initialization...
@@ -87,6 +88,7 @@
     ipa_user: admin
     ipa_pass: "{{ freeipa_admin_passwd }}"
   loop: "{{ freeipa_groups }}"
+  no_log: true
   become: true
 
 - name: Creating rules to manage FreeIPA sudo rules...
@@ -103,6 +105,7 @@
     ipa_user: admin
     ipa_pass: "{{ freeipa_admin_passwd }}"
   become: true
+  no_log: true
   ignore_errors: true
 
 - name: Configuring FreeIPA password policy for global_policy group...
@@ -118,6 +121,7 @@
     ipa_host: "{{ freeipa_server_fqdn }}"
     ipa_user: admin
     ipa_pass: "{{ freeipa_admin_passwd }}"
+  no_log: true
   become: true
 
 - name: Enabling audit logging on FreeIPA server...
@@ -143,6 +147,7 @@
   args:
     creates: /opt/freeipa_audit_log
   register: freeipa_audit_log_created
+  no_log: true
   become: true
 
 - name: Creating freeipa_audit_log file after enabling logging
@@ -178,6 +183,7 @@
     validate_certs: no
   register: dns_reverse_zone
   ignore_errors: true
+  no_log: true
   become: true
 
 - name: Creating PTR record for a reverse DNS record...
@@ -192,6 +198,7 @@
     ipa_pass: "{{ freeipa_admin_passwd }}"
     ipa_timeout: 30
     validate_certs: no
+  no_log: true
   become: true
 
 #Tunning SSSD and Clearing Cache
@@ -278,4 +285,35 @@
   ansible.builtin.shell: |
     /bin/kinit admin <<< {{ freeipa_admin_passwd }}
     ipa dnszone-mod {{ domain_tld }} --dynamic-update=True --update-policy='grant cert-manager-acme wildcard * TXT;'
+    ipa dnszone-mod {{ domain_tld }} --dynamic-update=True --update-policy='grant cert-manager-acme zonesub ANY;'
+  become: true
+  no_log: true
+
+# external-dns requires zone transfers, which is required for deletion of records.
+- name: Setting facts for Domain TLD...
+  ansible.builtin.set_fact:
+    domain_tld1: "{{ domain_tld.split('.')[0] }}"
+    domain_tld2: "{{ domain_tld.split('.')[1] }}"
+  become: true
+
+- name: Enabling zone transfers on FreeIPA server...
+  ansible.builtin.shell: |
+    /usr/bin/ldapmodify -D "cn=Directory Manager" -w {{ directory_manager_passwd }} -x  << EOF
+    dn: idnsname={{ domain_tld }}.,cn=dns,dc={{ domain_tld1 }},dc={{ domain_tld2 }}
+    changetype: modify
+    replace: idnsAllowTransfer
+    idnsAllowTransfer: key cert-manager-acme;
+    -
+    EOF
+  args:
+    creates: /opt/freeipa_zone_transfers
+  register: freeipa_zone_transfers_created
+  no_log: true
+  become: true
+
+- name: Creating zone transfers check file...
+  ansible.builtin.file:
+    path: "/opt/freeipa_zone_transfers"
+    state: touch
+  when: freeipa_zone_transfers_created.rc == 0
   become: true

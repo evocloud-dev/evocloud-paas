@@ -15,8 +15,10 @@ kubeapp_dir: '/home/{{ cloud_user }}/kubeapps'
 
 kubeconfig: '/home/{{ cloud_user }}/kubeconfig/kubeconfig-{{ kube_cluster_name }}.yaml'
 
-certmanager_minor_ver: v1.17
+certmanager_min_ver: v1.17
 
 certmanager_namespace: cert-manager
 
 tsig_secret_name: ipa-tsig
+
+external_dns_min_ver: 1.17
