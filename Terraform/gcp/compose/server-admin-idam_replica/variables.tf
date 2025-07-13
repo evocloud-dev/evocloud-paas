@@ -13,6 +13,11 @@ variable "GCP_VPC" {
   type        = string
 }
 
+variable "USE_SPOT" {
+  description = "Use Ephemeral VM Instances that can be Terminated"
+  type        = bool
+}
+
 variable "CLOUD_USER" {
   description = "Server Default Login User"
   type        = string
@@ -96,6 +101,11 @@ variable "GCP_METADATA_NS" {
 variable "CLOUD_PLATFORM" {
   description = "IaaS Infrastructure"
   type        = string
+}
+
+variable "use_spot" {
+  description = "Use Ephemeral VM Instances that can be Terminated"
+  type        = bool
 }
 
 variable "admin_subnet_name" {

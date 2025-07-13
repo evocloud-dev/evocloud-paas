@@ -14,6 +14,7 @@ inputs = {
   cluster_post_config_revision = "0.1.0"
   kubeapp_gateway_revision  = "0.1.0"
   create_talos_img          = true
+  use_spot                  = true
 }
 
 #--------------------------------------------------

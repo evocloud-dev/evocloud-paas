@@ -8,6 +8,7 @@ inputs = {
   idam_server_ip        = dependency.server-admin-idam.outputs.private_ip
   idam_replica_ip       = dependency.server-admin-idam_replica.outputs.private_ip
   evoharbor_revision    = "0.1.0"
+  use_spot              = true
 }
 
 #--------------------------------------------------

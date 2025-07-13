@@ -7,6 +7,7 @@ inputs = {
   deployer_server_eip   = dependency.server-dmz-deployer.outputs.public_ip
   idam_server_ip        = dependency.server-admin-idam.outputs.private_ip
   idam_replica_revision = "0.1.0"
+  use_spot              = true
 }
 
 #--------------------------------------------------

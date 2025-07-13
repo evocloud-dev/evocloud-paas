@@ -91,6 +91,11 @@ variable "GCP_METADATA_NS" {
   default     = "169.254.169.254"
 }
 
+variable "use_spot" {
+  description = "Use Ephemeral VM Instances that can be Terminated"
+  type        = bool
+}
+
 variable "dmz_subnet_name" {
   description = "Output for DMZ Subnet Name"
   type        = string

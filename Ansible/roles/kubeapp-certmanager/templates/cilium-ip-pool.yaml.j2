@@ -5,6 +5,6 @@ metadata:
   name: "cilium-ip-pool-01"
 spec:
   blocks:
-    - cidr: "{{ admin_cilium_lbipam_cidr }}"
-    #- start: "10.10.20.100"
-    #  stop: "10.10.20.150"
+    #- cidr: "{{ admin_cilium_lbipam_cidr }}"
+    - start: "{{ admin_cilium_lbipam_cidr }}"
+      stop: "{{ admin_cilium_lbipam_cidr }}"

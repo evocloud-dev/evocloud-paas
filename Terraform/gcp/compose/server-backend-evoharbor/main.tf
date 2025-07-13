@@ -42,7 +42,7 @@ resource "google_compute_instance" "evoharbor_server" {
   scheduling {
     preemptible = true
     automatic_restart = false
-    provisioning_model = "SPOT" #SPOT | STANDARD
+    provisioning_model = var.use_spot ? "SPOT" : "STANDARD"
     instance_termination_action = "STOP" #DELETE | STOP
   }
 
