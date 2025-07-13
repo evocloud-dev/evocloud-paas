@@ -8,6 +8,7 @@ inputs = {
   DOMAIN_TLD      = "evocloud.dev"
   GCP_METADATA_NS = "169.254.169.254" #Changes depending on zone
   CLOUD_PLATFORM  = "gcp"
+  USE_SPOT        = true
 
   ###########################################################################
   # Common Variables

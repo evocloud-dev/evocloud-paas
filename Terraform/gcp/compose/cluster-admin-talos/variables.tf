@@ -151,6 +151,11 @@ variable "ADMIN_SUBNET_CIDR_LBIPAM" {
   type        = string
 }
 
+variable "use_spot" {
+  description = "Use Ephemeral VM Instances that can be Terminated"
+  type        = bool
+}
+
 variable "admin_subnet_name" {
   description = "Output for ADMIN Subnet Name"
   type        = string

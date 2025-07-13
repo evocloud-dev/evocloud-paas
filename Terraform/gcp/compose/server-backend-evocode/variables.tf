@@ -83,6 +83,11 @@ variable "GCP_METADATA_NS" {
   type        = string
 }
 
+variable "use_spot" {
+  description = "Use Ephemeral VM Instances that can be Terminated"
+  type        = bool
+}
+
 variable "backend_subnet_name" {
   description = "Output for BACKEND Subnet Name"
   type        = string

@@ -5,6 +5,7 @@
 inputs = {
   dmz_subnet_name       = dependency.network-subnet.outputs.dmz_subnet_name
   deployer_revision     = "0.1.0"
+  use_spot              = true
 
 }
 

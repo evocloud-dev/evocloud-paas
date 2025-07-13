@@ -88,6 +88,11 @@ variable "CLOUD_PLATFORM" {
   type        = string
 }
 
+variable "use_spot" {
+  description = "Use Ephemeral VM Instances that can be Terminated"
+  type        = bool
+}
+
 variable "dmz_subnet_name" {
   description = "Output for DMZ Subnet Name"
   type        = string

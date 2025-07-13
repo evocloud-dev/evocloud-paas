@@ -11,6 +11,18 @@
 #           https://medium.com/@tijmen.vandenbrink/ciliums-load-balancing-the-l2-way-0fdbc8bbeb60
 # Talos Machine Config Parameters: https://www.talos.dev/v1.9/reference/configuration/v1alpha1/config/
 
+#--------------------------------------------------
+# Gateway LoadBalancer IP
+#--------------------------------------------------
+resource "google_compute_address" "gateway_vip" {
+  name         = "${var.cluster_name}-gateway-vip"
+  subnetwork   = var.admin_subnet_name
+  address_type = "INTERNAL"
+}
+
+#--------------------------------------------------
+# Talos Machine Image
+#--------------------------------------------------
 resource "google_compute_image" "talos_img" {
   count       = var.create_talos_img ? 1 : 0
 
@@ -83,7 +95,7 @@ resource "google_compute_instance" "talos_loadbalancer" {
   scheduling {
     preemptible = true
     automatic_restart = false
-    provisioning_model = "SPOT" #SPOT | STANDARD
+    provisioning_model = var.use_spot ? "SPOT" : "STANDARD"
     instance_termination_action = "STOP" #DELETE | STOP
   }
 
@@ -184,7 +196,7 @@ resource "google_compute_instance" "talos_ctrlplane" {
   scheduling {
     preemptible = true
     automatic_restart = false
-    provisioning_model = "SPOT" #SPOT | STANDARD
+    provisioning_model = var.use_spot ? "SPOT" : "STANDARD"
     instance_termination_action = "STOP" #DELETE | STOP
   }
 }
@@ -237,7 +249,7 @@ resource "google_compute_instance" "talos_workload" {
   scheduling {
     preemptible = true
     automatic_restart = false
-    provisioning_model = "SPOT" #SPOT | STANDARD
+    provisioning_model = var.use_spot ? "SPOT" : "STANDARD"
     instance_termination_action = "STOP" #DELETE | STOP
   }
 
@@ -1561,7 +1573,7 @@ resource "terraform_data" "cluster_post_configuration" {
 
   provisioner "local-exec" {
     command = <<EOF
-      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapps-admin-talos.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} admin_cilium_lbipam_cidr=${var.ADMIN_SUBNET_CIDR_LBIPAM}'
+      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapps-admin-talos.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} admin_cilium_lbipam_cidr=${google_compute_address.gateway_vip.address}'
     EOF
     #Ansible logs
     environment = {
@@ -1585,9 +1597,9 @@ resource "terraform_data" "kubeapp_gateway" {
   }
 
   provisioner "local-exec" {
+    #${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapp-gateway-endpoint.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} kubeapp_shortname=evomonitoring kubeapp_namespace=monitoring kubeapp_backend_svc=kube-promstack-stack-grafana kubeapp_backend_svc_port=80 gateway_lb_ip=10.100.250.10'
     command = <<EOF
-      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapp-gateway-endpoint.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} kubeapp_shortname=evomonitoring kubeapp_namespace=monitoring kubeapp_backend_svc=kube-promstack-stack-grafana kubeapp_backend_svc_port=80 gateway_lb_ip=10.100.250.10'
-      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapp-gateway-endpoint.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} kubeapp_shortname=evodashboard kubeapp_namespace=headlamp kubeapp_backend_svc=headlamp kubeapp_backend_svc_port=80 gateway_lb_ip=10.100.250.11'
+      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapp-gateway-endpoint.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} kubeapp_shortname=evodashboard kubeapp_namespace=headlamp kubeapp_backend_svc=headlamp kubeapp_backend_svc_port=80 gateway_lb_ip=${google_compute_address.gateway_vip.address}'
     EOF
     #Ansible logs
     environment = {

@@ -8,6 +8,7 @@ inputs = {
   idam_replica_ip         = dependency.server-admin-idam_replica.outputs.private_ip
   evocode_hostname_fqdn   = dependency.server-backend-evocode.outputs.hostname_fqdn
   evocode_runner_revision = "0.1.0"
+  use_spot                = true
 }
 
 #--------------------------------------------------
