@@ -99,7 +99,7 @@ inputs = {
   TALOS_AMI_SOURCE            = "https://storage.cloud.google.com/evocloud-cnpg-cluster-backup/gcp-amd64.raw.tar.gz" #https://factory.talos.dev/image/96f8c146a67c80daad900d3fc1a6976fe11062321eee9ab6ae2a6aea88b2d26e/v1.10.5/gcp-amd64.raw.tar.gz
 
   #TALOS CONTROLPLANE NODES
-  TALOS_CTRL_INSTANCE_SIZE    = "e2-standard-4"
+  TALOS_CTRL_INSTANCE_SIZE    = "e2-highcpu-8"
   TALOS_CTRL_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
   TALOS_CTRL_NODES            = {
     node01 = "evotalos-cp01"
@@ -108,7 +108,7 @@ inputs = {
   }
 
   #TALOS WORKER NODES
-  TALOS_WKLD_INSTANCE_SIZE      = "e2-standard-4"
+  TALOS_WKLD_INSTANCE_SIZE      = "e2-highcpu-8"
   TALOS_WKLD_BASE_VOLUME_TYPE   = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
   TALOS_WKLD_EXTRA_VOLUME_TYPE  = "pd-balanced"
   TALOS_WKLD_NODES              = {
@@ -156,7 +156,7 @@ inputs = {
   }
 
   #TALOS STANDALONE
-  TALOS_CTRL_STANDALONE_SIZE    = "e2-standard-4"
+  TALOS_CTRL_STANDALONE_SIZE    = "e2-highcpu-8"
   TALOS_STANDALONE_VOLUME_TYPE  = "pd-balanced"
   TALOS_CTRL_STANDALONE            = {
     node01 = "evotalos-workstation"
