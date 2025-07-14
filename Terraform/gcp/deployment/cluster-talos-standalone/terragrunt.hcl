@@ -6,9 +6,9 @@ inputs = {
   dmz_subnet_name     = dependency.network-subnet.outputs.dmz_subnet_name
   idam_server_ip      = dependency.server-admin-idam.outputs.private_ip
   idam_replica_ip     = dependency.server-admin-idam_replica.outputs.private_ip
-  cluster_name        = "evotalos-workstation"
-  talos_version       = "v1.10.3"
-  kubernetes_version  = "v1.33.1"
+  cluster_name        = "evo-cluster-std"
+  talos_version       = "v1.10.5"
+  kubernetes_version  = "v1.33.2"
   create_talos_img    = true
   use_spot            = true
 }

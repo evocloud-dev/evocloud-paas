@@ -42,3 +42,10 @@ output "ingress_lb_ip" {
   value = google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip
   sensitive = true
 }
+
+# Retrieve Gateway Loadbalancer IP Address
+output "gateway_vip" {
+  description = "Gateway LoadBalancer IP"
+  value = google_compute_address.gateway_vip.address
+  sensitive = true
+}

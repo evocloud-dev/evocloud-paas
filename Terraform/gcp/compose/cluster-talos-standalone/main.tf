@@ -32,28 +32,17 @@ resource "google_compute_image" "talos_img" {
 }
 
 #--------------------------------------------------
-# Talos Virtual IP
+# Gateway LoadBalancer IP
 #--------------------------------------------------
-resource "google_compute_address" "talos_vip" {
-  name         = "${var.cluster_name}-talos-vip"
+resource "google_compute_address" "gateway_vip" {
+  name         = "${var.cluster_name}-gateway-vip"
   subnetwork   = var.dmz_subnet_name
   address_type = "INTERNAL"
 }
-
-#--------------------------------------------------
-# Ingress Load balancer IP Pool
-#--------------------------------------------------
-resource "google_compute_address" "ingress_lb_ip" {
-  name         = "${var.cluster_name}-talos-ingress-lb"
-  subnetwork   = var.dmz_subnet_name
-  address_type = "INTERNAL"
-}
-
 
 #--------------------------------------------------
 # Talos Control Plane VMs
 #--------------------------------------------------
-
 # random_integer resource is needed to be able to assign different zones to google_compute_instance
 resource "random_integer" "zone_selector_ctrlnode" {
   for_each     = var.TALOS_CTRL_STANDALONE
@@ -93,8 +82,6 @@ resource "google_compute_instance" "talos_ctrlplane" {
     server = format("%s", each.value)
   }
 
-  #metadata_startup_script = "/usr/bin/date"
-
   #For selecting Spot Instances - Remove this snippet in production
   scheduling {
     preemptible = true
@@ -118,6 +105,13 @@ data "talos_client_configuration" "talosconfig" {
   nodes = concat(
     [for xvalue in google_compute_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip],
   )
+}
+
+#Wait for 45 secondes for VM Instance to be fully available
+resource "time_sleep" "wait_45_seconds" {
+  depends_on = [data.talos_machine_configuration.talos_controlplane]
+
+  create_duration = "45s"
 }
 
 ## Generate the Controlplane configuration and instantiate the Talos Controlplane VMs
@@ -148,9 +142,6 @@ data "talos_machine_configuration" "talos_controlplane" {
             {
               interface = "eth0"
               dhcp      = false
-              vip       = {
-                ip = google_compute_address.talos_vip.address
-              }
             }
           ]
         }
@@ -158,14 +149,18 @@ data "talos_machine_configuration" "talos_controlplane" {
           extraArgs = {
             rotate-server-certificates = true
           }
-          install = {
-            extraKernelArgs = ["talos.dashboard.disabled=1"]
-          }
           extraConfig = {
             featureGates = {
               UserNamespacesSupport = true
               UserNamespacesPodSecurityStandards = true
             }
+          }
+        }
+        features = {
+          kubernetesTalosAPIAccess = {
+            enabled = true
+            allowedRoles = ["os:reader"]
+            allowedKubernetesNamespaces = ["kube-system"]
           }
         }
         systemDiskEncryption = {
@@ -194,9 +189,6 @@ data "talos_machine_configuration" "talos_controlplane" {
           extraArgs = {
             feature-gates = "UserNamespacesSupport=true,UserNamespacesPodSecurityStandards=true"
           }
-          certSANs = [
-            google_compute_address.talos_vip.address,
-          ]
         }
         network = {
           cni = {
@@ -235,7 +227,7 @@ data "talos_machine_configuration" "talos_controlplane" {
         //Inline Manifests
         inlineManifests = [
           {
-            name     = "cilium-helm-deploy"
+            name     = "cilium-and-talos-ccm-deploy"
             contents = <<-EOT
               ---
               apiVersion: rbac.authorization.k8s.io/v1
@@ -313,6 +305,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                         - sh
                         - -c
                         - |
+                          helm upgrade --install --namespace kube-system talos-cloud-controller-manager oci://ghcr.io/siderolabs/charts/talos-cloud-controller-manager -f https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/talos-ccm-gcp.yaml
                           helm repo add cilium https://helm.cilium.io/
                           helm repo update
                           helm upgrade --install cilium cilium/cilium \
@@ -322,29 +315,28 @@ data "talos_machine_configuration" "talos_controlplane" {
                           --set k8sServicePort=7445 \
                           --set k8sClientRateLimit.qps=50 \
                           --set k8sClientRateLimit.burst=200 \
-                          --set cluster.name=cluster-manager \
-                          --set cluster.id=0 \
+                          --set cluster.name=evo-cluster-std \
+                          --set cluster.id=99 \
                           --set rollOutCiliumPods=true \
                           --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
                           --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
                           --set l2announcements.enabled=true \
+                          --set l2announcements.leaseDuration=15s \
+                          --set l2announcements.leaseRenewDeadline=5s \
+                          --set l2announcements.leaseRetryPeriod=1s \
                           --set envoyConfig.enabled=true \
-                          --set ingressController.enabled=true \
                           --set gatewayAPI.enabled=true \
                           --set gatewayAPI.enableAppProtocol=true \
                           --set gatewayAPI.enableAlpn=true \
                           --set-string gatewayAPI.gatewayClass.create=true \
                           --set externalIPs.enabled=true \
-                          --set hubble.relay.enabled=true \
-                          --set hubble.ui.enabled=true \
-                          --set hubble.ui.rollOutPods=true \
                           --set ipam.mode=kubernetes \
                           --set kubeProxyReplacement=true \
                           --set maglev.tableSize=65521 \
-                          --set loadBalancer.algorithm=maglev \
                           --set operator.rollOutPods=true \
                           --set cgroup.autoMount.enabled=false \
                           --set cgroup.hostRoot=/sys/fs/cgroup \
+                          --set envoy.securityContext.capabilities.envoy="{NET_ADMIN,NET_BIND_SERVICE,PERFMON,BPF}" \
                           --set envoy.securityContext.capabilities.keepCapNetBindService=true
                     serviceAccount: cilium-install-sa
                     serviceAccountName: cilium-install-sa
@@ -476,587 +468,6 @@ data "talos_machine_configuration" "talos_controlplane" {
                     serviceAccountName: vela-install
             EOT
           },
-          {
-            name     = "flux-helm-deploy"
-            contents = <<-EOT
-              ---
-              #Flux Operator Chart Repo: https://github.com/controlplaneio-fluxcd/charts/tree/main/charts/flux-operator
-              apiVersion: rbac.authorization.k8s.io/v1
-              kind: ClusterRoleBinding
-              metadata:
-                name: flux-install
-                annotations:
-                  ttl.after.delete: "86400s" #Automatically deletes CRB after 24 hours (86400 seconds)
-              roleRef:
-                apiGroup: rbac.authorization.k8s.io
-                kind: ClusterRole
-                name: cluster-admin
-              subjects:
-              - kind: ServiceAccount
-                name: flux-install
-                namespace: kube-system
-              ---
-              apiVersion: v1
-              kind: ServiceAccount
-              metadata:
-                name: flux-install
-                namespace: kube-system
-                annotations:
-                  ttl.after.delete: "86400s" #Automatically deletes SA after 24 hours (86400 seconds)
-              ---
-              apiVersion: batch/v1
-              kind: Job
-              metadata:
-                name: flux-operator-deploy
-                namespace: kube-system
-              spec:
-                backoffLimit: 10
-                template:
-                  metadata:
-                    labels:
-                      job: flux-operator-deployment
-                  spec:
-                    containers:
-                    - name: helm
-                      image: alpine/helm:3
-                      command:
-                        - sh
-                        - -c
-                        - |
-                          kubectl create namespace flux-system || true
-                          helm upgrade --install flux-operator oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator \
-                            --namespace flux-system \
-                            --create-namespace \
-                            --version 0.21.0 \
-                            --wait
-                    restartPolicy: OnFailure
-                    serviceAccount: flux-install
-                    serviceAccountName: flux-install
-              ---
-              #Deploying Flux Instance with Multi-tenancy Disabled
-              apiVersion: fluxcd.controlplane.io/v1
-              kind: FluxInstance
-              metadata:
-                name: flux
-                namespace: flux-system
-                annotations:
-                  fluxcd.controlplane.io/reconcileEvery: "1h"
-                  fluxcd.controlplane.io/reconcileArtifactEvery: "15m"
-                  fluxcd.controlplane.io/reconcileTimeout: "15m"
-              spec:
-                distribution:
-                  version: "2.x"
-                  registry: "ghcr.io/fluxcd"
-                  artifact: "oci://ghcr.io/controlplaneio-fluxcd/flux-operator-manifests"
-                components:
-                  - source-controller
-                  - kustomize-controller
-                  - helm-controller
-                  - notification-controller
-                  - image-reflector-controller
-                  - image-automation-controller
-                cluster:
-                  type: kubernetes
-                  multitenant: false
-                  networkPolicy: false
-                  domain: "cluster.local"
-                kustomize:
-                  patches:
-                    - target:
-                        kind: Deployment
-                        name: "(kustomize-controller|helm-controller)"
-                      patch: |
-                        - op: add
-                          path: /spec/template/spec/containers/0/args/-
-                          value: --concurrent=10
-                        - op: add
-                          path: /spec/template/spec/containers/0/args/-
-                          value: --requeue-dependency=15s
-              ---
-              ############################################
-              #DEPLOYING ROOK STORAGE SOLUTION
-              ############################################
-              apiVersion: v1
-              kind: Namespace
-              metadata:
-                name: rook-ceph
-                labels:
-                  pod-security.kubernetes.io/enforce: privileged #Talos default PodSecurity configuration prevents execution of priviledged pods. Adding a label to the namespace will allow ceph to start
-              ---
-              #Dedicated service account for flux in rook-ceph namespace
-              apiVersion: rbac.authorization.k8s.io/v1
-              kind: ClusterRoleBinding
-              metadata:
-                name: flux-rook-ceph
-              roleRef:
-                apiGroup: rbac.authorization.k8s.io
-                kind: ClusterRole
-                name: cluster-admin
-              subjects:
-              - kind: ServiceAccount
-                name: flux-rook-ceph-sa
-                namespace: rook-ceph
-              ---
-              apiVersion: v1
-              kind: ServiceAccount
-              metadata:
-                name: flux-rook-ceph-sa
-                namespace: rook-ceph
-              ---
-              apiVersion: source.toolkit.fluxcd.io/v1
-              kind: HelmRepository
-              metadata:
-                name: rook-release
-                namespace: rook-ceph
-              spec:
-                interval: 24h
-                url: https://charts.rook.io/release
-              ---
-              apiVersion: helm.toolkit.fluxcd.io/v2
-              kind: HelmRelease
-              metadata:
-                name: rook-ceph-operator
-                namespace: rook-ceph
-              spec:
-                chart:
-                  spec:
-                    chart: rook-ceph
-                    sourceRef:
-                      kind: HelmRepository
-                      name: rook-release
-                    version: "v1.17.*"
-                serviceAccountName: flux-rook-ceph-sa
-                interval: 30m0s
-                install:
-                  remediation:
-                    retries: 3
-                upgrade:
-                  remediation:
-                    retries: 3
-                driftDetection:
-                  mode: enabled
-                values:
-                  enableDiscoveryDaemon: true
-                  discoveryDaemonInterval: 15m
-                  monitoring:
-                    enabled: true
-              ---
-              apiVersion: helm.toolkit.fluxcd.io/v2
-              kind: HelmRelease
-              metadata:
-                name: rook-ceph-cluster
-                namespace: rook-ceph
-              spec:
-                dependsOn:
-                  - name: rook-ceph-operator
-                chart:
-                  spec:
-                    chart: rook-ceph-cluster
-                    sourceRef:
-                      kind: HelmRepository
-                      name: rook-release
-                    version: "v1.17.*"
-                serviceAccountName: flux-rook-ceph-sa
-                interval: 35m0s
-                install:
-                  remediation:
-                    retries: 3
-                upgrade:
-                  remediation:
-                    retries: 3
-                driftDetection:
-                  mode: enabled
-                values:
-                  toolbox:
-                    enabled: true
-                  mgr:
-                    modules:
-                      - name: rook
-                        enabled: true
-                  monitoring:
-                    enabled: true
-                    createPrometheusRules: true
-
-              ---
-              ############################################
-              #HEADLAMP DEPLOYMENT
-              ############################################
-              apiVersion: v1
-              kind: Namespace
-              metadata:
-                name: headlamp
-              ---
-              #Dedicated service account for headlamp in headlamp namespace
-              apiVersion: rbac.authorization.k8s.io/v1
-              kind: ClusterRoleBinding
-              metadata:
-                name: flux-headlamp
-              roleRef:
-                apiGroup: rbac.authorization.k8s.io
-                kind: ClusterRole
-                name: cluster-admin
-              subjects:
-              - kind: ServiceAccount
-                name: flux-headlamp-sa
-                namespace: headlamp
-              ---
-              apiVersion: v1
-              kind: ServiceAccount
-              metadata:
-                name: flux-headlamp-sa
-                namespace: headlamp
-              ---
-              apiVersion: source.toolkit.fluxcd.io/v1
-              kind: HelmRepository
-              metadata:
-                name: headlamp-release
-                namespace: headlamp
-              spec:
-                interval: 24h
-                url: https://kubernetes-sigs.github.io/headlamp
-              ---
-              apiVersion: helm.toolkit.fluxcd.io/v2
-              kind: HelmRelease
-              metadata:
-                name: headlamp
-                namespace: headlamp
-              spec:
-                chart:
-                  spec:
-                    chart: headlamp
-                    sourceRef:
-                      kind: HelmRepository
-                      name: headlamp-release
-                    version: "0.31.*"
-                serviceAccountName: flux-headlamp-sa
-                interval: 30m0s
-                timeout: 25m0s
-                driftDetection:
-                  mode: enabled
-                values:
-                  serviceAccount:
-                    name: "headlamp-admin"
-                  ingress:
-                    enabled: false
-                  config:
-                    pluginsDir: /build/plugins
-                  initContainers:
-                    - command:
-                        - /bin/sh
-                        - -c
-                        - mkdir -p /build/plugins && cp -r /plugins/* /build/plugins/
-                      image: ghcr.io/evocloud-dev/headlamp/evo-headlamp-plugins:0.1.0 #custom-built plugin image
-                      imagePullPolicy: Always
-                      name: headlamp-plugins
-                      securityContext:
-                        runAsNonRoot: false
-                        privileged: false
-                        runAsUser: 0
-                        runAsGroup: 101
-                      volumeMounts:
-                        - mountPath: /build/plugins
-                          name: headlamp-plugins
-                  persistentVolumeClaim:
-                    enabled: true
-                    accessModes:
-                      - ReadWriteOnce
-                    size: 1Gi
-                  volumeMounts:
-                    - mountPath: /build/plugins
-                      name: headlamp-plugins
-                  volumes:
-                    - name: headlamp-plugins
-                      persistentVolumeClaim:
-                        claimName: headlamp
-
-              ---
-              ###################################################
-              #KUBE PROMETHEUS STACK
-              ###################################################
-              apiVersion: v1
-              kind: Namespace
-              metadata:
-                name: monitoring
-                labels:
-                  pod-security.kubernetes.io/enforce: privileged #Talos default PodSecurity configuration prevents execution of priviledged pods. Adding a label to the namespace will allow deamonsets to start
-              ---
-              #Dedicated service account for headlamp in headlamp namespace
-              apiVersion: rbac.authorization.k8s.io/v1
-              kind: ClusterRoleBinding
-              metadata:
-                name: flux-kube-promstack
-              roleRef:
-                apiGroup: rbac.authorization.k8s.io
-                kind: ClusterRole
-                name: cluster-admin
-              subjects:
-              - kind: ServiceAccount
-                name: flux-kube-promstack-sa
-                namespace: monitoring
-              ---
-              apiVersion: v1
-              kind: ServiceAccount
-              metadata:
-                name: flux-kube-promstack-sa
-                namespace: monitoring
-              ---
-              apiVersion: source.toolkit.fluxcd.io/v1
-              kind: HelmRepository
-              metadata:
-                name: kube-promstack-release
-                namespace: monitoring
-              spec:
-                interval: 24h
-                url: https://prometheus-community.github.io/helm-charts
-              ---
-              apiVersion: helm.toolkit.fluxcd.io/v2
-              kind: HelmRelease
-              metadata:
-                name: kube-promstack-stack
-                namespace: monitoring
-              spec:
-                chart:
-                  spec:
-                    chart: kube-prometheus-stack
-                    sourceRef:
-                      kind: HelmRepository
-                      name: kube-promstack-release
-                    version: "72.*"
-                interval: 30m0s
-                timeout: 25m0s
-                serviceAccountName: flux-kube-promstack-sa
-                install:
-                  remediation:
-                    retries: 3
-                upgrade:
-                  remediation:
-                    retries: 2
-                driftDetection:
-                  mode: enabled
-                values:
-                  grafana:
-                    adminPassword: prom-operator
-                  nodeExporter:
-                    enabled: true
-                    operatingSystems:
-                      linux:
-                        enabled: true
-                      aix:
-                        enabled: false
-                      darwin:
-                        enabled: false
-              ---
-              ###################################################
-              #OpenCost Billing
-              ###################################################
-              apiVersion: v1
-              kind: Namespace
-              metadata:
-                name: opencost
-              ---
-              #Dedicated service account for opencost in opencost namespace
-              apiVersion: rbac.authorization.k8s.io/v1
-              kind: ClusterRoleBinding
-              metadata:
-                name: flux-opencost
-              roleRef:
-                apiGroup: rbac.authorization.k8s.io
-                kind: ClusterRole
-                name: cluster-admin
-              subjects:
-              - kind: ServiceAccount
-                name: flux-opencost-sa
-                namespace: opencost
-              ---
-              apiVersion: v1
-              kind: ServiceAccount
-              metadata:
-                name: flux-opencost-sa
-                namespace: opencost
-              ---
-              apiVersion: source.toolkit.fluxcd.io/v1
-              kind: HelmRepository
-              metadata:
-                name: kube-opencost-release
-                namespace: opencost
-              spec:
-                interval: 24h
-                url: https://opencost.github.io/opencost-helm-chart
-              ---
-              #https://opencost.io/docs/configuration/gcp
-              apiVersion: helm.toolkit.fluxcd.io/v2
-              kind: HelmRelease
-              metadata:
-                name: kube-opencost-stack
-                namespace: opencost
-              spec:
-                chart:
-                  spec:
-                    chart: opencost
-                    sourceRef:
-                      kind: HelmRepository
-                      name: kube-opencost-release
-                    version: "2.1.*"
-                interval: 30m0s
-                timeout: 25m0s
-                serviceAccountName: flux-opencost-sa
-                install:
-                  remediation:
-                    retries: 3
-                upgrade:
-                  remediation:
-                    retries: 2
-                driftDetection:
-                  mode: enabled
-                values:
-                  networkPolicies:
-                    prometheus:
-                      namespace: monitoring
-                  opencost:
-                    exporter:
-                      cloudProviderApiKey: "op3nco57op3Nco57OP3Nco57op3nco57op3Nco57"
-                    prometheus:
-                      internal:
-                        enabled: true
-                        namespaceName: monitoring
-                        port: 9090
-                        serviceName: kube-promstack-stack-kube-prometheus
-              ---
-              ###################################################
-              #KubeScape Vulnerability Scanner
-              ###################################################
-              apiVersion: v1
-              kind: Namespace
-              metadata:
-                name: kubescape
-                labels:
-                  pod-security.kubernetes.io/enforce: privileged #Talos default PodSecurity configuration prevents execution of priviledged pods.
-              ---
-              #Dedicated service account for kubescape in kubescape namespace
-              apiVersion: rbac.authorization.k8s.io/v1
-              kind: ClusterRoleBinding
-              metadata:
-                name: flux-kubescape
-              roleRef:
-                apiGroup: rbac.authorization.k8s.io
-                kind: ClusterRole
-                name: cluster-admin
-              subjects:
-              - kind: ServiceAccount
-                name: flux-kubescape-sa
-                namespace: kubescape
-              ---
-              apiVersion: v1
-              kind: ServiceAccount
-              metadata:
-                name: flux-kubescape-sa
-                namespace: kubescape
-              ---
-              apiVersion: source.toolkit.fluxcd.io/v1
-              kind: HelmRepository
-              metadata:
-                name: kubescape-release
-                namespace: kubescape
-              spec:
-                interval: 24h
-                url: https://kubescape.github.io/helm-charts
-              ---
-              apiVersion: helm.toolkit.fluxcd.io/v2
-              kind: HelmRelease
-              metadata:
-                name: kubescape-stack
-                namespace: kubescape
-              spec:
-                chart:
-                  spec:
-                    chart: kubescape-operator
-                    sourceRef:
-                      kind: HelmRepository
-                      name: kubescape-release
-                    version: "1.27.*"
-                interval: 30m0s
-                timeout: 25m0s
-                serviceAccountName: flux-kubescape-sa
-                install:
-                  remediation:
-                    retries: 3
-                upgrade:
-                  remediation:
-                    retries: 2
-                driftDetection:
-                  mode: enabled
-                values:
-                  capabilities:
-                    continuousScan: enable
-
-              ---
-            EOT
-          },
-          {
-            name     = "kyverno-helm-deploy"
-            contents = <<-EOT
-              ---
-              #Kyverno Chart Repo: https://github.com/kyverno/kyverno/tree/main/charts
-              apiVersion: rbac.authorization.k8s.io/v1
-              kind: ClusterRoleBinding
-              metadata:
-                name: kyverno-install
-                annotations:
-                  ttl.after.delete: "86400s" #Automatically deletes CRB after 24 hours (86400 seconds)
-              roleRef:
-                apiGroup: rbac.authorization.k8s.io
-                kind: ClusterRole
-                name: cluster-admin
-              subjects:
-              - kind: ServiceAccount
-                name: kyverno-install
-                namespace: kube-system
-              ---
-              apiVersion: v1
-              kind: ServiceAccount
-              metadata:
-                name: kyverno-install
-                namespace: kube-system
-                annotations:
-                  ttl.after.delete: "86400s" #Automatically deletes SA after 24 hours (86400 seconds)
-              ---
-              apiVersion: batch/v1
-              kind: Job
-              metadata:
-                name: kyverno-helm-deployer
-                namespace: kube-system
-              spec:
-                backoffLimit: 10
-                template:
-                  metadata:
-                    labels:
-                      job: kyverno-helm-deployment
-                  spec:
-                    containers:
-                    - name: helm
-                      image: alpine/helm:3
-                      command:
-                        - sh
-                        - -c
-                        - |
-                          kubectl create namespace kyverno || true
-                          kubectl label namespace kyverno pod-security.kubernetes.io/enforce=privileged
-                          helm repo add kyverno https://kyverno.github.io/kyverno/
-                          helm repo update
-                          helm upgrade --install kyverno kyverno/kyverno \
-                            --namespace kyverno \
-                            --create-namespace \
-                            --version 3.4.1 \
-                            --set admissionController.replicas=3 \
-                            --set backgroundController.replicas=2 \
-                            --set cleanupController.replicas=2 \
-                            --set reportsController.replicas=2 \
-                            --wait
-                    restartPolicy: OnFailure
-                    serviceAccount: kyverno-install
-                    serviceAccountName: kyverno-install
-            EOT
-          },
         ]
       }
     }),
@@ -1104,6 +515,30 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
   node                 = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
 }
 
+#--------------------------------------------------
+# Write out Kubeconfig and Talosconfig to a file
+#--------------------------------------------------
+resource "local_file" "talos_kubeconfig_file" {
+  depends_on  = [talos_cluster_kubeconfig.kubeconfig]
+
+  filename    = "/home/${var.CLOUD_USER}/kubeconfig/kubeconfig-${var.cluster_name}.yaml"
+  directory_permission = "0740"
+  file_permission      = "0640"
+  content     = <<-EOF
+    ${talos_cluster_kubeconfig.kubeconfig.kubeconfig_raw}
+  EOF
+}
+
+resource "local_file" "talos_talosconfig_file" {
+  depends_on  = [talos_cluster_kubeconfig.kubeconfig]
+
+  filename    = "/home/${var.CLOUD_USER}/talosconfig/talosconfig-${var.cluster_name}.yaml"
+  directory_permission = "0740"
+  file_permission      = "0640"
+  content     = <<-EOF
+    ${data.talos_client_configuration.talosconfig.talos_config}
+  EOF
+}
 
 ############### CILIUM HELM TEMPLATE GENERATION CODE ############################
 #Parameter options: https://docs.cilium.io/en/stable/cmdref/cilium-agent/t
