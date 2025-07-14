@@ -29,16 +29,9 @@ output "talos_controlplane_config" {
   sensitive = true
 }
 
-# Retrieve Talos Virtual IP Address
-output "talos_vip" {
-  description = "Talos Virtual IP Address"
-  value = google_compute_address.talos_vip.address
-  sensitive = true
-}
-
-# Retrieve Talos Virtual IP Address
-output "ingress_lb_ip" {
-  description = "Talos Virtual IP Address"
-  value = google_compute_address.ingress_lb_ip.address
+# Retrieve Gateway Loadbalancer IP Address
+output "gateway_vip" {
+  description = "Gateway LoadBalancer IP"
+  value = google_compute_address.gateway_vip.address
   sensitive = true
 }
