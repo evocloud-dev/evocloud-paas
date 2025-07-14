@@ -24,3 +24,21 @@
     name: brave-browser
     state: present
   become: true
+
+- name: Setup Brave managed policies
+  block:
+    - name: Create Brave managed policies directory
+      ansible.builtin.file:
+        path: /etc/brave/policies/managed
+        state: directory
+        mode: '0755'
+      become: true
+
+    - name: Set Brave policy
+      ansible.builtin.template:
+        src: policy.json.j2
+        dest: /etc/brave/policies/managed/policy.json
+        owner: root
+        group: root
+        mode: '0644'
+      become: true
