@@ -118,7 +118,7 @@
   ansible.builtin.replace:
     path: /usr/lib64/firefox/defaults/preferences/all-redhat.js
     regexp: '{{ item }}'
-    replace: 'https://evocloud.dev'
+    replace: 'https://www.geanttech.com'
   loop:
     - 'https:\/\/rockylinux\.org'
     - 'data:text\/plain,browser\.startup\.homepage=file:\/\/\/usr\/share\/doc\/HTML\/index\.html'

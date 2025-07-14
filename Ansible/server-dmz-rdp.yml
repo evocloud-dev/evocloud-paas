@@ -19,6 +19,7 @@
     - name: enable google dns for metadata
       ansible.builtin.lineinfile:
         path: /etc/resolv.dmasq
+        regexp: '^#nameserver 169.254.169.254'
         line: 'nameserver 169.254.169.254'
       become: true
       when: resolv_dmasq.stat.exists
