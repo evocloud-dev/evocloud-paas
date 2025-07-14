@@ -65,10 +65,10 @@ spec:
       - service
       - ingress
       - gateway-httproute
-      #- gateway-grpcroute
-      #- gateway-tlsroute
-      #- gateway-tcproute
-      #- gateway-udproute
+      - gateway-grpcroute
+      - gateway-tlsroute
+      - gateway-tcproute
+      - gateway-udproute
     domainFilters:
       - {{ domain_tld }}
     serviceMonitor:
