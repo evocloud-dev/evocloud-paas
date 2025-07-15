@@ -8,10 +8,43 @@
   vars:
     creds_store: "{{ lookup('file', ansible_secret) | from_yaml }}"
 
+  pre_tasks:
+    - name: check for existence of resolv.dmasq
+      ansible.builtin.stat:
+        path: /etc/resolv.dmasq
+        get_checksum: no
+      register: resolv_dmasq
+      become: true
+
+    - name: enable google dns for metadata
+      ansible.builtin.lineinfile:
+        path: /etc/resolv.dmasq
+        regexp: '^#nameserver 169.254.169.254'
+        line: 'nameserver 169.254.169.254'
+      become: true
+      when: resolv_dmasq.stat.exists
+
   roles:
     - app-dnsmasq #Needed by GCP Compute Instances
     - config-freeipa-client
     - config-freeipa-certs
     - server-tigervnc
     - app-vscode
+    - app-brave
     - app-fail2ban
+
+  post_tasks:
+    - name: check for existence of resolv.dmasq
+      ansible.builtin.stat:
+        path: /etc/resolv.dmasq
+        get_checksum: no
+      register: resolv_dmasq
+      become: true
+
+    - name: enable google dns for metadata
+      ansible.builtin.lineinfile:
+        path: /etc/resolv.dmasq
+        regexp: '^nameserver 169.254.169.254'
+        line: '#nameserver 169.254.169.254'
+      become: true
+      when: resolv_dmasq.stat.exists
