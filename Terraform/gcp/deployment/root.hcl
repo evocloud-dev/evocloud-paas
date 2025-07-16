@@ -99,7 +99,7 @@ inputs = {
   TALOS_AMI_SOURCE            = "https://storage.cloud.google.com/evocloud-cnpg-cluster-backup/gcp-amd64.raw.tar.gz" #https://factory.talos.dev/image/96f8c146a67c80daad900d3fc1a6976fe11062321eee9ab6ae2a6aea88b2d26e/v1.10.5/gcp-amd64.raw.tar.gz
 
   #TALOS CONTROLPLANE NODES
-  TALOS_CTRL_INSTANCE_SIZE    = "e2-standard-4"
+  TALOS_CTRL_INSTANCE_SIZE    = "e2-highcpu-8"
   TALOS_CTRL_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
   TALOS_CTRL_NODES            = {
     node01 = "evotalos-cp01"
@@ -108,7 +108,7 @@ inputs = {
   }
 
   #TALOS WORKER NODES
-  TALOS_WKLD_INSTANCE_SIZE      = "e2-standard-4"
+  TALOS_WKLD_INSTANCE_SIZE      = "e2-highcpu-8"
   TALOS_WKLD_BASE_VOLUME_TYPE   = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
   TALOS_WKLD_EXTRA_VOLUME_TYPE  = "pd-balanced"
   TALOS_WKLD_NODES              = {
@@ -147,8 +147,8 @@ inputs = {
 
   #TALOS EXTRA KUBERNETES MANIFESTS
   TALOS_EXTRA_MANIFESTS     = {
-    gateway_api_std       = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml"
-    gateway_api_tls       = "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.2.1/config/crd/experimental/gateway.networking.k8s.io_tlsroutes.yaml"
+    gateway_api_std       = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml"
+    gateway_api_exp       = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/experimental-install.yaml"
     kubelet_serving_cert  = "https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml"
     kube-metric_server    = "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml"
     local-storage_class   = "https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/local-storageclass.yaml"
@@ -156,7 +156,7 @@ inputs = {
   }
 
   #TALOS STANDALONE
-  TALOS_CTRL_STANDALONE_SIZE    = "e2-standard-4"
+  TALOS_CTRL_STANDALONE_SIZE    = "e2-highcpu-8"
   TALOS_STANDALONE_VOLUME_TYPE  = "pd-balanced"
   TALOS_CTRL_STANDALONE            = {
     node01 = "evotalos-workstation"

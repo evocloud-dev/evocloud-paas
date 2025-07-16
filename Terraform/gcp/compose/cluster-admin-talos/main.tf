@@ -404,7 +404,7 @@ data "talos_machine_configuration" "talos_controlplane" {
         }
         extraManifests = [
           var.TALOS_EXTRA_MANIFESTS["gateway_api_std"],
-          var.TALOS_EXTRA_MANIFESTS["gateway_api_tls"],
+          var.TALOS_EXTRA_MANIFESTS["gateway_api_exp"],
           var.TALOS_EXTRA_MANIFESTS["kubelet_serving_cert"],
           var.TALOS_EXTRA_MANIFESTS["kube-metric_server"],
           var.TALOS_EXTRA_MANIFESTS["local-storage_class"],
