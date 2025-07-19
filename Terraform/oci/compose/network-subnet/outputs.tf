@@ -7,7 +7,7 @@ output "admin_subnet_name" {
 }
 
 output "admin_subnet_id" {
-  value = oci_core_subnet.admin_subnet.id
+  value     = oci_core_subnet.admin_subnet.id
   sensitive = true
 }
 
@@ -16,7 +16,7 @@ output "backend_subnet_name" {
 }
 
 output "backend_subnet_id" {
-  value = oci_core_subnet.backend_subnet.id
+  value     = oci_core_subnet.backend_subnet.id
   sensitive = true
 }
 
@@ -25,6 +25,6 @@ output "dmz_subnet_name" {
 }
 
 output "dmz_subnet_id" {
-  value = oci_core_subnet.dmz_subnet.id
+  value     = oci_core_subnet.dmz_subnet.id
   sensitive = true
 }
