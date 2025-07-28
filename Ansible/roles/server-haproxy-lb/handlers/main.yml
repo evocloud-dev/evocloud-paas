@@ -7,3 +7,12 @@
   loop:
     - 'haproxy'
   become: true
+
+- name: Restarting keepalived...
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: restarted
+    enabled: yes
+  loop:
+    - 'keepalived'
+  become: true

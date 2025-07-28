@@ -1,0 +1,42 @@
+global_defs {
+  vrrp_skip_check_adv_addr
+  enable_script_security
+  script_user root
+  max_auto_priority 50
+}
+
+vrrp_script chk_haproxy {
+  script "/usr/sbin/pidof haproxy"
+  interval 2
+  weight -2
+  fall 3
+  rise 2
+}
+
+vrrp_instance haproxy-vip {
+  state {% if lb_short_name == 'evotalos-lb01' %}MASTER\n{% else %}BACKUP\n{% endif %}
+  interface {{ net_interface }}
+  virtual_router_id 60
+  priority {% if lb_short_name == 'evotalos-lb01' %}100\n{% else %}50\n{% endif %}
+  advert_int 30
+  authentication {
+    auth_type PASS
+    auth_pass MkcDcWc111 #update this to use vault
+  }
+
+  unicast_src_ip {% if lb_short_name == 'evotalos-lb01' %}{{ lb_node01_ip }}{% else %}{{ lb_node02_ip }}{% endif %}  #The IP address of the current machine
+  unicast_peer {
+    {% if lb_short_name == 'evotalos-lb01' %}{{ lb_node02_ip }}{% else %}{{ lb_node01_ip }}{% endif %}  #The IP address of peer machines
+  }
+
+  #Commented our virtual_ipaddress due to GCP Networking not supporting multicast
+  #virtual_ipaddress {
+  #  {{ gateway_vip_cidr }}   #The VIP address
+  #}
+
+  track_script {
+    chk_haproxy
+  }
+
+  notify_master "/usr/local/bin/keepalived-ip-updater.sh" root
+}
