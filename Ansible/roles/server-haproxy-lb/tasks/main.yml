@@ -3,12 +3,15 @@
 - ansible.builtin.debug:
     msg: "################# STARTING ANSIBLE ROLE: server-haproxy-lb ##################"
 
-# Installing haproxy packages
-- name: Installing haproxy packages...
+# Installing haproxy and keepalived packages
+- name: Installing haproxy and keepalived packages...
   ansible.builtin.dnf:
-    name: '{{ haproxy_package }}'
+    name: '{{ item }}'
     state: present
     disable_gpg_check: yes
+  loop:
+    - "{{ haproxy_package }}"
+    - "{{ keepalive_packages }}"
   become: true
 
 #Reverse DNS Entry
@@ -50,12 +53,41 @@
   become: true
   notify: Restarting haproxy...
 
-#Enable and start haproxy
-- name: Enabling and starting haproxy...
-  ansible.builtin.systemd:
-    name: haproxy
+# Setting up keepalived.conf
+- name: Fetching VM short hostname...
+  ansible.builtin.command: "/usr/bin/hostname --short"
+  register: server_short_name
+  become: true
+
+- name: Setting facts for VM short hostname...
+  ansible.builtin.set_fact:
+    lb_short_name: "{{ server_fqdn.stdout.split('.')[0] }}"
+  become: true
+
+- name: Configuring keepalived.conf...
+  ansible.builtin.template:
+    src: "keepalived.conf.j2"
+    dest: "/etc/keepalived/keepalived.conf"
+  become: true
+
+- name: Configuring keepalived-ip-updater script...
+  ansible.builtin.template:
+    src: "keepalived-ip-updater.sh.j2"
+    dest: "/usr/local/bin/keepalived-ip-updater.sh"
+    mode: "0754"
+    setype: "keepalived_unconfined_script_exec_t"
+  become: true
+
+#Enable then start keepalived and haproxy
+- name: Enabling and starting keepalived and haproxy...
+  ansible.builtin.service:
+    name: '{{ item }}'
     state: started
     enabled: yes
+    daemon_reload: yes
+  loop:
+    - 'keepalived'
+    - 'haproxy'
   become: true
 
 # Enable firewall rules

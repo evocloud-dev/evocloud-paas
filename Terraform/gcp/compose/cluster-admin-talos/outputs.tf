@@ -37,9 +37,15 @@ output "talos_worker_config" {
 }
 
 # Retrieve Talos Load-balancer IP Address
-output "ingress_lb_ip" {
-  description = "Talos Load-balancer IP Address"
+output "lb_node01_ip" {
+  description = "Load-balancer IP Address - Node01"
   value = google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip
+  sensitive = true
+}
+
+output "lb_node02_ip" {
+  description = "Load-balancer IP Address - Node02"
+  value = google_compute_instance.talos_loadbalancer["node02"].network_interface[0].network_ip
   sensitive = true
 }
 
