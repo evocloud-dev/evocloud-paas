@@ -78,8 +78,7 @@
     setype: "keepalived_unconfined_script_exec_t"
   become: true
 
-#Enable then start keepalived and haproxy
-- name: Enabling and starting keepalived and haproxy...
+- name: Enabling and starting keepalived...
   ansible.builtin.service:
     name: '{{ item }}'
     state: started
@@ -87,7 +86,6 @@
     daemon_reload: yes
   loop:
     - 'keepalived'
-    - 'haproxy'
   become: true
 
 # Enable firewall rules
@@ -98,4 +96,14 @@
     immediate: yes
     state: enabled
   with_items: "{{ ports_list }}"
+  become: true
+
+- name: Enabling and starting haproxy...
+  ansible.builtin.systemd:
+    name: '{{ item }}'
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  loop:
+    - 'haproxy'
   become: true
