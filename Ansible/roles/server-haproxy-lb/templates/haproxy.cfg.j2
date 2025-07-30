@@ -63,7 +63,7 @@ defaults
 # Talos Linux API RoundRobin TCP Load-balancing
 #---------------------------------------------------------------------
 frontend talos-nodes
-  bind {{ gateway_vip }}:{{ talos_port | default(50000) }}
+  bind *:{{ talos_port | default(50000) }}
   mode tcp
   option tcplog
   default_backend talos-nodes
@@ -83,7 +83,7 @@ backend talos-nodes
 # Kubernetes api-server RoundRobin TCP Load-balancing
 #---------------------------------------------------------------------
 frontend k8s-control-plane
-  bind {{ gateway_vip }}:{{ kubeapi_port | default(6443) }}
+  bind *:{{ kubeapi_port | default(6443) }}
   mode tcp
   option tcplog
   default_backend k8s-control-plane
