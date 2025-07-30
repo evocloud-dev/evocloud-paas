@@ -43,7 +43,7 @@ resource "google_compute_address" "gateway_vip" {
 #--------------------------------------------------
 # Talos Control Plane VMs
 #--------------------------------------------------
-# random_integer resource is needed to be able to assign different zones to google_compute_instance
+# random_integer resource is needed to be able to assign different zones to oci_core_instance
 resource "random_integer" "zone_selector_ctrlnode" {
   for_each     = var.TALOS_CTRL_STANDALONE
   min = 0
@@ -51,15 +51,14 @@ resource "random_integer" "zone_selector_ctrlnode" {
 }
 
 ##Talos Controlplane VMs Creation
-resource "google_compute_instance" "talos_ctrlplane" {
+resource "oci_core_instance" "talos_ctrlplane" {
   depends_on = [google_compute_image.talos_img]
 
-  for_each     = var.TALOS_CTRL_STANDALONE
-  name         = format("%s", each.value)
-  machine_type = var.TALOS_CTRL_STANDALONE_SIZE #custom-6-20480 | custom-6-15360-ext
-  description  = "Talos Controlplane Standalone Instance"
-  zone         = element(var.OCI_REGION, random_integer.zone_selector_ctrlnode[each.key].result)
-  hostname     = format("%s.%s", each.value, var.DOMAIN_TLD)
+  for_each       = var.TALOS_CTRL_STANDALONE
+  display_name   = format("%s", each.value)
+  shape          = var.TALOS_CTRL_STANDALONE_SIZE #custom-6-20480 | custom-6-15360-ext
+  #zone           = element(var.OCI_REGION, random_integer.zone_selector_ctrlnode[each.key].result)
+  #hostname_label = format("%s.%s", each.value, var.DOMAIN_TLD)
 
   boot_disk {
     initialize_params {
@@ -101,9 +100,9 @@ resource "talos_machine_secrets" "talos_vm" {}
 data "talos_client_configuration" "talosconfig" {
   cluster_name         = var.cluster_name
   client_configuration = talos_machine_secrets.talos_vm.client_configuration
-  endpoints = [for xvalue in google_compute_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip]
+  endpoints = [for xvalue in oci_core_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip]
   nodes = concat(
-    [for xvalue in google_compute_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip],
+    [for xvalue in oci_core_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip],
   )
 }
 
@@ -116,10 +115,10 @@ resource "time_sleep" "wait_45_seconds" {
 
 ## Generate the Controlplane configuration and instantiate the Talos Controlplane VMs
 data "talos_machine_configuration" "talos_controlplane" {
-  depends_on = [google_compute_instance.talos_ctrlplane]
+  depends_on = [oci_core_instance.talos_ctrlplane]
 
   cluster_name       = var.cluster_name
-  cluster_endpoint   = "https://${google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip}:6443"
+  cluster_endpoint   = "https://${oci_core_instance.talos_ctrlplane["node01"].network_interface[0].network_ip}:6443"
   machine_type       = "controlplane"
   machine_secrets    = talos_machine_secrets.talos_vm.machine_secrets
   talos_version      = var.talos_version
@@ -477,7 +476,7 @@ data "talos_machine_configuration" "talos_controlplane" {
 resource "talos_machine_configuration_apply" "controlplane" {
   depends_on = [data.talos_machine_configuration.talos_controlplane]
 
-  for_each                    = google_compute_instance.talos_ctrlplane
+  for_each                    = oci_core_instance.talos_ctrlplane
   client_configuration        = talos_machine_secrets.talos_vm.client_configuration
   machine_configuration_input = data.talos_machine_configuration.talos_controlplane.machine_configuration
   endpoint                    = each.value.network_interface[0].network_ip
@@ -489,8 +488,8 @@ resource "talos_machine_bootstrap" "bootstrap_cluster" {
   depends_on           = [talos_machine_configuration_apply.controlplane]
 
   client_configuration = talos_machine_secrets.talos_vm.client_configuration
-  endpoint             = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
-  node                 = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
+  endpoint             = oci_core_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
+  node                 = oci_core_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
 }
 
 ## Check whether the Talos Kubernetes Cluster is in a healthy state
@@ -498,8 +497,8 @@ resource "talos_machine_bootstrap" "bootstrap_cluster" {
 #  depends_on = [talos_machine_bootstrap.bootstrap_cluster]
 
 #  client_configuration    = talos_machine_secrets.talos_vm.client_configuration
-#  control_plane_nodes     = [for xvalue in google_compute_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip]
-#  endpoints               = [for xvalue in google_compute_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip]
+#  control_plane_nodes     = [for xvalue in oci_core_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip]
+#  endpoints               = [for xvalue in oci_core_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip]
 #  skip_kubernetes_checks  = true
 #}
 
@@ -511,8 +510,8 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
   ]
 
   client_configuration = talos_machine_secrets.talos_vm.client_configuration
-  endpoint             = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
-  node                 = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
+  endpoint             = oci_core_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
+  node                 = oci_core_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
 }
 
 #--------------------------------------------------

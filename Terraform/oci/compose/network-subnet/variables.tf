@@ -28,4 +28,17 @@ variable "OCI_PROFILE" {
   type        = string
 }
 
+variable "vpc_id" {
+  description = "VCN ID"
+  type        = string
+}
 
+variable "public_rt_table" {
+  description = "PUBLIC ROUTE TABLE"
+  type        = string
+}
+
+variable "private_rt_table" {
+  description = "PRIVATE ROUTE TABLE"
+  type        = string
+}

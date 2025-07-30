@@ -1,4 +1,13 @@
 #--------------------------------------------------
+# Include inputs
+#--------------------------------------------------
+inputs = {
+  public_rt_table   = dependency.network-gateway.outputs.evocloud_public_rt
+  private_rt_table  = dependency.network-gateway.outputs.evocloud_private_rt
+  vpc_id            = dependency.network-vpc.outputs.main_vpc_id
+}
+
+#--------------------------------------------------
 # Include root terragrunt.hcl file
 #--------------------------------------------------
 include "root" {
@@ -10,7 +19,10 @@ include "root" {
 #--------------------------------------------------
 dependency "network-vpc" {
   config_path   = "${get_terragrunt_dir()}/../network-01-vpc"
-  skip_outputs  = true
+}
+
+dependency "network-gateway" {
+  config_path   = "${get_terragrunt_dir()}/../network-02-gateway"
 }
 
 #--------------------------------------------------

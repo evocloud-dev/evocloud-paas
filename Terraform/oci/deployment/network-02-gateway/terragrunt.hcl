@@ -1,4 +1,11 @@
 #--------------------------------------------------
+# Include inputs
+#--------------------------------------------------
+inputs = {
+  vpc_id = dependency.network-vpc.outputs.main_vpc_id
+}
+
+#--------------------------------------------------
 # Include root terragrunt.hcl file
 #--------------------------------------------------
 include "root" {
@@ -6,10 +13,10 @@ include "root" {
 }
 
 #--------------------------------------------------
-# Set network-subnet module dependency
+# Set network-vpc module dependency
 #--------------------------------------------------
-dependency "network-subnet" {
-  config_path   = "${get_terragrunt_dir()}/../network-02-subnet"
+dependency "network-vpc" {
+  config_path   = "${get_terragrunt_dir()}/../network-01-vpc"
 }
 
 #--------------------------------------------------

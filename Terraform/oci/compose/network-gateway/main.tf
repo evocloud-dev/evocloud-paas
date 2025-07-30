@@ -1,27 +1,14 @@
 #--------------------------------------------------
-# Lookup VPC ID
-#--------------------------------------------------
-data "oci_core_vcns" "evocloud-vpc" {
-  compartment_id = local.tenancy_ocid
-  display_name = var.OCI_VPC
-}
-
-data "oci_core_route_tables" "evocloud_route_tables" {
-  compartment_id = local.tenancy_ocid
-  vcn_id         = data.oci_core_vcns.evocloud-vpc.virtual_networks[0].id
-}
-
-#--------------------------------------------------
 # Internet Gateway for VPC Internet Access
 #--------------------------------------------------
-resource "oci_core_internet_gateway" "evocloud_internet_gateway" {
+resource "oci_core_internet_gateway" "evocloud_inet_gateway" {
   #Required
   compartment_id = local.tenancy_ocid
-  vcn_id         = data.oci_core_vcns.evocloud-vpc.virtual_networks[0].id
+  vcn_id         = var.vpc_id
 
   #Optional
-  display_name    = "evocloud-internet-gateway"
-  enabled         = true
+  display_name   = "evocloud-inet-gateway"
+  enabled        = true
 }
 
 #--------------------------------------------------
@@ -30,9 +17,113 @@ resource "oci_core_internet_gateway" "evocloud_internet_gateway" {
 resource "oci_core_nat_gateway" "evocloud_nat_gateway" {
   #Required
   compartment_id = local.tenancy_ocid
-  vcn_id         = data.oci_core_vcns.evocloud-vpc.virtual_networks[0].id
+  vcn_id         = var.vpc_id
 
   #Optional
   display_name   = "evocloud-nat-gateway"
-  route_table_id = data.oci_core_route_tables.evocloud_route_tables.id
 }
+
+#--------------------------------------------------
+# Public Route Table for Internet Gateway
+#--------------------------------------------------
+resource "oci_core_route_table" "evocloud_public_rt" {
+  compartment_id             = local.tenancy_ocid
+  vcn_id                     = var.vpc_id
+  display_name               = "evocloud-public-rt"
+
+  route_rules {
+    network_entity_id = oci_core_internet_gateway.evocloud_inet_gateway.id
+    destination       = "0.0.0.0/0"
+    #destination_type  = "CIDR_BLOCK"
+  }
+}
+
+#--------------------------------------------------
+# Private Route Table for NAT Gateway
+#--------------------------------------------------
+resource "oci_core_route_table" "evocloud_private_rt" {
+  compartment_id = local.tenancy_ocid
+  vcn_id         = var.vpc_id
+  display_name   = "evocloud-private-rt"
+
+  route_rules {
+    network_entity_id = oci_core_nat_gateway.evocloud_nat_gateway.id
+    destination       = "0.0.0.0/0"
+    #destination_type  = "CIDR_BLOCK"
+  }
+}
+
+#--------------------------------------------------
+# Network Security Group
+#--------------------------------------------------
+resource "oci_core_network_security_group" "evocloud_nsg" {
+  # Required
+  compartment_id = local.tenancy_ocid
+  vcn_id         = var.vpc_id
+  #Optional
+  display_name   = "evocloud-nsg"
+}
+
+#--------------------------------------------------
+# Network Security Group Rules
+#--------------------------------------------------
+resource "oci_core_network_security_group_security_rule" "firewall_rule_ingress_ssh" {
+  # Required
+  network_security_group_id = oci_core_network_security_group.evocloud_nsg.id
+  direction                 = "INGRESS"
+  protocol                  = "all"
+  source                    = "0.0.0.0/0"
+  source_type               = "CIDR_BLOCK"
+
+  tcp_options {
+    source_port_range {
+      max = 22
+      min = 22
+    }
+    destination_port_range {
+      max = 22
+      min = 22
+    }
+  }
+}
+
+resource "oci_core_network_security_group_security_rule" "firewall_rule_ingress_internal" {
+  # Required
+  network_security_group_id = oci_core_network_security_group.evocloud_nsg.id
+  direction                 = "INGRESS"
+  protocol                  = "all"
+  source                    = "0.0.0.0/0"
+  source_type               = "CIDR_BLOCK"
+
+  tcp_options {
+    source_port_range {
+      max = 65535
+      min = 0
+    }
+    destination_port_range {
+      max = 22
+      min = 22
+    }
+  }
+}
+
+resource "oci_core_network_security_group_security_rule" "firewall_rule_egress_ssh" {
+  # Required
+  network_security_group_id = oci_core_network_security_group.evocloud_nsg.id
+  direction                 = "EGRESS"
+  protocol                  = "all"
+  destination               = "0.0.0.0/0"
+  destination_type          = "CIDR_BLOCK"
+
+  #tcp_options {
+  #  source_port_range {
+  #    max = 65535
+  #    min = 1
+  #  }
+  #  destination_port_range {
+  #    max = 22
+  #    min = 22
+  #  }
+  #}
+}
+

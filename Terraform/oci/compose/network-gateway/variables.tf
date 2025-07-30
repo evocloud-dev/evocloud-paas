@@ -28,4 +28,9 @@ variable "OCI_PROFILE" {
   type        = string
 }
 
+variable "vpc_id" {
+  description = "VCN ID"
+  type        = string
+}
+
 
