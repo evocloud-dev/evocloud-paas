@@ -71,7 +71,7 @@ resource "oci_core_network_security_group_security_rule" "firewall_rule_ingress_
   # Required
   network_security_group_id = oci_core_network_security_group.evocloud_nsg.id
   direction                 = "INGRESS"
-  protocol                  = "all"
+  protocol                  = "6"
   source                    = "0.0.0.0/0"
   source_type               = "CIDR_BLOCK"
 
@@ -91,14 +91,14 @@ resource "oci_core_network_security_group_security_rule" "firewall_rule_ingress_
   # Required
   network_security_group_id = oci_core_network_security_group.evocloud_nsg.id
   direction                 = "INGRESS"
-  protocol                  = "all"
+  protocol                  = "6"
   source                    = "0.0.0.0/0"
   source_type               = "CIDR_BLOCK"
 
   tcp_options {
     source_port_range {
       max = 65535
-      min = 0
+      min = 1
     }
     destination_port_range {
       max = 22
