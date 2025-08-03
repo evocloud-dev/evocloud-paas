@@ -13,22 +13,23 @@ inputs = {
   ###########################################################################
   # Common Variables
   ###########################################################################
-  BASE_VOLUME_10    = "10"
-  CLOUD_USER     = "mlkroot"
+  BASE_VOLUME_10    = "50"
+  CLOUD_USER        = "mlkroot"
   #DEFAULT_TIMEZONE = "America/Detroit"
-  OCI_PROFILE    = "DEFAULT"
-  OCI_PROJECT_ID = "change me"
-  OCI_REGION     = "us-ashburn-1"
+  OCI_PROFILE       = "DEFAULT"
+  #OCI_PROJECT_ID    = "change me"
+  OCI_REGION        = "us-ashburn-1"
+  OCI_AD            = ["rzWL:US-ASHBURN-AD-1", "rzWL:US-ASHBURN-AD-2","rzWL:US-ASHBURN-AD-3"]
 
   ###########################################################################
   # Network Configurations
   ###########################################################################
-  OCI_VPC = "evocloud-vpc"
-  OCI_VPC_CIDR = ["10.10.0.0/16"]
-
-  DMZ_SUBNET_CIDR     = "10.10.10.0/24"
+  OCI_VPC             = "evocloud-vpc"
+  OCI_VPC_CIDR        = ["10.10.0.0/16"]
+  
   ADMIN_SUBNET_CIDR   = "10.10.20.0/24"
   BACKEND_SUBNET_CIDR = "10.10.30.0/24"
+  DMZ_SUBNET_CIDR     = "10.10.10.0/24"
 
   ###########################################################################
   # Talos Kubernetes Cluster (Kubernetes)
@@ -38,7 +39,7 @@ inputs = {
   TALOS_CTRL_BASE_VOLUME_TYPE = "pd-standard" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
   #TALOS EXTRA KUBERNETES MANIFESTS
-  TALOS_EXTRA_MANIFESTS     = {
+  TALOS_EXTRA_MANIFESTS   = {
     gateway_api_std       = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml"
     gateway_api_tls       = "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.2.1/config/crd/experimental/gateway.networking.k8s.io_tlsroutes.yaml"
     cilium_manifest       = "https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/cilium-1.17.3.yaml"
@@ -53,25 +54,25 @@ inputs = {
   }
 
   #TALOS STANDALONE
-  TALOS_CTRL_STANDALONE_SIZE = "e2-standard-2"
-  TALOS_STANDALONE_VOLUME_TYPE = "pd-balanced"
-  TALOS_CTRL_STANDALONE            = {
-    node01 = "evotalos-workstation"
+  TALOS_CTRL_STANDALONE_SIZE   = "VM.Standard.E2.2"
+  TALOS_STANDALONE_VOLUME_TYPE = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
+  TALOS_CTRL_STANDALONE        = {
+    node01 = "evotalos-workstation2"
   }
 } # End inputs
 
 #--------------------------------------------------
 # Tfstate Remote State Storage
 #--------------------------------------------------
-remote_state {
-  backend = "oci"
-  config = {
-    project  = "evocloud-dev"
-    location = "us"
-    bucket   = "evocloud-tf-state"
-    prefix   = "${basename(get_parent_terragrunt_dir())}/${path_relative_to_include()}"
-  }
-}
+#remote_state {
+#  backend = "oci"
+#  config     = {
+#    project  = "evocloud-dev"
+#    location = "us"
+#    bucket   = "evocloud-tf-state"
+#    prefix   = "${basename(get_parent_terragrunt_dir())}/${path_relative_to_include()}"
+#  }
+#}
 
 #----------------------------------------------------------------------------------------------------
 # TERRAFORM HOOKS

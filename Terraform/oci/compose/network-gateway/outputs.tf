@@ -29,3 +29,8 @@ output "evocloud_private_rt" {
   value     = oci_core_route_table.evocloud_private_rt.id
   sensitive = true
 }
+
+output "evocloud_nsg_id" {
+  value     = oci_core_network_security_group.evocloud_nsg.id
+  sensitive = true
+}

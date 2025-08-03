@@ -107,7 +107,47 @@ resource "oci_core_network_security_group_security_rule" "firewall_rule_ingress_
   }
 }
 
-resource "oci_core_network_security_group_security_rule" "firewall_rule_egress_ssh" {
+resource "oci_core_network_security_group_security_rule" "firewall_rule_ingress_taloskube" {
+  # Required
+  network_security_group_id = oci_core_network_security_group.evocloud_nsg.id
+  direction                 = "INGRESS"
+  protocol                  = "6"
+  source                    = "0.0.0.0/0"
+  source_type               = "CIDR_BLOCK"
+
+  tcp_options {
+    source_port_range {
+      max = 65535
+      min = 1
+    }
+    destination_port_range {
+      max = 6443
+      min = 6443
+    }
+  }
+}
+
+resource "oci_core_network_security_group_security_rule" "firewall_rule_ingress_talosctl" {
+  # Required
+  network_security_group_id = oci_core_network_security_group.evocloud_nsg.id
+  direction                 = "INGRESS"
+  protocol                  = "6"
+  source                    = "0.0.0.0/0"
+  source_type               = "CIDR_BLOCK"
+
+  tcp_options {
+    source_port_range {
+      max = 65535
+      min = 1
+    }
+    destination_port_range {
+      max = 50000
+      min = 50000
+    }
+  }
+}
+
+resource "oci_core_network_security_group_security_rule" "firewall_rule_egress" {
   # Required
   network_security_group_id = oci_core_network_security_group.evocloud_nsg.id
   direction                 = "EGRESS"

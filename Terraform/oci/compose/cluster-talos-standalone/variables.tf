@@ -44,20 +44,24 @@ variable "OCI_PROFILE" {
   type        = string
 }
 
+variable "OCI_AD" {
+  type = list
+}
+
 variable "TALOS_AMI_NAME" {
   description = "Talos Base AMI Name"
   type        = string
   default     = "evocloud-talos19-b010"
 }
 
-variable "TALOS_AMI_SOURCE" {
-  description = "Link to Talos OS Raw Disk"
-  type        = string
-}
+#variable "TALOS_AMI_SOURCE" {
+#  description = "Link to Talos OS Raw Disk"
+#  type        = string
+#}
 
 variable "TALOS_CTRL_STANDALONE" {
   description = "Talos Standalone Controlplane Nodes"
-  type        = string
+  type        = map(string)
 }
 
 variable "TALOS_CTRL_STANDALONE_SIZE" {
@@ -133,4 +137,35 @@ variable "create_talos_img" {
   description = "Boolean variable to determine whether to create the Talos Base Image"
   type        = bool
   default     = false
+}
+
+variable "admin_subnet_id" {
+  description = "Admin Subnet ID"
+  type        = string
+}
+
+variable "backend_subnet_id" {
+  description = "Backend Subnet ID"
+  type        = string
+}
+
+variable "dmz_subnet_id" {
+  description = "DMZ Subnet ID"
+  type        = string
+}
+
+variable "vpc_id" {
+  description = "VCN ID"
+  type        = string
+}
+
+variable "nsg_id" {
+  description = "Network Security Group ID"
+  type        = string
+}
+
+variable "talos_image_id" {
+  description = "Talos Image ID"
+  type  = string
+  default = "ocid1.image.oc1.iad.aaaaaaaabtyrw7r7jvgau53eqf7432qektw4sg4k2qb5qfnmalabfhrj3mfq"
 }
