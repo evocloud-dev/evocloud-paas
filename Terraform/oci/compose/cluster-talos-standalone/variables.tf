@@ -1,7 +1,7 @@
-variable "BASE_VOLUME_10" {
+variable "BASE_VOLUME_50" {
   description = "Base Volume Size 10GB"
   type        = string
-  default     = "10"
+  default     = "50"
 }
 
 variable "CLOUD_USER" {

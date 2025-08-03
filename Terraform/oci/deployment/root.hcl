@@ -13,13 +13,13 @@ inputs = {
   ###########################################################################
   # Common Variables
   ###########################################################################
-  BASE_VOLUME_10    = "50"
+  BASE_VOLUME_50    = "50"
   CLOUD_USER        = "mlkroot"
   #DEFAULT_TIMEZONE = "America/Detroit"
   OCI_PROFILE       = "DEFAULT"
   #OCI_PROJECT_ID    = "change me"
   OCI_REGION        = "us-ashburn-1"
-  OCI_AD            = ["rzWL:US-ASHBURN-AD-1", "rzWL:US-ASHBURN-AD-2","rzWL:US-ASHBURN-AD-3"]
+  OCI_AD            = []
 
   ###########################################################################
   # Network Configurations
@@ -57,7 +57,7 @@ inputs = {
   TALOS_CTRL_STANDALONE_SIZE   = "VM.Standard.E2.2"
   TALOS_STANDALONE_VOLUME_TYPE = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
   TALOS_CTRL_STANDALONE        = {
-    node01 = "evotalos-workstation2"
+    node01 = "evotalos-workstation"
   }
 } # End inputs
 

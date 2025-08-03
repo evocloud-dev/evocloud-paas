@@ -2,7 +2,7 @@
 # Include inputs
 #--------------------------------------------------
 inputs = {
-  vpc_id = dependency.network-vpc.outputs.main_vpc_id
+  vcn_id = dependency.network-vpc.outputs.main_vcn_id
 }
 
 #--------------------------------------------------

@@ -4,7 +4,7 @@
 resource "oci_core_internet_gateway" "evocloud_inet_gateway" {
   #Required
   compartment_id = local.tenancy_ocid
-  vcn_id         = var.vpc_id
+  vcn_id         = var.vcn_id
 
   #Optional
   display_name   = "evocloud-inet-gateway"
@@ -17,7 +17,7 @@ resource "oci_core_internet_gateway" "evocloud_inet_gateway" {
 resource "oci_core_nat_gateway" "evocloud_nat_gateway" {
   #Required
   compartment_id = local.tenancy_ocid
-  vcn_id         = var.vpc_id
+  vcn_id         = var.vcn_id
 
   #Optional
   display_name   = "evocloud-nat-gateway"
@@ -28,7 +28,7 @@ resource "oci_core_nat_gateway" "evocloud_nat_gateway" {
 #--------------------------------------------------
 resource "oci_core_route_table" "evocloud_public_rt" {
   compartment_id             = local.tenancy_ocid
-  vcn_id                     = var.vpc_id
+  vcn_id                     = var.vcn_id
   display_name               = "evocloud-public-rt"
 
   route_rules {
@@ -43,7 +43,7 @@ resource "oci_core_route_table" "evocloud_public_rt" {
 #--------------------------------------------------
 resource "oci_core_route_table" "evocloud_private_rt" {
   compartment_id = local.tenancy_ocid
-  vcn_id         = var.vpc_id
+  vcn_id         = var.vcn_id
   display_name   = "evocloud-private-rt"
 
   route_rules {
@@ -59,7 +59,7 @@ resource "oci_core_route_table" "evocloud_private_rt" {
 resource "oci_core_network_security_group" "evocloud_nsg" {
   # Required
   compartment_id = local.tenancy_ocid
-  vcn_id         = var.vpc_id
+  vcn_id         = var.vcn_id
   #Optional
   display_name   = "evocloud-nsg"
 }

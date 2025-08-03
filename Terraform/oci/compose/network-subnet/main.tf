@@ -2,7 +2,7 @@ resource "oci_core_subnet" "admin_subnet" {
   #Required
   cidr_block     = var.ADMIN_SUBNET_CIDR
   compartment_id = local.tenancy_ocid
-  vcn_id         = var.vpc_id
+  vcn_id         = var.vcn_id
 
   #Optional
   display_name               = "admin_subnet"
@@ -14,7 +14,7 @@ resource "oci_core_subnet" "backend_subnet" {
   #Required
   cidr_block     = var.BACKEND_SUBNET_CIDR
   compartment_id = local.tenancy_ocid
-  vcn_id         = var.vpc_id
+  vcn_id         = var.vcn_id
 
   #Optional
   display_name               = "backend_subnet"
@@ -26,7 +26,7 @@ resource "oci_core_subnet" "dmz_subnet" {
   #Required
   cidr_block     = var.DMZ_SUBNET_CIDR
   compartment_id = local.tenancy_ocid
-  vcn_id         = var.vpc_id
+  vcn_id         = var.vcn_id
 
   #Optional
   display_name               = "dmz_subnet"

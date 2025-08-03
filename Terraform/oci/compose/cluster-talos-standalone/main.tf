@@ -82,7 +82,7 @@ resource "oci_core_instance" "evo-std" {
     launch_create_volume_details {
       display_name       = format("%s-%s", "base-volume", each.value)
       compartment_id     = local.tenancy_ocid
-      size_in_gbs        = var.BASE_VOLUME_10
+      size_in_gbs        = var.BASE_VOLUME_50
       volume_creation_type = "ATTRIBUTES"
       vpus_per_gb        = var.TALOS_STANDALONE_VOLUME_TYPE
     }

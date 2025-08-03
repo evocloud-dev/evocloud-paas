@@ -4,7 +4,7 @@
 inputs = {
   public_rt_table   = dependency.network-gateway.outputs.evocloud_public_rt
   private_rt_table  = dependency.network-gateway.outputs.evocloud_private_rt
-  vpc_id            = dependency.network-vpc.outputs.main_vpc_id
+  vcn_id            = dependency.network-vcn.outputs.main_vcn_id
 }
 
 #--------------------------------------------------
