@@ -2,7 +2,7 @@
 # Include inputs
 #--------------------------------------------------
 inputs = {
-  vcn_id = dependency.network-vpc.outputs.main_vcn_id
+  vcn_id = dependency.network-vcn.outputs.main_vcn_id
 }
 
 #--------------------------------------------------
@@ -15,8 +15,8 @@ include "root" {
 #--------------------------------------------------
 # Set network-vpc module dependency
 #--------------------------------------------------
-dependency "network-vpc" {
-  config_path   = "${get_terragrunt_dir()}/../network-01-vpc"
+dependency "network-vcn" {
+  config_path   = "${get_terragrunt_dir()}/../network-01-vcn"
 }
 
 #--------------------------------------------------

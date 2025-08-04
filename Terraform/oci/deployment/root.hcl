@@ -20,7 +20,8 @@ inputs = {
   #OCI_PROJECT_ID    = "change me"
   OCI_REGION        = "us-ashburn-1"
   OCI_AD            = []
-
+  OCI_IMAGE_BUCKET  = "vince-oci-bucket"
+  TALOS_SOURCE      = "oracle-amd64.raw.xz"
   ###########################################################################
   # Network Configurations
   ###########################################################################

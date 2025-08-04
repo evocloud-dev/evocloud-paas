@@ -8,7 +8,7 @@ inputs = {
   dmz_subnet_id       = dependency.network-subnet.outputs.dmz_subnet_id
   dmz_subnet_name     = dependency.network-subnet.outputs.dmz_subnet_name
   nsg_id              = dependency.network-gateway.outputs.evocloud_nsg_id
-  vcn_id              = dependency.network-vpc.outputs.main_vcn_id
+  vcn_id              = dependency.network-vcn.outputs.main_vcn_id
   #idam_server_ip      =
   #idam_replica_ip     =
   cluster_name        = "evo-cluster-std"
@@ -28,8 +28,8 @@ include "root" {
 #--------------------------------------------------
 # Set network-subnet module dependency
 #--------------------------------------------------
-dependency "network-vpc" {
-  config_path = "${get_terragrunt_dir()}/../network-01-vpc"
+dependency "network-vcn" {
+  config_path = "${get_terragrunt_dir()}/../network-01-vcn"
 }
 
 #--------------------------------------------------

@@ -45,13 +45,24 @@ variable "OCI_PROFILE" {
 }
 
 variable "OCI_AD" {
-  type = list
+  description = "OCI Availability Domain List"
+  type        = list
+}
+
+variable "OCI_IMAGE_BUCKET" {
+  description = "Bucket for oci images"
+  type        = string
 }
 
 variable "TALOS_AMI_NAME" {
   description = "Talos Base AMI Name"
   type        = string
   default     = "evocloud-talos19-b010"
+}
+
+variable "TALOS_SOURCE" {
+  description = "Source file name from Talos Image Factory"
+  type        = string
 }
 
 #variable "TALOS_AMI_SOURCE" {
@@ -154,7 +165,7 @@ variable "dmz_subnet_id" {
   type        = string
 }
 
-variable "vpc_id" {
+variable "vcn_id" {
   description = "VCN ID"
   type        = string
 }
@@ -164,8 +175,4 @@ variable "nsg_id" {
   type        = string
 }
 
-variable "talos_image_id" {
-  description = "Talos Image ID"
-  type  = string
-  default = "ocid1.image.oc1.iad.aaaaaaaabtyrw7r7jvgau53eqf7432qektw4sg4k2qb5qfnmalabfhrj3mfq"
-}
+

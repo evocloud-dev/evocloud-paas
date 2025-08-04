@@ -9,5 +9,5 @@ include "root" {
 # Load network-vpc module
 #--------------------------------------------------
 terraform {
-  source = "${get_terragrunt_dir()}/../../compose//network-vpc"
+  source = "${get_terragrunt_dir()}/../../compose//network-vcn"
 }
