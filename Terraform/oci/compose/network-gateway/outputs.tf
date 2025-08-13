@@ -1,7 +1,6 @@
 #--------------------------------------------------
 # Expose Gateway Router Information
 #--------------------------------------------------
-
 output "evocloud_internet_gateway" {
   value = oci_core_internet_gateway.evocloud_inet_gateway.display_name
 }

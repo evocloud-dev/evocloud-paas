@@ -54,28 +54,22 @@ resource "random_integer" "zone_selector_ctrlnode" {
   max        = length(var.OCI_AD) - 1
 }
 
-#resource "oci_core_vlan" "evo-vlan" {
-#  display_name     = "evotalos-vlan"
-#  compartment_id   = local.tenancy_ocid
-#  vcn_id           = var.vpc_id
-#  cidr_block       = "10.10.20.0/24"
-#  nsg_ids          = [var.nsg_id]
-#}
-
 resource "oci_core_instance" "talos_ctrlplane" {
   depends_on = [oci_core_image.talos]
 
-  for_each            = var.TALOS_CTRL_STANDALONE
-  display_name        = format("%s", each.value)
-  compartment_id      = local.tenancy_ocid
+  for_each                                = var.TALOS_CTRL_STANDALONE
+  display_name = format("%s", each.value)
+  compartment_id                          = local.tenancy_ocid
   availability_domain = element(var.OCI_AD, random_integer.zone_selector_ctrlnode[each.key].result)
-  shape               = var.TALOS_CTRL_STANDALONE_SIZE
-  preserve_boot_volume                        = false
-  preserve_data_volumes_created_at_launch     = false
+  shape                                   = var.TALOS_CTRL_STANDALONE_SIZE
+  preserve_boot_volume                    = false
+  preserve_data_volumes_created_at_launch = false
+
+  #metadata = {ssh_authorized_keys = data.local_file.ssh_public_key.content}
 
   create_vnic_details {
-    subnet_id      = var.dmz_subnet_id
-    nsg_ids        = [var.nsg_id]
+    subnet_id        = var.dmz_subnet_id
+    nsg_ids = [var.nsg_id]
     assign_public_ip = false
     #hostname_label = format("%s.%s", each.value, var.DOMAIN_TLD)
   }
@@ -89,11 +83,11 @@ resource "oci_core_instance" "talos_ctrlplane" {
   launch_volume_attachments {
     display_name = format("%s-%s", "base-volume", each.value)
     launch_create_volume_details {
-      display_name       = format("%s-%s", "base-volume", each.value)
-      compartment_id     = local.tenancy_ocid
-      size_in_gbs        = var.BASE_VOLUME_50
+      display_name = format("%s-%s", "base-volume", each.value)
+      compartment_id       = local.tenancy_ocid
+      size_in_gbs          = var.BASE_VOLUME_50
       volume_creation_type = "ATTRIBUTES"
-      vpus_per_gb        = var.TALOS_STANDALONE_VOLUME_TYPE
+      vpus_per_gb          = var.TALOS_STANDALONE_VOLUME_TYPE
     }
     type = "paravirtualized"
   }
@@ -104,22 +98,7 @@ resource "oci_core_instance" "talos_ctrlplane" {
       type                 = "TERMINATE"
     }
   }
-
-  #shape_config {
-  #  memory_in_gbs = "32"
-  #  ocpus         = "4"
-  #}
 }
-
-#resource "oci_core_vnic_attachment" "evo-vlan-vnic" {
-#  for_each = oci_core_instance.evo-std
-#  instance_id = each.value.id
-#
-#  create_vnic_details {
-#    vlan_id = oci_core_vlan.evo-vlan.id
-#  }
-#}
-
 #--------------------------------------------------
 # Configuring Talos Kubernetes Cluster
 #--------------------------------------------------
@@ -139,7 +118,6 @@ data "talos_client_configuration" "talosconfig" {
 #Wait for 45 secondes for VM Instance to be fully available
 resource "time_sleep" "wait_45_seconds" {
   depends_on = [data.talos_machine_configuration.talos_controlplane]
-
   create_duration = "45s"
 }
 

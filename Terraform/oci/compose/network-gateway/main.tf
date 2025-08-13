@@ -74,12 +74,10 @@ resource "oci_core_network_security_group_security_rule" "firewall_rule_ingress_
   protocol                  = "6"
   source                    = "0.0.0.0/0"
   source_type               = "CIDR_BLOCK"
+  description               = "Allow SSH on port 22"
+  stateless                 = false
 
   tcp_options {
-    source_port_range {
-      max = 22
-      min = 22
-    }
     destination_port_range {
       max = 22
       min = 22
@@ -87,22 +85,56 @@ resource "oci_core_network_security_group_security_rule" "firewall_rule_ingress_
   }
 }
 
-resource "oci_core_network_security_group_security_rule" "firewall_rule_ingress_internal" {
+resource "oci_core_network_security_group_security_rule" "firewall_rule_ingress_http" {
   # Required
   network_security_group_id = oci_core_network_security_group.evocloud_nsg.id
   direction                 = "INGRESS"
   protocol                  = "6"
   source                    = "0.0.0.0/0"
   source_type               = "CIDR_BLOCK"
+  description               = "Allow HTTP"
+  stateless                 = false
 
   tcp_options {
-    source_port_range {
-      max = 65535
-      min = 1
-    }
     destination_port_range {
-      max = 22
-      min = 22
+      max = 80
+      min = 80
+    }
+  }
+}
+
+resource "oci_core_network_security_group_security_rule" "firewall_rule_ingress_https" {
+  # Required
+  network_security_group_id = oci_core_network_security_group.evocloud_nsg.id
+  direction                 = "INGRESS"
+  protocol                  = "6"
+  source                    = "0.0.0.0/0"
+  source_type               = "CIDR_BLOCK"
+  description               = "Allow HTTPS"
+  stateless                 = false
+
+  tcp_options {
+    destination_port_range {
+      max = 443
+      min = 443
+    }
+  }
+}
+
+resource "oci_core_network_security_group_security_rule" "firewall_rule_ingress_rdp" {
+  # Required
+  network_security_group_id = oci_core_network_security_group.evocloud_nsg.id
+  direction                 = "INGRESS"
+  protocol                  = "6"
+  source                    = "0.0.0.0/0"
+  source_type               = "CIDR_BLOCK"
+  description               = "Allow HTTP"
+  stateless                 = false
+
+  tcp_options {
+    destination_port_range {
+      max = 3389
+      min = 3389
     }
   }
 }
@@ -114,12 +146,10 @@ resource "oci_core_network_security_group_security_rule" "firewall_rule_ingress_
   protocol                  = "6"
   source                    = "0.0.0.0/0"
   source_type               = "CIDR_BLOCK"
+  description               = "Allow Kube API"
+  stateless                 = false
 
   tcp_options {
-    source_port_range {
-      max = 65535
-      min = 1
-    }
     destination_port_range {
       max = 6443
       min = 6443
@@ -134,16 +164,30 @@ resource "oci_core_network_security_group_security_rule" "firewall_rule_ingress_
   protocol                  = "6"
   source                    = "0.0.0.0/0"
   source_type               = "CIDR_BLOCK"
+  description               = "Allow Talosctl"
+  stateless                 = false
 
   tcp_options {
-    source_port_range {
-      max = 65535
-      min = 1
-    }
     destination_port_range {
       max = 50000
       min = 50000
     }
+  }
+}
+
+resource "oci_core_network_security_group_security_rule" "firewall_rule_ingress_icmp" {
+  # Required
+  network_security_group_id = oci_core_network_security_group.evocloud_nsg.id
+  direction                 = "INGRESS"
+  protocol                  = "1"
+  source                    = "0.0.0.0/0"
+  source_type               = "CIDR_BLOCK"
+  description               = "Allow ICMP ping"
+  stateless                 = false
+
+  icmp_options {
+    type  = 8
+    code  = 0
   }
 }
 
@@ -154,16 +198,7 @@ resource "oci_core_network_security_group_security_rule" "firewall_rule_egress" 
   protocol                  = "all"
   destination               = "0.0.0.0/0"
   destination_type          = "CIDR_BLOCK"
-
-  #tcp_options {
-  #  source_port_range {
-  #    max = 65535
-  #    min = 1
-  #  }
-  #  destination_port_range {
-  #    max = 22
-  #    min = 22
-  #  }
-  #}
+  description               = "Allow outbound traffic"
+  stateless                 = false
 }
 
