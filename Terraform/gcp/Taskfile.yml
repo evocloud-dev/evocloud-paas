@@ -33,7 +33,7 @@ tasks:
   copy-files:
     # Task only runs if one or more status commands not satisfied"
     # Files: gcp-evocloud.pem, gcp-evocloud.pub, ansible-vault-pass.txt, secret-store.yml and root.hcl
-    desc: "Copies files from mount directory inside container to their respective locations."
+    desc: "GCP: Copies files from mount directory inside container to their respective locations."
     status:
       - "ls -al /etc/pki/tls | grep gcp-evocloud.pem"
       - "ls -al /etc/pki/tls | grep gcp-evocloud.pub"
@@ -45,7 +45,7 @@ tasks:
       - \cp {{.MNTDIR}}/gcp/*.json {{.KEYS_DIR}}
       - \cp {{.MNTDIR}}/gcp/*.pem /etc/pki/tls
       - \cp {{.MNTDIR}}/gcp/*.pub /etc/pki/tls
-      - \cp {{.MNTDIR}}/gcp/ansible-vault-pass.txt {{.MNTDIR}}/secret-store.yml Ansible/secret-vault
+      - \cp {{.MNTDIR}}/gcp/ansible-vault-pass.txt {{.MNTDIR}}/gcp/secret-store.yml Ansible/secret-vault
       - \cp {{.MNTDIR}}/gcp/root.hcl {{.DEPLOY_DIR}}
       - chmod 0600 /etc/pki/tls/*.pem
       - chmod 0644 /etc/pki/tls/*.pub
@@ -54,60 +54,60 @@ tasks:
   # Build Tasks
   ###############################
   build-evo-master:
-    desc: "Build evo-master Server"
+    desc: "GCP: Build evo-master Server"
     deps: [copy-files]
     cmds:
-      - echo "Building evo-master"
+      - echo "GCP':' Building evo-master"
       - task: vm-operation
         vars:
           SERVER: server-01-dmz-deployer
           ACTION: "{{.BUILD_CMD}}"
 
   build-evo-idp:
-    desc: "Build EvoCloud IdM Server"
+    desc: "GCP: Build EvoCloud IdM Server"
     deps: [copy-files]
     cmds:
-      - echo "Building EvoCloud IdM Server"
+      - echo "GCP':' Building EvoCloud IdM Server"
       - task: vm-operation
         vars:
           SERVER: server-02-admin-idam-helper
           ACTION: "{{.BUILD_CMD}}"
 
   build-evo-idpr:
-    desc: "Build EvoCloud IdM Replica Server"
+    desc: "GCP: Build EvoCloud IdM Replica Server"
     deps: [copy-files]
     cmds:
-      - echo "Building EvoCloud IdM Replica Server"
+      - echo "GCP':' Building EvoCloud IdM Replica Server"
       - task: vm-operation
         vars:
           SERVER: server-03-admin-idam_replica-helper
           ACTION: "{{.BUILD_CMD}}"
 
   build-evo-rdp:
-    desc: "Build EvoCloud Remote Desktop Server"
+    desc: "GCP: Build EvoCloud Remote Desktop Server"
     deps: [copy-files]
     cmds:
-      - echo "Building EvoCloud Remote Desktop Server"
+      - echo "GCP':' Building EvoCloud Remote Desktop Server"
       - task: vm-operation
         vars:
           SERVER: server-dmz-rdp-helper
           ACTION: "{{.BUILD_CMD}}"
 
   build-evo-cluster-std:
-    desc: "Build EvoCloud Single Node Cluster"
+    desc: "GCP: Build EvoCloud Single Node Cluster"
     deps: [copy-files]
     cmds:
-      - echo "Building EvoCloud Single Node Kube Cluster"
+      - echo "GCP':' Building EvoCloud Single Node Kube Cluster"
       - task: vm-operation
         vars:
           SERVER: cluster-talos-standalone-helper
           ACTION: "{{.BUILD_CMD}}"
 
   build-evo-cluster-mgr:
-    desc: "Build EvoCloud Full Kube Cluster"
+    desc: "GCP: Build EvoCloud Full Kube Cluster"
     deps: [copy-files]
     cmds:
-      - echo "Building Full EvoCloud Kube Cluster"
+      - echo "GCP':' Building Full EvoCloud Kube Cluster"
       - task: vm-operation
         vars:
           SERVER: cluster-admin-talos-helper
@@ -117,60 +117,60 @@ tasks:
   # Destroy Tasks
   ###############################
   destroy-evo-master:
-    desc: "Destroy evo-master"
+    desc: "GCP: Destroy evo-master"
     deps: [copy-files]
     cmds:
-      - echo "Destroying evo-master"
+      - echo "GCP':' Destroying evo-master"
       - task: vm-operation
         vars:
           SERVER: server-01-dmz-deployer
           ACTION: "{{.DESTROY_CMD}}"
 
   destroy-evo-idp:
-    desc: "Destroy EvoCloud IdM Server"
+    desc: "GCP: Destroy EvoCloud IdM Server"
     deps: [copy-files]
     cmds:
-      - echo "Destroying EvoCloud IdM Server"
+      - echo "GCP':' Destroying EvoCloud IdM Server"
       - task: vm-operation
         vars:
           SERVER: server-02-admin-idam
           ACTION: "{{.DESTROY_CMD}}"
 
   destroy-evo-idpr:
-    desc: "Destroy EvoCloud IdM Replica Server"
+    desc: "GCP: Destroy EvoCloud IdM Replica Server"
     deps: [copy-files]
     cmds:
-      - echo "Destroying EvoCloud IdM Replica Server"
+      - echo "GCP':' Destroying EvoCloud IdM Replica Server"
       - task: vm-operation
         vars:
           SERVER: server-03-admin-idam_replica
           ACTION: "{{.DESTROY_CMD}}"
 
   destroy-evo-rdp:
-    desc: "Destroy EvoCloud Remote Desktop Server"
+    desc: "GCP: Destroy EvoCloud Remote Desktop Server"
     deps: [copy-files]
     cmds:
-      - echo "Destroying EvoCloud Remote Desktop Server"
+      - echo "GCP':' Destroying EvoCloud Remote Desktop Server"
       - task: vm-operation
         vars:
           SERVER: server-dmz-rdp
           ACTION: "{{.DESTROY_CMD}}"
 
   destroy-evo-cluster-std:
-    desc: "Destroy EvoCloud Single Node Kube Cluster"
+    desc: "GCP: Destroy EvoCloud Single Node Kube Cluster"
     deps: [copy-files]
     cmds:
-      - echo "Destroying EvoCloud Single Node Kube Cluster"
+      - echo "GCP':' Destroying EvoCloud Single Node Kube Cluster"
       - task: vm-operation
         vars:
           SERVER: cluster-talos-standalone-helper-destroyer
           ACTION: "{{.CLUSTER_DESTROY_CMD}}"
 
   destroy-evo-cluster-mgr:
-    desc: "Destroy EvoCloud Full  Kube Cluster"
+    desc: "GCP: Destroy EvoCloud Full  Kube Cluster"
     deps: [copy-files]
     cmds:
-      - echo "Destroying EvoCloud Full Kube Cluster"
+      - echo "GCP':' Destroying EvoCloud Full Kube Cluster"
       - task: vm-operation
         vars:
           SERVER: cluster-admin-talos-helper-destroyer

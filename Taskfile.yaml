@@ -2,37 +2,11 @@ version: 3
 
 silent: true
 
-# Searches Terraform directory and finds provider taskfiles
-vars:
-  PROVIDERS:
-    sh: find ./Terraform -mindepth 1 -maxdepth 1 -type d -printf "%f\n" | sort
-
-tasks:
-  # Open each provider Taskfile.yml, reads the descriptions and shows them.
-  _list:
-    silent: true
-    cmds:
-      - |
-        echo "Dynamic provider tasks:"
-        for prov in {{.PROVIDERS}}; do
-          echo "Provider: $prov"
-          grep -E '^[ ]{2}[a-zA-Z0-9_-]+:' ./Terraform/$prov/Taskfile.yml \
-            | cut -d':' -f1 \
-            | while read taskname; do
-                desc=$(grep -A1 "^[ ]\{2\}$taskname:" ./Terraform/$prov/Taskfile.yml | grep 'desc:' | sed 's/.*desc:[ ]*//')
-                printf "  %-12s - %s\n" "$prov:$taskname" "$desc"
-              done
-        done
-
-  # Allows provider tasks to be run via the following methods
-  # 1. Using Namespace - task gcp:build-evo-master
-  # 2. Using CLI       - task build-evo-master -- gcp
-  '{{.PROVIDER}}:{{.ACTION}}':
-    internal: true
-    vars:
-      PROVIDER:
-        sh: echo "{{.TASK}}" | cut -d':' -f1
-      ACTION:
-        sh: echo "{{.TASK}}" | cut -d':' -f2
-      cmds:
-        - task --dir ./Terraform/{{.PROVIDER}} {{.ACTION}}
+# Creates Namespaces for tasks. To execute as task run the following:
+# task gcp:build-evo-master
+# task oci:build-evo-master
+includes:
+  gcp:
+    taskfile: ./Terraform/gcp/Taskfile.yml
+  oci:
+    taskfile: ./Terraform/oci/Taskfile.yml
