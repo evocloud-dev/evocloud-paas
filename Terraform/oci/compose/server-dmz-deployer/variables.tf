@@ -113,10 +113,10 @@ variable "deployer_revision" {
   description = "Deployer revision version"
 }
 
-variable "rocky_image_id" {
-  description = "ID of Rocky Linux Image"
-  type        = string
-}
+#variable "rocky_image_id" {
+#  description = "ID of Rocky Linux Image"
+#  type        = string
+#}
 
 variable "nsg_id" {
   description = "Network Security Group ID"

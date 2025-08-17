@@ -24,9 +24,7 @@ resource "oci_core_instance" "deployer_server" {
     instance_source_image_filter_details {
       compartment_id      = local.tenancy_ocid
       defined_tags_filter = {
-        namespace = var.ROCKY_IMAGE_NS
-        key       = var.ROCKY_IMAGE_KEY
-        value     = var.BASE_AMI_NAME
+        "${var.ROCKY_IMAGE_NS}.${var.ROCKY_IMAGE_KEY}" = var.BASE_AMI_NAME
       }
       operating_system         = "Rocky-Linux"
       operating_system_version = var.BASE_AMI_VERSION

@@ -9,8 +9,8 @@ inputs = {
   dmz_subnet_name     = dependency.network-subnet.outputs.dmz_subnet_name
   nsg_id              = dependency.network-gateway.outputs.evocloud_nsg_id
   vcn_id              = dependency.network-vcn.outputs.main_vcn_id
-  rocky_image_id      = dependency.image-build.outputs.rocky_linux_image_id
-  rocky_image_name    = dependency.image-build.outputs.rocky_linux_image_name
+  #rocky_image_id      = dependency.image-build.outputs.rocky_linux_image_id
+  #rocky_image_name    = dependency.image-build.outputs.rocky_linux_image_name
   deployer_revision     = "0.1.0"
   use_spot            = true
 }
