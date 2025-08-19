@@ -15,12 +15,12 @@ resource "terraform_data" "evoidam_deployment" {
     host        = var.deployer_server_eip
     type        = "ssh"
     user        = var.CLOUD_USER
-    private_key = file(var.PRIVATE_KEY_PAIR)
+    private_key = file(var.PRIVATE_NODE_KEY_PAIR)
   }
 
   provisioner "remote-exec" {
     inline = [
-      "cd /home/${var.CLOUD_USER}/EVOCLOUD/Terraform/gcp/deployment/server-02-admin-idam",
+      "cd /home/${var.CLOUD_USER}/EVOCLOUD/Terraform/oci/deployment/server-02-admin-idam",
       "terragrunt run-all apply --non-interactive --queue-include-external -auto-approve",
     ]
   }

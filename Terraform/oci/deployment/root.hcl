@@ -11,21 +11,22 @@ inputs = {
   ###########################################################################
   # Common Variables
   ###########################################################################
-  BASE_AMI_NAME     = "evocloud-rocky-linux-8-b0-1-1"
-  BASE_AMI_VERSION  = "8.10"
-  BASE_SOURCE       = "Rocky-8-GenericCloud-Base.latest.x86_64.qcow2"
-  BASE_VOLUME_50    = "50"
-  CLOUD_USER        = "mlkroot"
-  DEFAULT_TIMEZONE  = "America/Detroit"
-  OCI_PROFILE       = "DEFAULT"
-  OCI_REGION        = "us-ashburn-1"
-  OCI_AD            = []
-  OCI_IMAGE_BUCKET  = "vince-oci-bucket"
-  TALOS_SOURCE      = "oracle-amd64.raw.xz"
-  PUBLIC_KEY_PAIR   = "/etc/pki/tls/oci_evocloud.pub"
-  PRIVATE_KEY_PAIR  = "/etc/pki/tls/oci_evocloud.pem"
-  ROCKY_IMAGE_NS    = "evoImages"
-  ROCKY_IMAGE_KEY   = "RockyLinux"
+  BASE_AMI_NAME          = "evocloud-rocky-linux-8-b0-1-2"
+  BASE_AMI_VERSION       = "8.10"
+  BASE_SOURCE            = "Rocky-8-GenericCloud-Base.latest.x86_64.qcow2"
+  BASE_VOLUME_50         = "50"
+  CLOUD_USER             = "mlkroot"
+  DEFAULT_TIMEZONE       = "America/Detroit"
+  OCI_PROFILE            = "DEFAULT"
+  OCI_REGION             = "us-ashburn-1"
+  OCI_AD                 = []
+  OCI_IMAGE_BUCKET       = ""
+  TALOS_SOURCE           = "oracle-amd64.raw.xz"
+  PUBLIC_KEY_PAIR        = "/etc/pki/tls/oci_evocloud.pub"
+  PRIVATE_KEY_PAIR       = "/etc/pki/tls/oci_evocloud.pem"
+  PUBLIC_NODE_KEY_PAIR   = "/etc/pki/tls/oci_evonode.pem"
+  PRIVATE_NODE_KEY_PAIR  = "/etc/pki/tls/oci_evonode.pem"
+  OCI_CONFIG             = "config"
 
   ###########################################################################
   # Ansible/Automation Runtime Environment Configurations

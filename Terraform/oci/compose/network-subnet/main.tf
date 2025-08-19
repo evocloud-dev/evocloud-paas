@@ -11,7 +11,7 @@ resource "oci_core_security_list" "dmz_list" {
     protocol    = "6" #TCP
     source      = "0.0.0.0/0"
     stateless   = false
-    description = "Allow HTTP"
+    description = "Allow SSH"
     tcp_options {
       max = 22
       min = 22

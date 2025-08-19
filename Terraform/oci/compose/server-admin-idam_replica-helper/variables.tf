@@ -1,9 +1,9 @@
-variable "GCP_PROJECT_ID" {
+variable "OCI_PROFILE" {
   description = "GCP Project ID"
   type        = string
 }
 
-variable "GCP_REGION" {
+variable "OCI_REGION" {
   description = "GCP Region"
   type        = string
 }
@@ -18,12 +18,8 @@ variable "CLOUD_USER" {
   type        = string
 }
 
-variable "PRIVATE_KEY_PAIR" {
+variable "PRIVATE_NODE_KEY_PAIR" {
   description = "Private Key Pair for SSH Login"
   type        = string
 }
 
-variable "GCP_JSON_CREDS" {
-  description = "GCP Secret Json Key File"
-  type        = string
-}

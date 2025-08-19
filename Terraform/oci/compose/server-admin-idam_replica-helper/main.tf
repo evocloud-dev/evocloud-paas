@@ -15,14 +15,12 @@ resource "terraform_data" "evoidam-replica_deployment" {
     host        = var.deployer_server_eip
     type        = "ssh"
     user        = var.CLOUD_USER
-    private_key = file(var.PRIVATE_KEY_PAIR)
+    private_key = file(var.PRIVATE_NODE_KEY_PAIR)
   }
 
   provisioner "remote-exec" {
     inline = [
-      "export GOOGLE_APPLICATION_CREDENTIALS='/home/${var.CLOUD_USER}/EVOCLOUD/Keys/${var.GCP_JSON_CREDS}'",
-      "gcloud auth activate-service-account --key-file /home/${var.CLOUD_USER}/EVOCLOUD/Keys/${var.GCP_JSON_CREDS}",
-      "cd /home/${var.CLOUD_USER}/EVOCLOUD/Terraform/gcp/deployment/server-03-admin-idam_replica",
+      "cd /home/${var.CLOUD_USER}/EVOCLOUD/Terraform/oci/deployment/server-03-admin-idam_replica",
       "terragrunt run-all apply --non-interactive --queue-include-external -auto-approve",
     ]
   }

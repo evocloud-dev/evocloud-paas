@@ -39,6 +39,11 @@ variable "DOMAIN_TLD" {
   type        = string
 }
 
+variable "IDAM_BASE_VOLUME_TYPE" {
+  description = "VM Type"
+  type        = string
+}
+
 variable "IDAM_INSTANCE_SIZE" {
   description = "Shape or Flavor of VM Instance"
   type        = string
@@ -86,6 +91,16 @@ variable "ROCKY_IMAGE_KEY" {
 
 variable "ROCKY_IMAGE_NS" {
   description = "Namespace for Rocky Image tag"
+  type        = string
+}
+
+variable "PUBLIC_NODE_KEY_PAIR" {
+  description = "Public Key Pair"
+  type        = string
+}
+
+variable "PRIVATE_NODE_KEY_PAIR" {
+  description = "Private Key Pair for Node SSH Login"
   type        = string
 }
 

@@ -1,16 +1,18 @@
 #--------------------------------------------------
 # Supported Cloud Provider
 #--------------------------------------------------
-provider "google" {
-  #credentials = file("path/to/credentials.json")
-  project = var.GCP_PROJECT_ID
-  region  = var.GCP_REGION
+
+data "local_file" "oci_config" {
+  filename = pathexpand("~/.oci/config")
 }
 
-#--------------------------------------------------
-# Tfstate Remote State Storage
-#--------------------------------------------------
-terraform {
-  # The configuration for this backend will be filled in by Terragrunt
-  backend "gcs" {}
+locals {
+  tenancy_ocid = trimspace(regex("tenancy\\s*=\\s*(.*)", data.local_file.oci_config.content)[0])
+}
+
+provider "oci" {
+  #credentials = file("path/to/oci-config")
+  tenancy_ocid = local.tenancy_ocid
+  config_file_profile = var.OCI_PROFILE
+  region  = var.OCI_REGION
 }

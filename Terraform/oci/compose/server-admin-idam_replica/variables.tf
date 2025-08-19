@@ -24,6 +24,11 @@ variable "BASE_VOLUME_50" {
   default     = "50"
 }
 
+variable "IDAM_REPLICA_BASE_VOLUME_TYPE" {
+  description = "Volume Type"
+  type        = string
+}
+
 variable "CLOUD_USER" {
   description = "Cloud User account"
   type        = string
@@ -89,15 +94,11 @@ variable "OCI_IMAGE_BUCKET" {
   type        = string
 }
 
-variable "ROCKY_IMAGE_KEY" {
-  description = "Key for Rocky Image tag"
+variable "PRIVATE_NODE_KEY_PAIR" {
+  description = "Private key pair for SSH"
   type        = string
 }
 
-variable "ROCKY_IMAGE_NS" {
-  description = "Namespace for Rocky Image tag"
-  type        = string
-}
 
 variable "use_spot" {
   description = "Use Ephemeral VM Instances that can be Terminated"

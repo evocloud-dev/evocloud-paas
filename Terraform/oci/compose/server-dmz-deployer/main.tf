@@ -1,4 +1,15 @@
 #--------------------------------------------------
+# Data Source to find Custom Rocky Linux Images
+#--------------------------------------------------
+
+data "oci_core_images" "rocky_images" {
+  compartment_id = local.tenancy_ocid
+
+  #Optional
+  display_name = var.BASE_AMI_NAME
+}
+
+#--------------------------------------------------
 # Deployer Server VM
 #--------------------------------------------------
 resource "oci_core_instance" "deployer_server" {
@@ -9,7 +20,9 @@ resource "oci_core_instance" "deployer_server" {
   preserve_boot_volume                    = false
   preserve_data_volumes_created_at_launch = false
 
-  #metadata = {ssh_authorized_keys = data.local_file.ssh_public_key.content}
+  metadata = {
+    ssh_authorized_keys = file("${var.PUBLIC_NODE_KEY_PAIR}")
+  }
   #metadata_startup_script = "/usr/bin/date"
 
   create_vnic_details {
@@ -21,19 +34,13 @@ resource "oci_core_instance" "deployer_server" {
 
   source_details {
     source_type = "image"
-    instance_source_image_filter_details {
-      compartment_id      = local.tenancy_ocid
-      defined_tags_filter = {
-        "${var.ROCKY_IMAGE_NS}.${var.ROCKY_IMAGE_KEY}" = var.BASE_AMI_NAME
-      }
-      operating_system         = "Rocky-Linux"
-      operating_system_version = var.BASE_AMI_VERSION
-
-    }
+    source_id   = data.oci_core_images.rocky_images.images[0].id
   }
 
   launch_volume_attachments {
     display_name = "base-volume-deployer"
+    type = "paravirtualized"
+
     launch_create_volume_details {
       display_name         = "base-volume-deployer"
       compartment_id       = local.tenancy_ocid
@@ -41,7 +48,6 @@ resource "oci_core_instance" "deployer_server" {
       volume_creation_type = "ATTRIBUTES"
       vpus_per_gb          = var.DEPLOYER_BASE_VOLUME_TYPE
     }
-    type = "paravirtualized"
   }
 
   preemptible_instance_config {
@@ -50,7 +56,6 @@ resource "oci_core_instance" "deployer_server" {
       type                 = "TERMINATE"
     }
   }
-
 }
 
 #--------------------------------------------------
@@ -63,7 +68,7 @@ resource "terraform_data" "staging_automation_code" {
     host        = oci_core_instance.deployer_server.public_ip
     type        = "ssh"
     user        = var.CLOUD_USER
-    private_key = file(var.PRIVATE_KEY_PAIR)
+    private_key = file(var.PRIVATE_NODE_KEY_PAIR)
   }
 
   provisioner "remote-exec" {
@@ -92,10 +97,10 @@ resource "terraform_data" "staging_automation_code" {
     destination   = "/home/${var.CLOUD_USER}/evocloud.tar.gz"
   }
 
-  #provisioner "file" {
-  #  source        = "${var.AUTOMATION_FOLDER}/Keys/${var.GCP_JSON_CREDS}"
-  #  destination   = "/home/${var.CLOUD_USER}/${var.GCP_JSON_CREDS}"
-  #}
+  provisioner "file" {
+    source        = "${var.AUTOMATION_FOLDER}/Keys/${var.OCI_CONFIG}"
+    destination   = "/home/${var.CLOUD_USER}/${var.OCI_CONFIG}"
+  }
 
   provisioner "file" {
     source        = "${var.AUTOMATION_FOLDER}/Ansible/secret-vault/ansible-vault-pass.txt"
@@ -131,8 +136,9 @@ resource "terraform_data" "staging_automation_code" {
       "mv /home/${var.CLOUD_USER}/secret-store.yml /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml",
       "mv /home/${var.CLOUD_USER}/ansible-vault-pass.txt /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt",
 
-      # Moves GCP Key to Keys folder
-      #"mv /home/${var.CLOUD_USER}/${var.GCP_JSON_CREDS} /home/${var.CLOUD_USER}/EVOCLOUD/Keys/${var.GCP_JSON_CREDS}",
+      # Moves OCI Config to .oci folder
+      "mkdir -p /home/${var.CLOUD_USER}/.oci",
+      "mv /home/${var.CLOUD_USER}/${var.OCI_CONFIG} /home/${var.CLOUD_USER}/.oci/${var.OCI_CONFIG}",
 
       # Move root.hcl into deployment folder
       "mv /home/${var.CLOUD_USER}/root.hcl /home/${var.CLOUD_USER}/EVOCLOUD/Terraform/oci/deployment/root.hcl",
@@ -166,7 +172,7 @@ resource "terraform_data" "deployer_server_configuration" {
 
   provisioner "local-exec" {
     command = <<EOF
-      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 ${var.AUTOMATION_FOLDER}/Ansible/server-dmz-deployer.yml --forks 10 --inventory-file ${oci_core_instance.deployer_server.public_ip}, --user ${var.CLOUD_USER} --private-key ${var.PRIVATE_KEY_PAIR} --ssh-common-args "-o 'StrictHostKeyChecking=no'"
+      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 ${var.AUTOMATION_FOLDER}/Ansible/server-dmz-deployer.yml --forks 10 --inventory-file ${oci_core_instance.deployer_server.public_ip}, --user ${var.CLOUD_USER} --private-key ${var.PRIVATE_NODE_KEY_PAIR} --ssh-common-args "-o 'StrictHostKeyChecking=no'"
     EOF
     #Ansible logs
     environment = {

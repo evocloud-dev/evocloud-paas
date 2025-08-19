@@ -2,14 +2,16 @@
 # Supported Terraform Version
 #--------------------------------------------------
 terraform {
-  #Terraform required version
-  required_version = ">= 1.0.0, < 2.0.0"
+  required_version = ">= 1.0.0"
 
-  #Providers required version
   required_providers {
-    google = {
-      #source  = "terraform.local/evocloud/google"
-      version = "< 7.0.0"
+    oci = {
+      source  = "oracle/oci"
+      version = ">=7.0.0"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "2.5.2"
     }
   }
 }
