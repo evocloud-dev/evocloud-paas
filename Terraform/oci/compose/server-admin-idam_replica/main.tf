@@ -20,12 +20,17 @@ resource "oci_core_instance" "idam_replica_server" {
   preserve_boot_volume                    = false
   preserve_data_volumes_created_at_launch = false
 
+  metadata = {
+    ssh_authorized_keys = file("${var.PUBLIC_NODE_KEY_PAIR}")
+  }
+
   create_vnic_details {
     nsg_ids    = [var.nsg_id]
     subnet_id  = var.admin_subnet_id
     private_ip = var.IDAM_REPLICA_PRIVATE_IP
 
   }
+
   source_details {
     source_type = "image"
     source_id   = data.oci_core_images.rocky_images.images[0].id

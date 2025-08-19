@@ -99,6 +99,10 @@ variable "PRIVATE_NODE_KEY_PAIR" {
   type        = string
 }
 
+variable "PUBLIC_NODE_KEY_PAIR" {
+  description = "Public key pair for SSH"
+  type        = string
+}
 
 variable "use_spot" {
   description = "Use Ephemeral VM Instances that can be Terminated"
