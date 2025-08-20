@@ -107,7 +107,7 @@ inputs = {
 remote_state {
   backend = "oci"
   config     = {
-    namespace = "idusyeyhcv4e"
+    namespace = ""
     bucket    = "evocloud-tf-state"
     key       = "${basename(get_parent_terragrunt_dir())}/${path_relative_to_include()}"
   }
