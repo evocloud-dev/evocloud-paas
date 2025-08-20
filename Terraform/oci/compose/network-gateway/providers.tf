@@ -20,7 +20,7 @@ provider "oci" {
 #--------------------------------------------------
 # Tfstate Remote State Storage
 #--------------------------------------------------
-#terraform {
- #The configuration for this backend will be filled in by Terragrunt
-# backend "oci" {}
-#}
+terraform {
+  # The configuration for this backend will be filled in by Terragrunt
+  backend "oci" {}
+}
