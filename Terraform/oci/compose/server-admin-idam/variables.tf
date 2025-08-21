@@ -84,16 +84,6 @@ variable "OCI_IMAGE_BUCKET" {
   type        = string
 }
 
-variable "ROCKY_IMAGE_KEY" {
-  description = "Key for Rocky Image tag"
-  type        = string
-}
-
-variable "ROCKY_IMAGE_NS" {
-  description = "Namespace for Rocky Image tag"
-  type        = string
-}
-
 variable "PUBLIC_NODE_KEY_PAIR" {
   description = "Public Key Pair"
   type        = string

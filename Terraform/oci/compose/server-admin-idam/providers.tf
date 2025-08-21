@@ -6,10 +6,6 @@ data "local_file" "oci_config" {
   filename = pathexpand("~/.oci/config")
 }
 
-data "local_file" "ssh_public_key" {
-  filename = pathexpand("~/.oci/oci_evocloud.pub")
-}
-
 locals {
   tenancy_ocid = trimspace(regex("tenancy\\s*=\\s*(.*)", data.local_file.oci_config.content)[0])
 }
