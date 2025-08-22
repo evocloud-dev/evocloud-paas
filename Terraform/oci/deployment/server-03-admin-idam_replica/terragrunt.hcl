@@ -7,6 +7,8 @@ inputs = {
   admin_subnet_id       = dependency.network-subnet.outputs.admin_subnet_id
   deployer_server_eip   = dependency.server-dmz-deployer.outputs.public_ip
   idam_server_ip        = dependency.server-admin-idam.outputs.private_ip
+  nsg_id                = dependency.network-gateway.outputs.evocloud_nsg_id
+  vcn_id                = dependency.network-vcn.outputs.main_vcn_id
   idam_replica_revision = "0.1.0"
   use_spot              = true
 }
@@ -49,7 +51,7 @@ dependency "server-dmz-deployer" {
 #--------------------------------------------------
 # Load server-admin-idam module
 #--------------------------------------------------
-dependency {
+dependency "server-admin-idam"{
   config_path = "${get_terragrunt_dir()}/../server-02-admin-idam"
 }
 

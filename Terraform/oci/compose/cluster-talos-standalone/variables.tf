@@ -54,6 +54,11 @@ variable "OCI_IMAGE_BUCKET" {
   type        = string
 }
 
+variable "PUBLIC_NODE_KEY_PAIR" {
+  description = "Public SSH Key for nodes"
+  type        = string
+}
+
 variable "TALOS_AMI_NAME" {
   description = "Talos Base AMI Name"
   type        = string

@@ -23,9 +23,10 @@ resource "oci_core_instance" "idam_server" {
   }
 
   create_vnic_details {
-    nsg_ids    = [var.nsg_id]
-    subnet_id  = var.admin_subnet_id
-    private_ip = var.IDAM_PRIVATE_IP
+    nsg_ids          = [var.nsg_id]
+    subnet_id        = var.admin_subnet_id
+    private_ip       = var.IDAM_PRIVATE_IP
+    assign_public_ip = false
   }
 
   source_details {

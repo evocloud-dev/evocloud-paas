@@ -15,7 +15,7 @@ resource "terraform_data" "evotalos_standalone_destroy" {
     host        = var.deployer_server_eip
     type        = "ssh"
     user        = var.CLOUD_USER
-    private_key = file(var.PRIVATE_KEY_PAIR)
+    private_key = file(var.PRIVATE_NODE_KEY_PAIR)
   }
 
   provisioner "remote-exec" {

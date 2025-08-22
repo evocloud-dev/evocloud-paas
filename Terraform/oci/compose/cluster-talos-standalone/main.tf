@@ -23,17 +23,6 @@ resource "oci_core_image" "talos" {
     operating_system_version = var.talos_version
     source_image_type        = "QCOW2"
   }
-
-  #lifecycle {
-  #  ignore_changes = [
-  #    defined_tags,
-  #  ]
-  #  replace_triggered_by = [oci_objectstorage_object.talos[each.key].content_md5]
-  #}
-#
-  #timeouts {
-  #  create = "30m"
-  #}
 }
 
 #--------------------------------------------------
@@ -58,18 +47,20 @@ resource "oci_core_instance" "talos_ctrlplane" {
   depends_on = [oci_core_image.talos]
 
   for_each                                = var.TALOS_CTRL_STANDALONE
-  display_name = format("%s", each.value)
+  display_name                            = format("%s", each.value)
   compartment_id                          = local.tenancy_ocid
-  availability_domain = element(var.OCI_AD, random_integer.zone_selector_ctrlnode[each.key].result)
+  availability_domain                     = element(var.OCI_AD, random_integer.zone_selector_ctrlnode[each.key].result)
   shape                                   = var.TALOS_CTRL_STANDALONE_SIZE
   preserve_boot_volume                    = false
   preserve_data_volumes_created_at_launch = false
 
-  #metadata = {ssh_authorized_keys = data.local_file.ssh_public_key.content}
+  metadata = {
+    ssh_authorized_keys = file("${var.PUBLIC_NODE_KEY_PAIR}")
+  }
 
   create_vnic_details {
     subnet_id        = var.dmz_subnet_id
-    nsg_ids = [var.nsg_id]
+    nsg_ids          = [var.nsg_id]
     assign_public_ip = false
     #hostname_label = format("%s.%s", each.value, var.DOMAIN_TLD)
   }

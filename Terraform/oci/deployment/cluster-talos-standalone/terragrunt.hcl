@@ -9,7 +9,7 @@ inputs = {
   dmz_subnet_name     = dependency.network-subnet.outputs.dmz_subnet_name
   nsg_id              = dependency.network-gateway.outputs.evocloud_nsg_id
   vcn_id              = dependency.network-vcn.outputs.main_vcn_id
-  #idam_server_ip      =
+  idam_server_ip      = dependency.server-admin-idam.outputs.private_ip
   #idam_replica_ip     =
   cluster_name        = "evo-cluster-std"
   talos_version       = "v1.10.5"
@@ -49,9 +49,9 @@ dependency "network-subnet" {
 #--------------------------------------------------
 # Set server-admin-idam module dependency
 #--------------------------------------------------
-#dependency "server-admin-idam" {
-#  config_path   = "${get_terragrunt_dir()}/../server-02-admin-idam"
-#}
+dependency "server-admin-idam" {
+  config_path   = "${get_terragrunt_dir()}/../server-02-admin-idam"
+}
 
 #dependency "server-admin-idam_replica" {
 #  config_path   = "${get_terragrunt_dir()}/../server-03-admin-idam_replica"

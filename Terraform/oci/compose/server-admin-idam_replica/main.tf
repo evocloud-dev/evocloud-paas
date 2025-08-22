@@ -25,10 +25,10 @@ resource "oci_core_instance" "idam_replica_server" {
   }
 
   create_vnic_details {
-    nsg_ids    = [var.nsg_id]
-    subnet_id  = var.admin_subnet_id
-    private_ip = var.IDAM_REPLICA_PRIVATE_IP
-
+    nsg_ids          = [var.nsg_id]
+    subnet_id        = var.admin_subnet_id
+    private_ip       = var.IDAM_REPLICA_PRIVATE_IP
+    assign_public_ip = false
   }
 
   source_details {
@@ -40,7 +40,7 @@ resource "oci_core_instance" "idam_replica_server" {
     display_name = "base-volume-idam-replica"
     type = "PARAVIRTUALIZED"
     launch_create_volume_details {
-      volume_creation_type = "volume"
+      volume_creation_type = "ATTRIBUTES"
       display_name         = "base-volume-idam-replica"
       compartment_id       = local.tenancy_ocid
       size_in_gbs          = var.BASE_VOLUME_50

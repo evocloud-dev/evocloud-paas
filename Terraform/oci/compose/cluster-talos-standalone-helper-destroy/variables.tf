@@ -18,7 +18,7 @@ variable "CLOUD_USER" {
   type        = string
 }
 
-variable "PRIVATE_KEY_PAIR" {
+variable "PRIVATE_NODE_KEY_PAIR" {
   description = "Private Key Pair for SSH Login"
   type        = string
 }
