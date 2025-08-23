@@ -5,7 +5,7 @@
 #            https://www.howtoforge.com/how-to-install-postgresql-15-on-rocky-linux-9/
 
 - ansible.builtin.debug:
-    msg: "################# STARTING ANSIBLE ROLE: server-postgresql ##################"
+    msg: "################# STARTING ANSIBLE ROLE: server-guacamole-postgres ##################"
 
 - name: Installing PostgreSQL GPG-Key...
   ansible.builtin.rpm_key:

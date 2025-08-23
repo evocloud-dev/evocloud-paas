@@ -1,7 +1,7 @@
-Apache Guacamole Remote Desktop Gateway.
+Postgresql Server.
 =====
 
-Installs [Guacamole Remote Desktop Gateway](https://guacamole.apache.org/)
+Installs [Postgresql Server](https://postgres.guide//)
 
 Dependencies
 ------------
@@ -19,14 +19,7 @@ Example Playbook
 ```yml
 - hosts: servers
   roles:
-    - app-dnsmasq #Needed by GCP Compute Instances
-    - config-freeipa-client
-    - config-freeipa-certs
-    - app-openjdk
-    - server-tomcat #requires app-openjdk
     - server-guacamole-postgres
-    - server-nginx-proxy
-    - server-guacamole
 ```
 
 Authors
