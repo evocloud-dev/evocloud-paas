@@ -1,7 +1,7 @@
-Server with GUI Install
+Nginx Server Proxy Install
 =====
 
-Installs [Server with GUI](https://serverspace.us/support/help/install-tigervnc-server-on-centos-8/)
+Installs [Nginx](https://nginx.org/)
 
 Dependencies
 ------------
@@ -23,7 +23,6 @@ Example Playbook
     - config-freeipa-client
     - config-freeipa-certs
     - server-nginx-proxy
-    - app-fail2ban
 ```
 
 Authors

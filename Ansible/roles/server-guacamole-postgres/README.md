@@ -1,7 +1,7 @@
 Postgresql Server.
 =====
 
-Installs [Postgresql Server](https://postgres.guide//)
+Installs [Postgresql Server](https://https://www.postgresql.org/)
 
 Dependencies
 ------------
