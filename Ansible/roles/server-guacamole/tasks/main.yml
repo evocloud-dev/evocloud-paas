@@ -198,7 +198,7 @@
               <connection name="RDP HOST">
                   <protocol>rdp</protocol>
                   <param name="hostname">192.168.1.20</param>
-                  <param name="port">3389</param>
+                  <param name="port">{{ rdp_host_port }}</param>
                   <param name="ignore-cert">true</param>
                   <param name="security">any</param>
               </connection>
@@ -207,14 +207,14 @@
               <connection name="VNC HOST">
                   <protocol>vnc</protocol>
                   <param name="hostname">192.168.1.20</param>
-                  <param name="port">5900</param>
+                  <param name="port">{{ vnc_host_port }}</param>
               </connection>
       
               <!--- SSH Connection -->
               <connection name="SSH HOST">
                   <protocol>ssh</protocol>
                   <param name="hostname">192.168.1.30</param>
-                  <param name="port">22</param>
+                  <param name="port">{{ ssh_host_port }}</param>
               </connection>
       
           </authorize>
