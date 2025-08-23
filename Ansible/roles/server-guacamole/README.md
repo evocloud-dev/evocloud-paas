@@ -1,7 +1,7 @@
-Server with GUI Install
+Apache Guacamole Remote Desktop Gateway.
 =====
 
-Installs [Server with GUI](https://serverspace.us/support/help/install-tigervnc-server-on-centos-8/)
+Installs [Guacamole Remote Desktop Gateway](https://guacamole.apache.org/)
 
 Dependencies
 ------------
@@ -19,11 +19,12 @@ Example Playbook
 ```yml
 - hosts: servers
   roles:
-    - app-dnsmasq
+    - app-dnsmasq #Needed by GCP Compute Instances
     - config-freeipa-client
     - config-freeipa-certs
-    - server-tigervnc
-    - app-vscode
+    - app-openjdk
+    - server-tomcat #requires app-openjdk
+    - server-guacamole-postgres
 ```
 
 Authors
