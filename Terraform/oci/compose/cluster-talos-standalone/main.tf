@@ -1,28 +1,12 @@
+#--------------------------------------------------
+# Data Source to find Custom Rocky Linux Images
+#--------------------------------------------------
 
-data "oci_objectstorage_namespace" "evo-bucket-namespace" {
+data "oci_core_images" "talos_images" {
   compartment_id = local.tenancy_ocid
-}
 
-data "oci_objectstorage_bucket" "evo-bucket" {
-  name      = var.OCI_IMAGE_BUCKET
-  namespace = data.oci_objectstorage_namespace.evo-bucket-namespace.namespace
-}
-
-resource "oci_core_image" "talos" {
-  compartment_id = local.tenancy_ocid
-  display_name   = var.TALOS_AMI_NAME
-  launch_mode    = "PARAVIRTUALIZED"
-
-  image_source_details {
-    source_type    = "objectStorageTuple"
-    namespace_name = data.oci_objectstorage_bucket.evo-bucket.namespace  #oci_objectstorage_bucket.images.namespace
-    bucket_name    = var.OCI_IMAGE_BUCKET #oci_objectstorage_bucket.images.name
-    object_name    = var.TALOS_SOURCE #oci_objectstorage_object.talos[each.key].object
-
-    operating_system         = "Talos"
-    operating_system_version = var.talos_version
-    source_image_type        = "QCOW2"
-  }
+  #Optional
+  display_name = var.TALOS_AMI_NAME
 }
 
 #--------------------------------------------------
@@ -44,7 +28,7 @@ resource "random_integer" "zone_selector_ctrlnode" {
 }
 
 resource "oci_core_instance" "talos_ctrlplane" {
-  depends_on = [oci_core_image.talos]
+  #depends_on = [oci_core_image.talos]
 
   for_each                                = var.TALOS_CTRL_STANDALONE
   display_name                            = format("%s", each.value)
@@ -67,7 +51,7 @@ resource "oci_core_instance" "talos_ctrlplane" {
 
   source_details {
     source_type = "image"
-    source_id   = oci_core_image.talos.id #var.talos_image_id
+    source_id   = data.oci_core_images.talos_images.images[0].id #var.talos_image_id
     #boot_volume_size_in_gbs = var.BASE_VOLUME_10
   }
 
