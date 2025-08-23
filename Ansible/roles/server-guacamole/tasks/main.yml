@@ -192,35 +192,31 @@
     dest: "{{ guac_config_dir }}/user-mapping.xml"
     content: |
       <user-mapping>
-          <!-- User with VNC connection -->
-          <authorize username="guacadmin" password="guacadmin">
-              <connection name="VNC-Desktop">
-                  <protocol>vnc</protocol>
-                  <param name="hostname">192.168.1.10</param>
-                  <param name="port">5901</param>
-              </connection>
-          </authorize>
-
-          <!-- User with RDP connection -->
-          <authorize username="guacadmin" password="guacadmin">
-              <connection name="Windows-Server">
+          <!-- User with SSH/RDP/VNC connection -->
+          <authorize username="guacadmin" password="your-md5-hashed-password" encoding="md5">
+              <!--- RDP Connection -->
+              <connection name="RDP HOST">
                   <protocol>rdp</protocol>
                   <param name="hostname">192.168.1.20</param>
                   <param name="port">3389</param>
-                  <param name="username">Administrator</param>
-                  <param name="password">windows_password</param>
+                  <param name="ignore-cert">true</param>
+                  <param name="security">any</param>
               </connection>
-          </authorize>
-
-          <!-- User with SSH connection -->
-          <authorize username="guacadmin" password="guacadmin">
-              <connection name="SSH-Server">
+      
+              <!--- VNC Connection -->
+              <connection name="VNC HOST">
+                  <protocol>vnc</protocol>
+                  <param name="hostname">192.168.1.20</param>
+                  <param name="port">5900</param>
+              </connection>
+      
+              <!--- SSH Connection -->
+              <connection name="SSH HOST">
                   <protocol>ssh</protocol>
                   <param name="hostname">192.168.1.30</param>
                   <param name="port">22</param>
-                  <param name="username">root</param>
-                  <param name="password">ssh_password</param>
               </connection>
+      
           </authorize>
       </user-mapping>
     mode: "0644"
