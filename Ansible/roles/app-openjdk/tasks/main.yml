@@ -1,0 +1,67 @@
+---
+#This playbook will deploy a OpenJDK or OpenJRE app
+#
+#References: https://github.com/andrewrothstein/ansible-openjdk
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-openjdk ##################"
+
+- name: Checking for existing OpenJDK installation...
+  ansible.builtin.stat:
+    path: '{{ openjdk_install_subdir }}'
+  changed_when: false
+  become: True
+  register: openjdk_binary
+
+- when: not openjdk_binary.stat.exists
+  block:
+    - name: Creating a directory for OpenJDK
+      ansible.builtin.file:
+        path: '{{ openjdk_install_dir }}'
+        state: directory
+        mode: 0755
+      become: true
+
+    - name: Downloading OpenJDK packages and Verifying SHA256 Checksum...
+      ansible.builtin.get_url:
+        url: '{{ openjdk_download_url }}'
+        dest: '{{ openjdk_install_dir }}'
+        mode: '0644'
+        checksum: '{{ openjdk_checksum }}'
+      become: true
+
+    - name: Unarchiving OpenJDK packages...
+      ansible.builtin.unarchive:
+        src: '{{ openjdk_install_dir }}/OpenJDK11U-jdk_x64_linux_hotspot_{{ openjdk_ver.major }}.{{ openjdk_ver.minor }}.{{ openjdk_ver.patch }}_{{ openjdk_ver.b }}.tar.gz'
+        dest: '{{ openjdk_install_dir }}'
+        remote_src: yes
+        creates: '{{ openjdk_install_subdir }}'
+      become: true
+
+    - name: Creating symlink for OpenJDK...
+      ansible.builtin.file:
+        src: '{{ openjdk_install_subdir }}'
+        dest: '{{ openjdk_install_link }}'
+        state: link
+      become: true
+
+    - name: Creating systemd like configuration for OpenJDK...
+      ansible.builtin.template:
+        src: '{{ item.f }}.j2'
+        dest: '{{ item.d }}/{{ item.f }}'
+        mode: '{{ item.m | default("0644") }}'
+      with_items:
+        - f: openjdk.sh
+          d: /etc/profile.d
+        - f: openjdk.env
+          d: '{{ openjdk_install_subdir }}'
+      become: true
+
+  always:
+    - name: Removing OpenJDK detritius...
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '{{ openjdk_install_dir }}/OpenJDK11U-jdk_x64_linux_hotspot_{{ openjdk_ver.major }}.{{ openjdk_ver.minor }}.{{ openjdk_ver.patch }}_{{ openjdk_ver.b }}.tar.gz'
+      become: true

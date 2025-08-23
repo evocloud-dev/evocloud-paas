@@ -79,6 +79,13 @@ inputs = {
   RDP_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
   ###########################################################################
+  # Virtual Cloud Desktop
+  ###########################################################################
+  VCD_SHORT_HOSTNAME   = "evovdi"
+  VCD_INSTANCE_SIZE    = "e2-highcpu-8"
+  VCD_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
+
+  ###########################################################################
   # EvoCode Enterprise Code Repository Platform (Gitlab)
   ###########################################################################
   EVOCODE_SHORT_HOSTNAME   = "evocode"
