@@ -54,13 +54,17 @@ resource "random_integer" "zone_selector_loadbalancer" {
   max = length(var.GCP_REGIONS) - 1
 }
 
+#Service Account used to run automation
+data "google_client_openid_userinfo" "current" {}
+
 resource "google_compute_instance" "talos_loadbalancer" {
 
   for_each     = var.TALOS_LB_NODES
   name         = format("%s", each.value)
   machine_type = var.TALOS_LB_INSTANCE_SIZE #custom-6-20480 | custom-6-15360-ext
   description  = "Talos LoadBalancer VM Instance"
-  zone         = element(var.GCP_REGIONS, random_integer.zone_selector_loadbalancer[each.key].result)
+  #zone         = element(var.GCP_REGIONS, random_integer.zone_selector_loadbalancer[each.key].result)
+  zone         = var.GCP_REGIONS[2]
   hostname     = format("%s.%s", each.value, var.DOMAIN_TLD)
 
   boot_disk {
@@ -76,6 +80,14 @@ resource "google_compute_instance" "talos_loadbalancer" {
 
   network_interface {
     subnetwork  = var.admin_subnet_name
+
+    #Dynamically assign alias IP on first loadbalancer
+    dynamic "alias_ip_range" {
+      for_each = each.value == "evotalos-lb01" ? [google_compute_address.gateway_vip.address] : []
+      content {
+        ip_cidr_range = alias_ip_range.value
+      }
+    }
   }
 
   allow_stopping_for_update = true
@@ -97,6 +109,12 @@ resource "google_compute_instance" "talos_loadbalancer" {
     automatic_restart = false
     provisioning_model = var.use_spot ? "SPOT" : "STANDARD"
     instance_termination_action = "STOP" #DELETE | STOP
+  }
+
+  #Assigning service account for node to be able to update aliased IP in fail over scenario
+  service_account {
+    email  = data.google_client_openid_userinfo.current.email  # Inherit the running SA
+    scopes = ["https://www.googleapis.com/auth/cloud-platform"]
   }
 
   # This ensures cloud-init completes before considering the resource created
@@ -139,7 +157,7 @@ resource "terraform_data" "talos_lb_configuration" {
 
   provisioner "local-exec" {
     command = <<EOF
-      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/talos-kube-lb.yml --forks 10 --inventory ${each.value.network_interface[0].network_ip}, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml server_ip=${each.value.network_interface[0].network_ip} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} server_short_hostname=${each.value.name} domain_tld=${var.DOMAIN_TLD} server_timezone=${var.DEFAULT_TIMEZONE} cloud_user=${var.CLOUD_USER} metadata_ns_ip=${var.GCP_METADATA_NS} idam_replica_ip=${var.idam_replica_ip} upstream_servers=${join(",", values(google_compute_instance.talos_ctrlplane)[*].network_interface[0].network_ip)} ports_list=[80,443,6443,50000]'
+      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/talos-kube-lb.yml --forks 10 --inventory ${each.value.network_interface[0].network_ip}, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml server_ip=${each.value.network_interface[0].network_ip} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} server_short_hostname=${each.value.name} domain_tld=${var.DOMAIN_TLD} server_timezone=${var.DEFAULT_TIMEZONE} cloud_user=${var.CLOUD_USER} metadata_ns_ip=${var.GCP_METADATA_NS} idam_replica_ip=${var.idam_replica_ip} upstream_servers=${join(",", values(google_compute_instance.talos_ctrlplane)[*].network_interface[0].network_ip)} ports_list=[80,443,6443,50000] lb_node01_ip=${google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip} lb_node02_ip=${google_compute_instance.talos_loadbalancer["node02"].network_interface[0].network_ip} gateway_vip=${trimsuffix(google_compute_address.gateway_vip.address, ",")} zone=${trimsuffix(each.value.zone, ", ")}'
     EOF
     #Ansible logs
     environment = {
@@ -300,7 +318,7 @@ data "talos_machine_configuration" "talos_controlplane" {
   depends_on = [google_compute_instance.talos_ctrlplane, google_compute_instance.talos_loadbalancer]
 
   cluster_name       = var.cluster_name
-  cluster_endpoint   = "https://${google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip}:6443"
+  cluster_endpoint   = "https://${google_compute_address.gateway_vip.address}:6443"
   machine_type       = "controlplane"
   machine_secrets    = talos_machine_secrets.talos_vm.machine_secrets
   talos_version      = var.talos_version
@@ -328,6 +346,8 @@ data "talos_machine_configuration" "talos_controlplane" {
         }
         certSANs = [
           google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip,
+          google_compute_instance.talos_loadbalancer["node02"].network_interface[0].network_ip,
+          google_compute_address.gateway_vip.address,
         ]
         kubelet = {
           extraArgs = {
@@ -376,6 +396,8 @@ data "talos_machine_configuration" "talos_controlplane" {
           }
           certSANs = [
             google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip,
+            google_compute_instance.talos_loadbalancer["node02"].network_interface[0].network_ip,
+            google_compute_address.gateway_vip.address,
           ]
         }
         network = {
@@ -1417,6 +1439,7 @@ resource "talos_machine_configuration_apply" "controlplane" {
   endpoint                    = each.value.network_interface[0].network_ip
   node                        = each.value.network_interface[0].network_ip
 }
+
 ################################################################################
 ## Talos Worker VMs: Generate and apply configs on worker nodes
 ################################################################################
@@ -1424,7 +1447,7 @@ data "talos_machine_configuration" "talos_worker" {
   depends_on = [google_compute_instance.talos_workload, google_compute_instance.talos_loadbalancer]
 
   cluster_name       = var.cluster_name
-  cluster_endpoint   = "https://${google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip}:6443"
+  cluster_endpoint   = "https://${google_compute_address.gateway_vip.address}:6443"
   machine_type       = "worker"
   machine_secrets    = talos_machine_secrets.talos_vm.machine_secrets
   talos_version      = var.talos_version
@@ -1501,8 +1524,8 @@ resource "talos_machine_bootstrap" "bootstrap_cluster" {
   depends_on           = [talos_machine_configuration_apply.controlplane, terraform_data.talos_lb_configuration]
 
   client_configuration = talos_machine_secrets.talos_vm.client_configuration
-  node                 = google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip
-  endpoint             = google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip
+  node                 = google_compute_address.gateway_vip.address
+  endpoint             = google_compute_address.gateway_vip.address
   timeouts             = { create = "1m" }
 }
 
@@ -1513,8 +1536,8 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
   ]
 
   client_configuration = talos_machine_secrets.talos_vm.client_configuration
-  node                 = google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip
-  endpoint             = google_compute_instance.talos_loadbalancer["node01"].network_interface[0].network_ip
+  node                 = google_compute_address.gateway_vip.address
+  endpoint             = google_compute_address.gateway_vip.address
 }
 
 ## Check whether the Talos Kubernetes Cluster is in a healthy state

@@ -1,0 +1,44 @@
+---
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-brave ##################"
+
+# Installing Brave packages
+- name: Add Brave repo
+  ansible.builtin.yum_repository:
+    name: brave-browser
+    description: Brave Browser
+    baseurl: https://brave-browser-rpm-release.s3.brave.com/x86_64/
+    gpgkey: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
+    gpgcheck: yes
+    enabled: yes
+  become: true
+
+- name: Install dnf-plugins-core (required for managing repos on some systems)
+  ansible.builtin.dnf:
+    name: dnf-plugins-core
+    state: present
+  become: true
+
+- name: Install Brave browser
+  ansible.builtin.dnf:
+    name: brave-browser
+    state: present
+  become: true
+
+- name: Setup Brave managed policies
+  block:
+    - name: Create Brave managed policies directory
+      ansible.builtin.file:
+        path: /etc/brave/policies/managed
+        state: directory
+        mode: '0755'
+      become: true
+
+    - name: Set Brave policy
+      ansible.builtin.template:
+        src: policy.json.j2
+        dest: /etc/brave/policies/managed/policy.json
+        owner: root
+        group: root
+        mode: '0644'
+      become: true

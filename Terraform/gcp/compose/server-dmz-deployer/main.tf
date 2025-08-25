@@ -64,6 +64,12 @@ resource "google_compute_instance" "deployer_server" {
     provisioning_model = var.use_spot ? "SPOT" : "STANDARD"
     instance_termination_action = "STOP" #DELETE | STOP
   }
+
+  #Assigning service account for node to be able to update aliased IP in fail over scenario
+  service_account {
+    email  = data.google_client_openid_userinfo.current.email  # Inherit the running SA
+    scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+  }
 }
 
 #--------------------------------------------------

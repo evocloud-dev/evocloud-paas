@@ -149,7 +149,8 @@ inputs = {
   TALOS_LB_INSTANCE_SIZE    = "e2-standard-2"
   TALOS_LB_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
   TALOS_LB_NODES            = {
-    node01 = "evotalos-lb"
+    node01 = "evotalos-lb01"
+    node02 = "evotalos-lb02"
   }
 
   #TALOS EXTRA KUBERNETES MANIFESTS
