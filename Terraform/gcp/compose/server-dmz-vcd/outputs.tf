@@ -6,7 +6,7 @@ output "vcd_server_private_ip" {
 }
 
 # Retrieve Virtual Cloud desktop Public IP Address
-output "rdp_server_public_ip" {
+output "vcd_server_public_ip" {
   description = "Virtual Cloud desktop Public IP Address"
   value = google_compute_address.vcd_server_eip.address
   sensitive = true
