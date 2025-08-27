@@ -1,0 +1,14 @@
+---
+tomcat_version: "9.0.107"
+
+tomcat_user: "tomcat"
+
+#echo $JAVA_HOME
+java_home: "/usr/local/openjdk-jdk"
+
+tomcat_download_url: "https://archive.apache.org/dist/tomcat/tomcat-9/v{{ tomcat_version }}/bin/apache-tomcat-{{ tomcat_version }}.tar.gz"
+tomcat_checksum: "sha256:d3caa0ad0a65b4931a7d3aeca24e5541cf743ba5fa9e51abda5b3a31d0b4857d"
+
+tomcat_install_dir: "/usr/local/tomcat"
+
+tomcat_systemd_file: "/etc/systemd/system/tomcat.service"

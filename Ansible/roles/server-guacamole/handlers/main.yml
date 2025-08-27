@@ -1,0 +1,17 @@
+---
+- name: Restarting tomcat...
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: restarted
+    enabled: true
+  loop:
+    - 'tomcat'
+  become: true
+
+- name: Notifying webserver to restart...
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: restarted
+  loop:
+    - 'nginx'
+  become: true

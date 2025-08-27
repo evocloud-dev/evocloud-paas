@@ -25,11 +25,12 @@ freeipa_services:
   - ntp
 
 freeipa_groups:
-  - sudo_wheel
-  - sys_adm
-  - sec_adm
+  - devops_usr
   - dev_adm
-  - ops_adm
   - gitlab_adm
   - gitlab_usr
-  - devops_usr
+  - guacamole_usr
+  - ops_adm
+  - sec_adm
+  - sudo_wheel
+  - sys_adm

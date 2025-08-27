@@ -1,0 +1,20 @@
+guacd-hostname: {{ guacd_hostname }}
+guacd-port: {{ guacd_port }}
+user-mapping: {{ guac_config_dir }}/user-mapping.xml
+auth-provider: net.sourceforge.guacamole.net.basic.BasicFileAuthenticationProvider
+postgresql-hostname: {{ postgresql_hostname }}
+postgresql-port: {{ postgresql_port }}
+postgresql-database: {{ guacamole_pg_db }}
+postgresql-username: {{ guacamole_pg_user }}
+postgresql-password: {{ guacamole_pg_passwd }}
+ban-max-invalid-attempts: 5
+ban-address-duration: 3600
+#Ldap common configuration
+ldap-port: 636
+ldap-encryption-method: ssl
+ldap-user-base-dn: cn=users,cn=accounts,dc={{ domain_tld1 }},dc={{ domain_tld2 }}
+ldap-username-attribute: uid
+ldap-user-search-filter: (memberOf=cn=guacamole_usr,cn=groups,cn=accounts,dc={{ domain_tld1 }},dc={{ domain_tld2 }})
+ldap-search-bind-password: '{{ freeipa_admin_passwd }}'
+#TOTP Parameters
+totp-issuer: EvoCloud MFA

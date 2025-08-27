@@ -1,7 +1,7 @@
-Nginx Server Load-balancer
+Server Tomcat Install
 =====
 
-Installs [Nginx](https://nginx.org/)
+Installs [Tomcat Server](https://tomcat.apache.org/)
 
 Dependencies
 ------------
@@ -22,7 +22,8 @@ Example Playbook
     - app-dnsmasq
     - config-freeipa-client
     - config-freeipa-certs
-    - server-nginx-lb
+    - app-openjdk
+    - server-tomcat #requires app-openjdk
 ```
 
 Authors

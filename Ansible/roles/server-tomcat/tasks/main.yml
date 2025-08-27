@@ -1,0 +1,108 @@
+---
+#This playbook will deploy Apache Tomcat
+#
+#References: https://www.jinshupeethambaran.com/articles/miscellaneous/automated-deployment-apache-guacamole
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: server-tomcat ##################"
+
+#Creating tomcat user and group
+- name: Creating tomcat group...
+  ansible.builtin.group:
+    name: "{{ tomcat_user | default(tomcat) }}"
+    system: true
+  become: true
+
+- name: Creating tomcat user...
+  ansible.builtin.user:
+    name: "{{ tomcat_user | default(tomcat) }}"
+    group: "{{ tomcat_user | default(tomcat) }}"
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+  become: true
+
+- name: Creating tomcat install directory
+  ansible.builtin.file:
+    path: "{{ tomcat_install_dir }}"
+    state: directory
+  become: true
+
+- name: Downloading Apache Tomcat source...
+  ansible.builtin.get_url:
+    url: "{{ tomcat_download_url }}"
+    dest: "/tmp/apache-tomcat-{{ tomcat_version }}.tar.gz"
+    mode: "644"
+    checksum: '{{ tomcat_checksum }}'
+  become: true
+
+- name: Unarchiving Apache Tomcat...
+  ansible.builtin.unarchive:
+    src: "/tmp/apache-tomcat-{{ tomcat_version }}.tar.gz"
+    dest: "{{ tomcat_install_dir }}"
+    owner: "{{ tomcat_user | default(tomcat) }}"
+    group: "{{ tomcat_user | default(tomcat) }}"
+    remote_src: true
+    extra_opts: "--strip-components=1"
+    creates: "{{ tomcat_install_dir }}/bin"
+    mode: "0755"
+  become: true
+
+- name: Changing Apache Tomcat install_dir permissions...
+  ansible.builtin.file:
+    path: "{{ tomcat_install_dir }}"
+    owner: "{{ tomcat_user | default(tomcat) }}"
+    group: "{{ tomcat_user | default(tomcat) }}"
+    recurse: true
+  become: true
+
+- name: Creating Apache Tomcat systemd file...
+  ansible.builtin.copy:
+    dest: "{{ tomcat_systemd_file }}"
+    content: |
+      [Unit]
+      Description=Tomcat Server
+      After=syslog.target network.target
+      
+      [Service]
+      Type=forking
+      User={{ tomcat_user }}
+      Group={{ tomcat_user }}
+      Environment=JAVA_HOME={{ java_home }}
+      Environment='JAVA_OPTS=-Djava.awt.headless=true'
+      Environment=CATALINA_HOME={{ tomcat_install_dir }}
+      Environment=CATALINA_BASE={{ tomcat_install_dir }}
+      Environment=CATALINA_PID={{ tomcat_install_dir }}/temp/tomcat.pid
+      Environment='CATALINA_OPTS=-Xms512M -Xmx1024M -XX:+UseParallelGC'
+      ExecStart={{ tomcat_install_dir }}/bin/startup.sh
+      ExecStop={{ tomcat_install_dir }}/bin/shutdown.sh
+      Restart=always
+      
+      [Install]
+      WantedBy=multi-user.target
+    mode: "0644"
+  become: true
+
+- name: Enabling and starting Apache Tomcat...
+  ansible.builtin.systemd:
+    name: tomcat
+    enabled: true
+    daemon_reload: true
+    state: started
+  become: true
+
+- name: Enabling firewall rules...
+  ansible.builtin.firewalld:
+    port: "8080/tcp"
+    permanent: true
+    state: enabled
+    immediate: true
+  become: true
+
+- name: Removing detritus...
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/tmp/apache-tomcat-{{ tomcat_version }}.tar.gz"
+  become: true

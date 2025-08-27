@@ -24,8 +24,8 @@
         content: |
           # Overrides needed by Google Cloud Platform
           [main]
-          no-auto-default=*
-          ignore-carrier=*
+          no-auto-default=
+          ignore-carrier=
       become: true
 
 

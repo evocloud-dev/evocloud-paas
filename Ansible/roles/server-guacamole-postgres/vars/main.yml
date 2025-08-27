@@ -1,0 +1,78 @@
+---
+postgres_user_passwd: "{{ creds_store.postgres_user_passwd }}"
+
+pg_version: 17
+postgresql_packages:
+  - 'postgresql{{ pg_version }}-server'
+  - 'postgresql{{ pg_version }}-contrib'
+  - 'libpq5-devel'
+
+postgresql_python_library: python3-psycopg2
+
+postgresql_user: postgres
+postgresql_group: postgres
+
+postgresql_conf_dir: '/var/lib/pgsql/{{ pg_version }}/data'
+
+postgresql_unix_socket_directories:
+  - /var/run/postgresql
+
+# `md5` or `scram-sha-256` (https://www.postgresql.org/docs/15/auth-methods.html)
+postgresql_auth_method: 'scram-sha-256'
+
+# Host based authentication (hba) entries to be added to the pg_hba.conf
+postgresql_hba_entries:
+  - {type: local, database: all, user: postgres, auth_method: peer}
+  - {type: local, database: all, user: all, auth_method: peer}
+  - {type: host, database: all, user: all, address: '127.0.0.1/32', auth_method: "{{ postgresql_auth_method }}"}
+  - {type: host, database: all, user: all, address: '::1/128', auth_method: "{{ postgresql_auth_method }}"}
+
+# Databases to ensure exist.
+postgresql_databases:
+ - name: guacamole_db # required; the rest are optional
+#   lc_collate: # defaults to 'en_US.UTF-8'
+#   lc_ctype: # defaults to 'en_US.UTF-8'
+#   encoding: # defaults to 'UTF-8'
+#   template: # defaults to 'template0'
+   #login_host: '127.0.0.1' # defaults to 'localhost'
+   #login_password: supersecure # defaults to not set
+   #login_user: guacamole_user # defaults to '{{ postgresql_user }}'
+#   login_unix_socket: # defaults to 1st of postgresql_unix_socket_directories
+#   port: # defaults to not set
+   owner: guacamole_user # defaults to postgresql_user
+#   state: # defaults to 'present'
+
+# Users to ensure exist.
+postgresql_users:
+ - name: guacamole_user #required; the rest are optional
+   password: '{{ postgres_user_passwd }}' # defaults to not set
+#   encrypted: # defaults to not set
+#   priv: # defaults to not set
+#   role_attr_flags: # defaults to not set
+#   db: guacamole_db # defaults to not set
+#   login_host: # defaults to 'localhost'
+#   login_password: # defaults to not set
+#   login_user: # defaults to '{{ postgresql_user }}'
+#   login_unix_socket: # defaults to 1st of postgresql_unix_socket_directories
+#   port: # defaults to not set
+#   state: # defaults to 'present'
+
+# Privileges to configure
+# see https://docs.ansible.com/ansible/latest/collections/community/postgresql/postgresql_privs_module.html#ansible-collections-community-postgresql-postgresql-privs-module
+postgresql_privs:
+ - db: guacamole_db # database (required)
+   roles: guacamole_user  # role(s) the privs apply to (required)
+   privs: ALL # comma separated list of privileges - defaults to not set
+#   type: # type of database object to set privileges on - defaults to not set
+   objs: ALL_IN_SCHEMA # list of database objects to set privileges on - defaults to not set
+#   schema: # defaults to not set
+#   session_role: # defaults to not set
+#   fail_on_role: # defaults to true
+#   grant_option: # defaults to not set
+#   target_roles: # defaults to not set
+#   login_host: # defaults to 'localhost'
+#   login_password: # defaults to not set
+#   login_user: # defaults to '{{ postgresql_user }}'
+#   login_unix_socket: # defaults to 1st of postgresql_unix_socket_directories
+#   port: # defaults to not set
+#   state: # defaults to 'present'

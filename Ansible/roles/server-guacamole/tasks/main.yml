@@ -1,0 +1,316 @@
+---
+#This playbook will deploy Apache Guacamole
+#
+#References: https://guacamole.incubator.apache.org/doc/gug/index.html
+#            https://guacamole.incubator.apache.org/doc/gug/postgresql-auth.html#postgresql-auth-database-creation
+#            https://www.jinshupeethambaran.com/articles/miscellaneous/automated-deployment-apache-guacamole
+#            https://infotechys.com/install-apache-guacamole-on-rhel-9-using-ansible/
+#            https://medium.com/@ahmetkamerc/acamapache-guacamole-install-guide-for-centos-5ad8498d11af
+#            https://guacamole.apache.org/doc/gug/configuring-guacamole.html
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: server-guacamole ##################"
+
+- name: Setting facts for Domain TLD...
+  ansible.builtin.set_fact:
+    domain_tld1: "{{ domain_tld.split('.')[0] }}"
+    domain_tld2: "{{ domain_tld.split('.')[1] }}"
+  become: true
+
+#Creating guacd user and group
+- name: Creating guacd group...
+  ansible.builtin.group:
+    name: "{{ guacd_user }}"
+    system: true
+  become: true
+
+- name: Creating guacd user...
+  ansible.builtin.user:
+    name: "{{ guacd_user }}"
+    group: "{{ guacd_user }}"
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+  become: true
+
+#Installing guacd server and required packages
+- name: Installing Guacd required packages...
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+    #update_cache: yes
+    disable_gpg_check: yes
+  loop:
+    - "{{ guac_required_packages }}"
+    - "{{ guacd_package }}"
+  register: packages_install
+  until: packages_install is succeeded
+  retries: 3
+  become: true
+
+- name: Applying Guacd configuration...
+  ansible.builtin.copy:
+    dest: "/etc/sysconfig/guacd"
+    content: |
+      # Ansible provided configuration
+      # Guacamole daemon configuration
+      OPTS="-b 127.0.0.1 -l 4822"
+    mode: "0644"
+  become: true
+
+- name: Enabling and starting guacd...
+  ansible.builtin.systemd:
+    name: guacd
+    enabled: true
+    daemon_reload: true
+    state: started
+  become: true
+
+#Installing guacamole frontend application
+- name: Downloading Guacamole WAR file...
+  ansible.builtin.get_url:
+    url: "{{ guac_client_war }}"
+    checksum: '{{ guac_client_checksum }}'
+    dest: "/tmp/guacamole-{{ guac_version }}.war"
+
+- name: Moving Guacamole WAR file to the Tomcat webapps directory...
+  ansible.builtin.command: "/usr/bin/mv /tmp/guacamole-{{ guac_version }}.war {{ tomcat_install_dir }}/webapps/guacamole.war"
+  become: true
+  notify: Restarting tomcat...
+
+#Configuring Apache Guacamole with Postgresql backend
+- name: Creating Guacamole Config directories...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    #mode: '0755'
+  loop:
+    - "{{ guac_config_dir }}"
+    - "{{ guac_config_dir }}/extensions"
+    - "{{ guac_config_dir }}/lib"
+  become: true
+
+- name: Downloading JDBC auth plugin...
+  ansible.builtin.get_url:
+    url: "{{ guac_jdbc_auth_url }}"
+    dest: "/tmp/guacamole-auth-jdbc-{{ guac_version }}.tar.gz"
+    checksum: '{{ guac_jdbc_auth_checksum }}'
+  become: true
+
+- name: Downloading guac_auth_ban plugin...
+  ansible.builtin.get_url:
+    url: "{{ guac_auth_ban_url }}"
+    dest: "/tmp/guacamole-auth-ban-{{ guac_version }}.tar.gz"
+    checksum: '{{ guac_auth_ban_checksum }}'
+  become: true
+
+- name: Downloading guac_auth_ldap plugin...
+  ansible.builtin.get_url:
+    url: "{{ guac_auth_ldap_url }}"
+    dest: "/tmp/guacamole-auth-ldap-{{ guac_version }}.tar.gz"
+    checksum: '{{ guac_auth_ldap_checksum }}'
+  become: true
+
+- name: Downloading guac_auth_totp plugin...
+  ansible.builtin.get_url:
+    url: "{{ guac_auth_totp_url }}"
+    dest: "/tmp/guacamole-auth-totp-{{ guac_version }}.tar.gz"
+    checksum: '{{ guac_auth_totp_checksum }}'
+  become: true
+
+- name: Downloading guac_auth_restrict plugin...
+  ansible.builtin.get_url:
+    url: "{{ guac_auth_restrict_url }}"
+    dest: "/tmp/guacamole-auth-restrict-{{ guac_version }}.tar.gz"
+    checksum: '{{ guac_auth_restrict_checksum }}'
+  become: true
+
+#Leverage sso to get ride of guac login page
+- name: Downloading guac_auth_sso plugin...
+  ansible.builtin.get_url:
+    url: "{{ guac_auth_sso_url }}"
+    dest: "/tmp/guacamole-auth-sso-{{ guac_version }}.tar.gz"
+    checksum: '{{ guac_auth_sso_checksum }}'
+  become: true
+
+- name: Unarchiving Guacamole plugins...
+  ansible.builtin.unarchive:
+    src: "{{ item }}"
+    dest: "/tmp"
+    remote_src: true
+  loop:
+    - '/tmp/guacamole-auth-jdbc-{{ guac_version }}.tar.gz'
+    - '/tmp/guacamole-auth-ban-{{ guac_version }}.tar.gz'
+    - '/tmp/guacamole-auth-ldap-{{ guac_version }}.tar.gz'
+    - '/tmp/guacamole-auth-totp-{{ guac_version }}.tar.gz'
+    - '/tmp/guacamole-auth-restrict-{{ guac_version }}.tar.gz'
+    - '/tmp/guacamole-auth-sso-{{ guac_version }}.tar.gz'
+  become: true
+
+- name: Moving Guacamole plugins to the extensions directory...
+  ansible.builtin.command: |
+    {{ item }}
+  become: true
+  loop:
+    - '/usr/bin/mv /tmp/guacamole-auth-jdbc-{{ guac_version }}/postgresql/guacamole-auth-jdbc-postgresql-{{ guac_version }}.jar {{ guac_config_dir }}/extensions'
+    - '/usr/bin/mv /tmp/guacamole-auth-ban-{{ guac_version }}/guacamole-auth-ban-{{ guac_version }}.jar {{ guac_config_dir }}/extensions'
+    - '/usr/bin/mv /tmp/guacamole-auth-ldap-{{ guac_version }}/guacamole-auth-ldap-{{ guac_version }}.jar {{ guac_config_dir }}/extensions'
+    - '/usr/bin/mv /tmp/guacamole-auth-totp-{{ guac_version }}/guacamole-auth-totp-{{ guac_version }}.jar {{ guac_config_dir }}/extensions'
+    - '/usr/bin/mv /tmp/guacamole-auth-restrict-{{ guac_version }}/guacamole-auth-restrict-{{ guac_version }}.jar {{ guac_config_dir }}/extensions'
+    #- '/usr/bin/mv /tmp/guacamole-auth-sso-{{ guac_version }}/saml/guacamole-auth-sso-saml-{{ guac_version }}.jar {{ guac_config_dir }}/extensions'
+
+- name: Moving Guacamole custom plugins to the extensions directory......
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  loop:
+    - src: "branding.jar"
+      dest: "{{ guac_config_dir }}/extensions"
+  become: true
+
+- name: Downloading JDBC driver for Postgresql...
+  ansible.builtin.get_url:
+    url: "{{ postgresql_jdbc_driver_url }}"
+    dest: "{{ guac_config_dir }}/lib"
+    checksum: '{{ postgresql_jdbc_checksum }}'
+  become: true
+
+- name: Applying Guacamole configuration...
+  ansible.builtin.template:
+    src: '{{ item.f }}.j2'
+    dest: '{{ item.d }}/{{ item.f }}'
+    mode: '{{ item.m | default("0644") }}'
+  with_items:
+    - f: guacamole.properties
+      d: '{{ guac_config_dir }}'
+    - f: ldap-servers.yml
+      d: '{{ guac_config_dir }}'
+  become: true
+
+- name: Configuring users mapping...
+  ansible.builtin.copy:
+    dest: "{{ guac_config_dir }}/user-mapping.xml"
+    content: |
+      <user-mapping>
+          <!-- User with SSH/RDP/VNC connection -->
+          <authorize username="guacadmin" password="your-md5-hashed-password" encoding="md5">
+              <!--- RDP Connection -->
+              <connection name="RDP HOST">
+                  <protocol>rdp</protocol>
+                  <param name="hostname">192.168.1.20</param>
+                  <param name="port">{{ rdp_host_port }}</param>
+                  <param name="ignore-cert">true</param>
+                  <param name="security">any</param>
+              </connection>
+      
+              <!--- VNC Connection -->
+              <connection name="VNC HOST">
+                  <protocol>vnc</protocol>
+                  <param name="hostname">192.168.1.20</param>
+                  <param name="port">{{ vnc_host_port }}</param>
+              </connection>
+      
+              <!--- SSH Connection -->
+              <connection name="SSH HOST">
+                  <protocol>ssh</protocol>
+                  <param name="hostname">192.168.1.30</param>
+                  <param name="port">{{ ssh_host_port }}</param>
+              </connection>
+      
+          </authorize>
+      </user-mapping>
+    mode: "0644"
+  become: true
+
+## Importing Postgresql database schema for Guacamole...
+- name: Loading the Guacamole schema files...
+  ansible.builtin.find:
+    paths: '/tmp/guacamole-auth-jdbc-{{ guac_version }}/postgresql/schema'
+    patterns: '*.sql'
+    file_type: file
+  register: guacamole_schema
+
+- name: Checking if Postgresql database schema is already imported...
+  ansible.builtin.stat:
+    path: '/opt/postgres_db_imported'
+  changed_when: false
+  become: true
+  register: pg_import_check_file
+
+- name: Importing Postgresql database schema for Guacamole...
+  community.postgresql.postgresql_script:
+    db: '{{ guacamole_pg_db }}'
+    path: '{{ item.path }}'
+    login_user: '{{ guacamole_pg_user }}'
+    login_password: "{{ guacamole_pg_passwd }}"
+    login_host: 'localhost'
+    port: 5432
+  loop: "{{ guacamole_schema.files | sort (attribute='path') }}"
+  no_log: true
+  register: postgres_import
+  when: (not pg_import_check_file.stat.exists)
+  become: true
+
+- name: Creating success file for imported Postgresql database schema...
+  ansible.builtin.file:
+    path: "/opt/postgres_db_imported"
+    state: touch
+  when: postgres_import is succeeded
+  become: true
+
+- name: Importing ca certs to java keystore...
+  ansible.builtin.shell: "{{ openjdk_install_dir }}/bin/keytool -import -trustcacerts -alias evoidp-ca -file {{ cert_dir }}/ca.crt -keystore {{ openjdk_install_dir }}/lib/security/cacerts -storepass changeit -noprompt"
+  no_log: true
+  args:
+    creates: /opt/keytool_imported
+  register: keytool_import
+  become: true
+
+- name: Creating success file for imported keytool...
+  ansible.builtin.file:
+    path: "/opt/keytool_imported"
+    state: touch
+  when: keytool_import is succeeded
+  become: true
+
+- name: Configuring SELinux contexts...
+  ansible.builtin.shell: |
+    sudo ausearch -c 'Catalina-utilit' --raw | audit2allow -M my-Catalinautilit
+    sudo semodule -X 300 -i my-Catalinautilit.pp
+    sudo ausearch -c 'java' --raw | audit2allow -M my-java
+    sudo semodule -X 300 -i my-java.pp
+    sudo setsebool -P domain_can_mmap_files 1
+    sudo setsebool -P tomcat_can_network_connect_db 1
+    sudo /sbin/restorecon -v {{ tomcat_install_dir }}/webapps/guacamole.war
+  become: true
+
+- name: Restarting Tomcat and guacd services...
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: restarted
+    daemon_reload: true
+  loop:
+    - guacd
+    - tomcat
+  become: true
+
+- name: Removing detritus...
+  file:
+    path: "/tmp/{{ item }}"
+    state: absent
+  loop:
+    - "guacamole-auth-jdbc-{{ guac_version }}.tar.gz"
+    - "guacamole-auth-jdbc-{{ guac_version }}"
+  become: true
+
+# Setting up web proxy
+- name: Configuring web-proxy for Guacamole...
+  ansible.builtin.template:
+    src: '{{ item.f }}.j2'
+    dest: '{{ item.d }}/{{ item.f }}'
+    mode: '{{ item.m | default("0644") }}'
+  with_items:
+    - f: nginx-vhost.conf
+      d: /etc/nginx/conf.d
+  become: true
+  notify: Notifying webserver to restart...

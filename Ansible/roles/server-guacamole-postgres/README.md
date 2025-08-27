@@ -1,7 +1,7 @@
-Nginx Server Load-balancer
+Postgresql Server.
 =====
 
-Installs [Nginx](https://nginx.org/)
+Installs [Postgresql Server](https://https://www.postgresql.org/)
 
 Dependencies
 ------------
@@ -19,10 +19,7 @@ Example Playbook
 ```yml
 - hosts: servers
   roles:
-    - app-dnsmasq
-    - config-freeipa-client
-    - config-freeipa-certs
-    - server-nginx-lb
+    - server-guacamole-postgres
 ```
 
 Authors

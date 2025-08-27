@@ -1,0 +1,88 @@
+---
+server_short_hostname: ''
+
+domain_tld: ''
+
+idam_server_ip: ''
+
+idam_replica_ip: ''
+
+freeipa_admin_passwd: "{{ creds_store.freeipa_admin_passwd }}"
+
+postgres_user_passwd: "{{ creds_store.postgres_user_passwd }}"
+
+guacamole_pg_passwd: '{{ postgres_user_passwd }}'
+
+postgresql_user: postgres
+
+guacd_user: 'guacd'
+
+guacd_hostname: 'localhost'
+
+guacd_port: 4822
+
+guac_version: '1.6.0'
+
+guac_client_war: 'https://downloads.apache.org/guacamole/{{ guac_version }}/binary/guacamole-{{ guac_version }}.war'
+
+guac_client_checksum: 'sha256:b41ceb1e2df010b54db563e0b00edb8d5fe9f073c6168462e4c978df0fc6e716'
+
+guacd_package: 'https://packages.zenetys.com/latest/redhat/8/RPMS/x86_64/guacamole-server16z-{{ guac_version }}-2.el8.zenetys.x86_64.rpm'
+
+guac_required_packages:
+  - rpmfusion-free-release
+  - cairo-devel
+  - libjpeg-turbo-devel
+  - libpng-devel
+  - libtool
+  - pango-devel
+  - libssh-devel
+  - pulseaudio-libs-devel
+  - libuuid-devel
+  - freerdp
+
+tomcat_install_dir: '/usr/local/tomcat'
+
+guac_config_dir: '/etc/guacamole'
+
+##https://guacamole.apache.org/releases/1.6.0/
+guac_jdbc_auth_url: 'https://downloads.apache.org/guacamole/{{ guac_version }}/binary/guacamole-auth-jdbc-{{ guac_version }}.tar.gz'
+guac_jdbc_auth_checksum: 'sha256:97bc5fd3d67d25c0e98a475d1dfd308a037859f549fac47171c723b7a7039366'
+
+guac_auth_ban_url: 'https://downloads.apache.org/guacamole/{{ guac_version }}/binary/guacamole-auth-ban-{{ guac_version }}.tar.gz'
+guac_auth_ban_checksum: 'sha256:b4c4a2d73d3f66083c46d05409e3dea6f560579d3cf9c3ca3bf099aad7040aca'
+
+guac_auth_ldap_url: 'https://downloads.apache.org/guacamole/{{ guac_version }}/binary/guacamole-auth-ldap-{{ guac_version }}.tar.gz'
+guac_auth_ldap_checksum: 'sha256:b07f27adc370324108527b6929f61d93880026d57c1033064bd1c55b881c7497'
+
+guac_auth_totp_url: 'https://downloads.apache.org/guacamole/{{ guac_version }}/binary/guacamole-auth-totp-{{ guac_version }}.tar.gz'
+guac_auth_totp_checksum: 'sha256:0202c197d3b4e59e69b4dde2a80906adf5f03a497748b74ad3d599022e26f347'
+
+guac_auth_restrict_url: 'https://downloads.apache.org/guacamole/{{ guac_version }}/binary/guacamole-auth-restrict-{{ guac_version }}.tar.gz'
+guac_auth_restrict_checksum: 'sha256:eee1f74d5295a58001b61f59c2e526412c295a9f06cbbd4a625674d6c0031eef'
+
+guac_auth_sso_url: 'https://downloads.apache.org/guacamole/{{ guac_version }}/binary/guacamole-auth-sso-{{ guac_version }}.tar.gz'
+guac_auth_sso_checksum: 'sha256:e957984471ac50a87f472f51aec9bf7e378ae67ce2502ff938030011a670dcae'
+
+#https://jdbc.postgresql.org/download/
+postgresql_jdbc_driver_url: 'https://jdbc.postgresql.org/download/postgresql-42.7.7.jar'
+postgresql_jdbc_checksum: 'sha256:157963d60ae66d607e09466e8c0cdf8087e9cb20d0159899ffca96bca2528460'
+
+postgresql_hostname: '127.0.0.1'
+
+postgresql_port: 5432
+
+guacamole_pg_db: 'guacamole_db'
+
+guacamole_pg_user: 'guacamole_user'
+
+openjdk_ver: '11.0.27+6'
+openjdk_install_dir: '/usr/local/openjdk/jdk-{{ openjdk_ver }}'
+
+cert_dir: '/etc/pki/host_certs'
+
+rdp_host_port: 3389
+
+vnc_host_port: 5900
+
+ssh_host_port: 22

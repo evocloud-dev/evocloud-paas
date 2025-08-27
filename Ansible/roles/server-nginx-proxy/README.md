@@ -1,4 +1,4 @@
-Nginx Server Load-balancer
+Nginx Server Proxy Install
 =====
 
 Installs [Nginx](https://nginx.org/)
@@ -22,7 +22,7 @@ Example Playbook
     - app-dnsmasq
     - config-freeipa-client
     - config-freeipa-certs
-    - server-nginx-lb
+    - server-nginx-proxy
 ```
 
 Authors

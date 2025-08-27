@@ -1,7 +1,7 @@
-Nginx Server Load-balancer
+Apache Guacamole Remote Desktop Gateway.
 =====
 
-Installs [Nginx](https://nginx.org/)
+Installs [Guacamole Remote Desktop Gateway](https://guacamole.apache.org/)
 
 Dependencies
 ------------
@@ -19,10 +19,14 @@ Example Playbook
 ```yml
 - hosts: servers
   roles:
-    - app-dnsmasq
+    - app-dnsmasq #Needed by GCP Compute Instances
     - config-freeipa-client
     - config-freeipa-certs
-    - server-nginx-lb
+    - app-openjdk
+    - server-tomcat #requires app-openjdk
+    - server-guacamole-postgres
+    - server-nginx-proxy
+    - server-guacamole
 ```
 
 Authors

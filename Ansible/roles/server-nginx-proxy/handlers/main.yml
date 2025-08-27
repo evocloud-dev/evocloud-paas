@@ -1,0 +1,9 @@
+---
+- name: Restarting webserver...
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: restarted
+    enabled: true
+  loop:
+    - 'nginx'
+  become: true

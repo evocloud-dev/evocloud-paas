@@ -1,0 +1,81 @@
+---
+#This playbook deploys PostgreSQL RDBMS
+#References: https://github.com/geerlingguy/ansible-role-postgresql/tree/master
+#            https://computingforgeeks.com/install-postgresql-server-on-rocky-almalinux/
+#            https://www.howtoforge.com/how-to-install-postgresql-15-on-rocky-linux-9/
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: server-guacamole-postgres ##################"
+
+- name: Installing PostgreSQL GPG-Key...
+  ansible.builtin.rpm_key:
+    key: "https://yum.postgresql.org/keys/PGDG-RPM-GPG-KEY-RHEL"
+    #fingerprint: EBC6 E12C 62B1 C734 026B  2122 A20E 5214 6B8D 79E6
+    state: present
+  become: true
+
+- name: Installing PostgreSQL repository...
+  ansible.builtin.dnf:
+    name: 'https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm'
+    state: present
+  become: true
+
+- name: Disabling the built-in PostgreSQL module...
+  ansible.builtin.shell: "{{ item }}"
+  loop:
+    - "dnf -qy module disable postgresql"
+  become: true
+
+- name: Installing PostgreSQL packages...
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+    #download_only: true
+    #download_dir: /tmp
+  loop: "{{ postgresql_packages }}"
+  register: packages_install
+  until: packages_install is succeeded
+  retries: 3
+  become: true
+
+- name: Installing PostgreSQL Python libraries...
+  ansible.builtin.dnf:
+    name: '{{ postgresql_python_library }}'
+    state: present
+  become: true
+
+- name: Initializing PostgreSQL...
+  ansible.builtin.command: "postgresql-{{ pg_version }}-setup initdb"
+  args:
+    creates: "/var/lib/pgsql/{{ pg_version }}/data/PG_VERSION"
+  become: true
+
+- name: Starting PostgreSQL service...
+  ansible.builtin.systemd:
+    name: 'postgresql-{{ pg_version }}'
+    state: restarted
+    enabled: yes
+  become: true
+
+- name: Configuring PostgreSQL host based authentication...
+  ansible.builtin.template:
+    src: "pg_hba.conf.j2"
+    dest: "{{ postgresql_conf_dir }}/pg_hba.conf"
+    owner: "{{ postgresql_user }}"
+    group: "{{ postgresql_group }}"
+    mode: 0600
+  when: postgresql_hba_entries | length > 0
+  become: true
+
+- name: Restarting PostgreSQL service...
+  ansible.builtin.systemd:
+    name: 'postgresql-{{ pg_version }}'
+    state: restarted
+    enabled: yes
+  become: true
+
+# Create USERS and DATABASES
+- import_tasks: users.yml
+- import_tasks: databases.yml
+- import_tasks: users_props.yml
