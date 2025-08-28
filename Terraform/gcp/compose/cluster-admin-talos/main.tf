@@ -516,7 +516,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm repo add cilium https://helm.cilium.io/
                           helm repo update
                           helm upgrade --install cilium cilium/cilium \
-                          --version 1.17.5 \
+                          --version 1.18.1 \
                           --namespace kube-system \
                           --set k8sServiceHost=localhost \
                           --set k8sServicePort=7445 \
@@ -609,7 +609,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install kro-orchestrator oci://ghcr.io/kro-run/kro/kro \
                             --namespace kro \
                             --create-namespace \
-                            --version 0.3.0 \
+                            --version 0.4.1 \
                             --wait
                     restartPolicy: OnFailure
                     serviceAccount: kro-install
@@ -726,7 +726,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install flux-operator oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator \
                             --namespace flux-system \
                             --create-namespace \
-                            --version 0.23.0 \
+                            --version 0.28.0 \
                             --wait
                     restartPolicy: OnFailure
                     serviceAccount: flux-install
@@ -926,7 +926,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: headlamp-release
-                    version: "0.31.*"
+                    version: "0.34.*"
                 serviceAccountName: flux-headlamp-sa
                 interval: 30m0s
                 timeout: 25m0s
@@ -1021,7 +1021,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: kube-promstack-release
-                    version: "72.*"
+                    version: "77.*"
                 interval: 30m0s
                 timeout: 25m0s
                 serviceAccountName: flux-kube-promstack-sa
@@ -1096,7 +1096,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: kube-opencost-release
-                    version: "2.1.*"
+                    version: "2.2.*"
                 interval: 30m0s
                 timeout: 25m0s
                 serviceAccountName: flux-opencost-sa
@@ -1125,6 +1125,7 @@ data "talos_machine_configuration" "talos_controlplane" {
               ###################################################
               #KubeScape Vulnerability Scanner
               ###################################################
+              # https://github.com/kubescape/helm-charts
               apiVersion: v1
               kind: Namespace
               metadata:
@@ -1173,7 +1174,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: kubescape-release
-                    version: "1.27.*"
+                    version: "1.29.*"
                 interval: 30m0s
                 timeout: 25m0s
                 serviceAccountName: flux-kubescape-sa
@@ -1193,6 +1194,7 @@ data "talos_machine_configuration" "talos_controlplane" {
               ############################################
               #DEPLOYING KEDA
               ############################################
+              #https://github.com/kedacore/charts
               apiVersion: v1
               kind: Namespace
               metadata:
