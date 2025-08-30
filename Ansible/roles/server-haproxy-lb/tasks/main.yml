@@ -64,10 +64,15 @@
     lb_short_name: "{{ server_fqdn.stdout.split('.')[0] }}"
   become: true
 
-- name: Configuring keepalived.conf...
+- name: Configuring keepalived...
   ansible.builtin.template:
-    src: "keepalived.conf.j2"
-    dest: "/etc/keepalived/keepalived.conf"
+    src: "{{ item.f }}"
+    dest: "{{ item.d }}"
+  with_items:
+    - f: 'keepalived.conf.j2'
+      d: "/etc/keepalived/keepalived.conf"
+    - f: 'keepalived.service.j2'
+      d: "/usr/lib/systemd/system/keepalived.service"
   become: true
 
 - name: Configuring keepalived-ip-updater script...
@@ -78,15 +83,15 @@
     setype: "keepalived_unconfined_script_exec_t"
   become: true
 
-- name: Enabling and starting keepalived and haproxy...
+- name: Enabling and starting haproxy and keepalived...
   ansible.builtin.systemd:
     name: '{{ item }}'
     state: started
     enabled: yes
     daemon_reload: yes
   loop:
-    - 'keepalived'
     - 'haproxy'
+    - 'keepalived'
   become: true
 
 # Enable firewall rules
