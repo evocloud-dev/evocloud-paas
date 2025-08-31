@@ -854,7 +854,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: rook-release
-                    version: "v1.17.*"
+                    version: "v1.18.*"
                 serviceAccountName: flux-rook-ceph-sa
                 interval: 35m0s
                 install:
