@@ -27,7 +27,6 @@ global
     log         127.0.0.1 local2
 
     chroot      /var/lib/haproxy
-    pidfile     /var/run/haproxy.pid
     maxconn     4000
     user        haproxy
     group       haproxy
@@ -49,30 +48,26 @@ defaults
     option                  httplog
     option                  dontlognull
     option http-server-close
-    option forwardfor       except 127.0.0.0/8
     option                  redispatch
     retries                 3
-    timeout http-request    10s
     timeout connect         5000
     timeout client          50000
     timeout server          50000
-    timeout http-keep-alive 900s
     maxconn                 3000
 
 #---------------------------------------------------------------------
 # Talos Linux API RoundRobin TCP Load-balancing
 #---------------------------------------------------------------------
-frontend talos-nodes
+frontend talos_nodes
   bind *:{{ talos_port | default(50000) }}
   mode tcp
   option tcplog
-  default_backend talos-nodes
+  default_backend talos_backend_nodes
 
 # Talos Linux Backend Servers
-backend talos-nodes
+backend talos_backend_nodes
   mode tcp
   balance roundrobin
-  option tcplog
   option tcp-check
   default-server inter 10s downinter 5s rise 2 fall 2 slowstart 60s maxconn 250 maxqueue 256 weight 100
 {% for server in upstream_servers.split(',') %}
@@ -82,14 +77,14 @@ backend talos-nodes
 #---------------------------------------------------------------------
 # Kubernetes api-server RoundRobin TCP Load-balancing
 #---------------------------------------------------------------------
-frontend k8s-control-plane
+frontend k8s_controlplane
   bind *:{{ kubeapi_port | default(6443) }}
   mode tcp
   option tcplog
-  default_backend k8s-control-plane
+  default_backend k8s_backend_controlplane
 
 # k8s-control-plane apiserver backend
-backend k8s-control-plane
+backend k8s_backend_controlplane
   mode tcp
   balance roundrobin
   option tcp-check

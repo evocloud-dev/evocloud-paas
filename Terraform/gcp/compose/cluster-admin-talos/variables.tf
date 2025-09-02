@@ -63,8 +63,8 @@ variable "BASE_VOLUME_SIZE" {
   type        = string
 }
 
-variable "BASE_VOLUME_10" {
-  description = "Base Volume Size 10GB"
+variable "BASE_VOLUME_50" {
+  description = "Base Volume Size 50GB"
   type        = string
 }
 
