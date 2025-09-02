@@ -190,7 +190,7 @@ resource "google_compute_instance" "talos_ctrlplane" {
   boot_disk {
     initialize_params {
       image = var.TALOS_AMI_NAME
-      size  = var.BASE_VOLUME_10
+      size  = var.BASE_VOLUME_50
       type  = var.TALOS_CTRL_BASE_VOLUME_TYPE
       labels = {
         name = format("%s-%s", "base-volume", each.value)
@@ -243,7 +243,7 @@ resource "google_compute_instance" "talos_workload" {
   boot_disk {
     initialize_params {
       image = var.TALOS_AMI_NAME
-      size  = var.BASE_VOLUME_10
+      size  = var.BASE_VOLUME_50
       type  = var.TALOS_WKLD_BASE_VOLUME_TYPE
       labels = {
         name = format("%s-%s", "base-volume", each.value.short_name)
@@ -823,7 +823,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: rook-release
-                    version: "v1.18.*"
+                    version: "v1.17.*"
                 serviceAccountName: flux-rook-ceph-sa
                 interval: 30m0s
                 install:
@@ -1528,7 +1528,7 @@ resource "talos_machine_bootstrap" "bootstrap_cluster" {
   client_configuration = talos_machine_secrets.talos_vm.client_configuration
   node                 = google_compute_address.gateway_vip.address
   endpoint             = google_compute_address.gateway_vip.address
-  timeouts             = { create = "1m" }
+  timeouts             = { create = "5m" }
 }
 
 ## Collect the Talos Kubeconfig
