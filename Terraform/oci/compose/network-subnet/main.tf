@@ -2,7 +2,7 @@
 # Network Security Lists
 #--------------------------------------------------
 # Add security lists here and attach to subnets
-resource "oci_core_security_list" "dmz_list" {
+/*resource "oci_core_security_list" "dmz_list" {
   compartment_id = local.tenancy_ocid
   vcn_id         = var.vcn_id
   display_name   =  "dmz_security_list"
@@ -52,6 +52,28 @@ resource "oci_core_security_list" "dmz_list" {
   }
 
   ingress_security_rules {
+    protocol    = "6" # TCP
+    source      = "0.0.0.0/0"
+    stateless   = false
+    description = "Allow kubectl"
+    tcp_options {
+      max = 6443
+      min = 6443
+    }
+  }
+
+  ingress_security_rules {
+    protocol = "6" # TCP
+    source      = "0.0.0.0/0"
+    stateless   = false
+    description = "Allow talosctl"
+    tcp_options {
+      max = 50000
+      min = 50000
+    }
+  }
+
+  ingress_security_rules {
     protocol    = "1" #ICMP
     source      = "0.0.0.0/0"
     stateless   = false
@@ -85,12 +107,34 @@ resource "oci_core_security_list" "private_subnet_list" {
     }
   }
 
+  ingress_security_rules {
+    protocol    = "6" # TCP
+    source      = "0.0.0.0/0"
+    stateless   = false
+    description = "Allow kubectl"
+    tcp_options {
+      max = 6443
+      min = 6443
+    }
+  }
+
+  ingress_security_rules {
+    protocol    = "6" # TCP
+    source      = "0.0.0.0/0"
+    stateless   = false
+    description = "Allow talosctl"
+    tcp_options {
+      max = 50000
+      min = 50000
+    }
+  }
+
   egress_security_rules {
     destination = "0.0.0.0/0"
     protocol    = "all"
     description = "Allow all outbound traffic"
   }
-}
+}*/
 
 
 #--------------------------------------------------
@@ -106,7 +150,7 @@ resource "oci_core_subnet" "admin_subnet" {
   display_name               = "admin_subnet"
   prohibit_public_ip_on_vnic = true
   route_table_id             = var.private_rt_table
-  security_list_ids          = [oci_core_security_list.private_subnet_list.id]
+  #security_list_ids          = [oci_core_security_list.private_subnet_list.id]
 }
 
 resource "oci_core_subnet" "backend_subnet" {
@@ -119,7 +163,7 @@ resource "oci_core_subnet" "backend_subnet" {
   display_name               = "backend_subnet"
   prohibit_public_ip_on_vnic = true
   route_table_id             = var.private_rt_table
-  security_list_ids          = [oci_core_security_list.private_subnet_list.id]
+  #security_list_ids          = [oci_core_security_list.private_subnet_list.id]
 }
 
 resource "oci_core_subnet" "dmz_subnet" {
@@ -132,6 +176,6 @@ resource "oci_core_subnet" "dmz_subnet" {
   display_name               = "dmz_subnet"
   prohibit_public_ip_on_vnic = false
   route_table_id             = var.public_rt_table
-  security_list_ids          = [oci_core_security_list.dmz_list.id]
+  #security_list_ids          = [oci_core_security_list.dmz_list.id]
 }
 

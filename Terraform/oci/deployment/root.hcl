@@ -74,8 +74,17 @@ inputs = {
   ###########################################################################
   # Talos Kubernetes Cluster (Kubernetes)
   ###########################################################################
-  TALOS_AMI_NAME     = "evocloud-talos19-b010"
+  #TALOS CONTROLPLANE NODES
   TALOS_CTRL_INSTANCE_SIZE    = "VM.Standard.E2.2"
+  TALOS_CTRL_BASE_VOLUME_TYPE = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
+  TALOS_CTRL_NODES            = {
+    node01 = "evotalos-cp01"
+    node02 = "evotalos-cp02"
+    node03 = "evotalos-cp03"
+  }
+
+  TALOS_AMI_NAME     = "metal-talos-1.10.7-qcow2"  #"evocloud-talos19-b010"
+  TALOS_CTRL_INSTANCE_SIZE    = "VM.Standard.E3.Flex"
   TALOS_CTRL_BASE_VOLUME_TYPE = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
 
   #TALOS EXTRA KUBERNETES MANIFESTS
@@ -94,11 +103,18 @@ inputs = {
   }
 
   #TALOS STANDALONE
-  TALOS_CTRL_STANDALONE_SIZE   = "VM.Standard.E2.2"
+  TALOS_CTRL_STANDALONE_SIZE   = "VM.Standard.E3.Flex"
   TALOS_STANDALONE_VOLUME_TYPE = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
   TALOS_CTRL_STANDALONE        = {
     node01 = "evotalos-workstation"
   }
+
+  TALOS_LB_NODES            = {
+    node01 = "evotalos-lb"
+  }
+  TALOS_LB_INSTANCE_SIZE    = "VM.Standard.E2.2"
+  TALOS_LB_BASE_VOLUME_TYPE = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
+
 } # End inputs
 
 #--------------------------------------------------
