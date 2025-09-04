@@ -15,7 +15,7 @@ inputs = {
   talos_version       = "v1.10.5"
   kubernetes_version  = "v1.33.2"
   create_talos_img    = true
-  use_spot            = true
+  use_spot            = false
 }
 
 #--------------------------------------------------

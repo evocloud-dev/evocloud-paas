@@ -10,7 +10,7 @@ inputs = {
   nsg_id              = dependency.network-gateway.outputs.evocloud_nsg_id
   vcn_id              = dependency.network-vcn.outputs.main_vcn_id
   deployer_revision     = "0.1.0"
-  use_spot            = true
+  use_spot            = false
 }
 
 #--------------------------------------------------

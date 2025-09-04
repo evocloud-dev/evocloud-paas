@@ -48,10 +48,13 @@ resource "oci_core_instance" "idam_replica_server" {
     }
   }
 
-  preemptible_instance_config {
-    preemption_action {
-      preserve_boot_volume = true
-      type                 = "TERMINATE"
+  dynamic "preemptible_instance_config" {
+    for_each = var.use_spot ? [1] : []
+    content {
+      preemption_action {
+        preserve_boot_volume = true
+        type                 = "TERMINATE"
+      }
     }
   }
 }

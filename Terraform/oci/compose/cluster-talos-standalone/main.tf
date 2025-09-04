@@ -122,13 +122,16 @@ data "talos_machine_configuration" "talos_controlplane" {
           "user.max_user_namespaces" = "11255"
         }
         network = {
-          #nameservers = [var.idam_server_ip, var.idam_replica_ip]
+          nameservers = [var.idam_server_ip, var.idam_replica_ip, "169.254.169.254"]
           interfaces = [
             {
               interface = "eth0"
               dhcp      = false
             }
           ]
+        }
+        time = {
+          servers = ["169.254.169.254"]
         }
         kubelet = {
           extraArgs = {
@@ -180,8 +183,8 @@ data "talos_machine_configuration" "talos_controlplane" {
             name = "none"
           }
           dnsDomain = "cluster.local"
-          podSubnets = ["10.244.0.0/16"]
-          serviceSubnets = ["10.96.0.0/12"]
+          podSubnets = ["10.10.50.0/24"]
+          serviceSubnets = ["10.10.60.0/24"]
         }
         proxy = {
           disabled = true
