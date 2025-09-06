@@ -1,0 +1,44 @@
+variable "OCI_REGION" {
+  description = "OCI Region"
+  type        = string
+}
+
+variable "OCI_PROFILE" {
+  description = "OCI Default Profile"
+  type        = string
+}
+
+variable "OCI_TENANCY_ID" {
+  description = "OCI Tenancy ID"
+  type        = string
+}
+
+variable "ADMIN_SUBNET_CIDR" {
+  description = "ADMIN Subnet CIDR"
+  type        = string
+}
+
+variable "BACKEND_SUBNET_CIDR" {
+  description = "BACKEND Subnet CIDR"
+  type        = string
+}
+
+variable "DMZ_SUBNET_CIDR" {
+  description = "DMZ Subnet CIDR"
+  type        = string
+}
+
+variable "vcn_id" {
+  description = "VCN ID"
+  type        = string
+}
+
+variable "public_rt_table" {
+  description = "PUBLIC ROUTE TABLE"
+  type        = string
+}
+
+variable "private_rt_table" {
+  description = "PRIVATE ROUTE TABLE"
+  type        = string
+}
