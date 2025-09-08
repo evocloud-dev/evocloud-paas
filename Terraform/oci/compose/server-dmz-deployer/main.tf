@@ -1,5 +1,5 @@
 #--------------------------------------------------
-# Data Source to find Custom Talos Image
+# Data Source to find EvoVM Linux Image
 #--------------------------------------------------
 data "oci_core_images" "evovm_image" {
   compartment_id  = var.OCI_TENANCY_ID

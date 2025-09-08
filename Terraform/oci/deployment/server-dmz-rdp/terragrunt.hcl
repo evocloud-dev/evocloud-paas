@@ -31,8 +31,8 @@ dependency "network-subnet" {
 }
 
 #--------------------------------------------------
-# DEPLOYER module
+# RDP Server module
 #--------------------------------------------------
 terraform {
-  source = "${get_terragrunt_dir()}/../../compose//server-dmz-deployer"
+  source = "${get_terragrunt_dir()}/../../compose//server-dmz-rdp"
 }

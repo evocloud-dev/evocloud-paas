@@ -20,7 +20,7 @@ inputs = {
   DEFAULT_TIMEZONE       = "America/Chicago"
   OCI_PROFILE            = "DEFAULT" #+1
   OCI_REGION             = "us-chicago-1" #+1
-  OCI_TENANCY_ID         = "ocid1.tenancy.oc1..aaaaaaaadamb5sl2yt66hdbhc5fnj3btilizcgf4l3rbjgtqstuvlu45ocea" #+1
+  OCI_TENANCY_ID         = "ocid1.tenancy.oc1..axxxxxxxxxxxxxxxxx" #+1
   TALOS_SOURCE           = "oracle-amd64.raw.xz"
   OCI_PUBLIC_KEY_PAIR    = "/etc/pki/tls/oci_platform.pub"
   OCI_PRIVATE_KEY_PAIR   = "/etc/pki/tls/oci_platform.pem"
@@ -55,11 +55,11 @@ inputs = {
   ###########################################################################
   # IDAM Identity and Access Management Server (FreeIPA)
   ###########################################################################
-  IDAM_SHORT_HOSTNAME   = "evoidp"
+  IDAM_SHORT_HOSTNAME   = "evoidp" #+1
   BASE_IPASERVER_IMG    = "evocloud-rocky8-b0-1-0"
   IDAM_PRIVATE_IP       = "10.10.20.5"
   IDAM_INSTANCE_SIZE    = "VM.Standard.E2.2"
-  IDAM_BASE_VOLUME_TYPE = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
+  IDAM_BASE_VOLUME_TYPE = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High #+1
 
   ###########################################################################
   # IDAM Identity and Access Management Replica Server
@@ -68,6 +68,36 @@ inputs = {
   IDAM_REPLICA_PRIVATE_IP       = "10.10.20.10"
   IDAM_REPLICA_INSTANCE_SIZE    = "VM.Standard.E2.2"
   IDAM_REPLICA_BASE_VOLUME_TYPE = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
+
+  ###########################################################################
+  # Remote Desktop Server
+  ###########################################################################
+  RDP_SHORT_HOSTNAME   = "evodesktop"
+  RDP_BASE_VOLUME_TYPE = "10" #0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
+
+  ###########################################################################
+  # Virtual Cloud Desktop
+  ###########################################################################
+  VCD_SHORT_HOSTNAME   = "evodash"
+  VCD_BASE_VOLUME_TYPE = "10" #0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
+
+  ###########################################################################
+  # EvoHarbor Repository Server
+  ###########################################################################
+  EVOHARBOR_SHORT_HOSTNAME   = "evoharbor"
+  EVOHARBOR_BASE_VOLUME_TYPE = "10" #0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
+
+  ###########################################################################
+  # EvoCode Enterprise Code Repository Management Server
+  ###########################################################################
+  EVOCODE_SHORT_HOSTNAME   = "evogit"
+  EVOCODE_BASE_VOLUME_TYPE = "10" #0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
+
+  ###########################################################################
+  # EvoCode RUNNER Server
+  ###########################################################################
+  EVOCODE_RUNNER_SHORT_HOSTNAME   = "evogit-runner01"
+  EVOCODE_RUNNER_BASE_VOLUME_TYPE = "10" #0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
 
   ###########################################################################
   # Talos Kubernetes Cluster (Kubernetes)
@@ -116,7 +146,7 @@ inputs = {
 remote_state {
   backend = "oci"
   config     = {
-    namespace = "ax1n5msefq6a"
+    namespace = "ax1xxxxxxxxxxxx"
     bucket    = "evocloud-tf-state"
     key       = "${basename(get_parent_terragrunt_dir())}/${path_relative_to_include()}"
   }

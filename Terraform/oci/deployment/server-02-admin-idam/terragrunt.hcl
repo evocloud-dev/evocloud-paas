@@ -3,8 +3,8 @@
 # Input Variables
 #--------------------------------------------------
 inputs = {
-  dmz_subnet_id       = dependency.network-subnet.outputs.dmz_subnet_id
-  public_nsg          = dependency.network-security.outputs.public_nsg
+  admin_subnet_id     = dependency.network-subnet.outputs.admin_subnet_id
+  private_nsg         = dependency.network-security.outputs.private_nsg
 }
 
 #--------------------------------------------------
@@ -31,8 +31,8 @@ dependency "network-subnet" {
 }
 
 #--------------------------------------------------
-# DEPLOYER module
+# IDAM module
 #--------------------------------------------------
 terraform {
-  source = "${get_terragrunt_dir()}/../../compose//server-dmz-deployer"
+  source = "${get_terragrunt_dir()}/../../compose//server-admin-idam"
 }
