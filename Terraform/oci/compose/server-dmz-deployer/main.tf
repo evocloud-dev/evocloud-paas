@@ -78,7 +78,7 @@ resource "terraform_data" "staging_automation_code" {
     host        = oci_core_instance.deployer_server.public_ip
     type        = "ssh"
     user        = var.CLOUD_USER
-    private_key = file(var.PRIVATE_NODE_KEY_PAIR)
+    private_key = file(var.NODE_PRIVATE_KEY_PAIR)
   }
 
   provisioner "remote-exec" {
@@ -117,10 +117,10 @@ resource "terraform_data" "staging_automation_code" {
     destination   = "/home/${var.CLOUD_USER}/evocloud.tar.gz"
   }
 
-  #provisioner "file" {
-  #  source        = "${var.AUTOMATION_FOLDER}/Keys/${var.OCI_CONFIG}"
-  #  destination   = "/home/${var.CLOUD_USER}/${var.OCI_CONFIG}"
-  #}
+  provisioner "file" {
+    source        = "${var.AUTOMATION_FOLDER}/Keys/${var.OCI_CONFIG}"
+    destination   = "/home/${var.CLOUD_USER}/${var.OCI_CONFIG}"
+  }
 
   provisioner "file" {
     source        = "${var.AUTOMATION_FOLDER}/Ansible/secret-vault/ansible-vault-pass.txt"
@@ -145,21 +145,21 @@ resource "terraform_data" "staging_automation_code" {
 
       # Moves Infrastructure public and private keys to /etc/pki/tls folder
       # and gives proper ownership and permissions
-      "sudo mv /home/${var.CLOUD_USER}/oci_evocloud.pem /etc/pki/tls",
-      "sudo mv /home/${var.CLOUD_USER}/oci_evocloud.pub /etc/pki/tls",
-      "sudo chmod 0600 /etc/pki/tls/oci_evocloud.pem",
-      "sudo chmod 0644 /etc/pki/tls/oci_evocloud.pub",
-      "sudo chown ${var.CLOUD_USER}:${var.CLOUD_USER} /etc/pki/tls/oci_evocloud.pem",
-      "sudo chown ${var.CLOUD_USER}:${var.CLOUD_USER} /etc/pki/tls/oci_evocloud.pub",
+      "sudo mv /home/${var.CLOUD_USER}/oci_platform.pem /etc/pki/tls",
+      "sudo mv /home/${var.CLOUD_USER}/oci_platform.pub /etc/pki/tls",
+      "sudo chmod 0600 /etc/pki/tls/oci_platform.pem",
+      "sudo chmod 0644 /etc/pki/tls/oci_platform.pub",
+      "sudo chown ${var.CLOUD_USER}:${var.CLOUD_USER} /etc/pki/tls/oci_platform.pem",
+      "sudo chown ${var.CLOUD_USER}:${var.CLOUD_USER} /etc/pki/tls/oci_platform.pub",
 
       # Moves Node public and private keys to /etc/pki/tls folder
       # and gives proper ownership and permissions
-      "sudo mv /home/${var.CLOUD_USER}/oci_evonode.pem /etc/pki/tls",
-      "sudo mv /home/${var.CLOUD_USER}/oci_evonode.pub /etc/pki/tls",
-      "sudo chmod 0600 /etc/pki/tls/oci_evonode.pem",
-      "sudo chmod 0644 /etc/pki/tls/oci_evonode.pub",
-      "sudo chown ${var.CLOUD_USER}:${var.CLOUD_USER} /etc/pki/tls/oci_evonode.pem",
-      "sudo chown ${var.CLOUD_USER}:${var.CLOUD_USER} /etc/pki/tls/oci_evonode.pub",
+      "sudo mv /home/${var.CLOUD_USER}/evonode.pem /etc/pki/tls",
+      "sudo mv /home/${var.CLOUD_USER}/evonode.pub /etc/pki/tls",
+      "sudo chmod 0600 /etc/pki/tls/evonode.pem",
+      "sudo chmod 0644 /etc/pki/tls/evonode.pub",
+      "sudo chown ${var.CLOUD_USER}:${var.CLOUD_USER} /etc/pki/tls/evonode.pem",
+      "sudo chown ${var.CLOUD_USER}:${var.CLOUD_USER} /etc/pki/tls/evonode.pub",
 
       # Moves Ansible secret-store and vault-pass to Ansible/secret-vault folder
       "mv /home/${var.CLOUD_USER}/secret-store.yml /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml",
@@ -201,7 +201,7 @@ resource "terraform_data" "deployer_server_configuration" {
 
   provisioner "local-exec" {
     command = <<EOF
-      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 ${var.AUTOMATION_FOLDER}/Ansible/server-dmz-deployer.yml --forks 10 --inventory-file ${oci_core_instance.deployer_server.public_ip}, --user ${var.CLOUD_USER} --private-key ${var.PRIVATE_NODE_KEY_PAIR} --ssh-common-args "-o 'StrictHostKeyChecking=no'"
+      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 ${var.AUTOMATION_FOLDER}/Ansible/server-dmz-deployer.yml --forks 10 --inventory-file ${oci_core_instance.deployer_server.public_ip}, --user ${var.CLOUD_USER} --private-key ${var.NODE_PRIVATE_KEY_PAIR} --ssh-common-args "-o 'StrictHostKeyChecking=no'"
     EOF
     #Ansible logs
     environment = {

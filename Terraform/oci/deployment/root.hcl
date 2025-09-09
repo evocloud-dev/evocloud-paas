@@ -21,11 +21,11 @@ inputs = {
   OCI_PROFILE            = "DEFAULT" #+1
   OCI_REGION             = "us-chicago-1" #+1
   OCI_TENANCY_ID         = "ocid1.tenancy.oc1..axxxxxxxxxxxxxxxxx" #+1
-  TALOS_SOURCE           = "oracle-amd64.raw.xz"
   OCI_PUBLIC_KEY_PAIR    = "/etc/pki/tls/oci_platform.pub"
   OCI_PRIVATE_KEY_PAIR   = "/etc/pki/tls/oci_platform.pem"
   NODE_PUBLIC_KEY_PAIR   = "/etc/pki/tls/evonode.pub" #+1
   NODE_PRIVATE_KEY_PAIR  = "/etc/pki/tls/evonode.pem" #+1
+  TALOS_SOURCE           = "oracle-amd64.raw.xz"
 
   ###########################################################################
   # Ansible/Automation Runtime Environment Configurations
@@ -48,7 +48,7 @@ inputs = {
   # DMZ Controller Host
   ###########################################################################
   DEPLOYER_SHORT_HOSTNAME   = "evo-master" #+1
-  BASE_INSTALLER_IMG        = "evocloud-rocky8-b0-1-0"
+  BASE_INSTALLER_IMG        = "evovm-os-8-10"
   DEPLOYER_PRIVATE_IP       = "10.10.10.5"
   DEPLOYER_BASE_VOLUME_TYPE = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High  #+1
 
@@ -56,7 +56,7 @@ inputs = {
   # IDAM Identity and Access Management Server (FreeIPA)
   ###########################################################################
   IDAM_SHORT_HOSTNAME   = "evoidp" #+1
-  BASE_IPASERVER_IMG    = "evocloud-rocky8-b0-1-0"
+  BASE_IPASERVER_IMG    = "evovm-os-8-10"
   IDAM_PRIVATE_IP       = "10.10.20.5"
   IDAM_INSTANCE_SIZE    = "VM.Standard.E2.2"
   IDAM_BASE_VOLUME_TYPE = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High #+1
