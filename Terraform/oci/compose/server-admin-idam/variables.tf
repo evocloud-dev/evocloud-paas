@@ -18,11 +18,6 @@ variable "OCI_VPC_CIDR" {
   type        = list(string)
 }
 
-variable "OCI_VPC" {
-  description = "Main VPC Name"
-  type        = string
-}
-
 variable "BASE_AMI_NAME" {
   description = "Base Image Name"
   type        = string

@@ -16,12 +16,13 @@ inputs = {
   BASE_AMI_VERSION        = "8.10"
   BASE_SOURCE             = "Rocky-8-GenericCloud-Base.latest.x86_64.qcow2"
   BASE_VOLUME_50          = "50" #+1
+  BASE_VOLUME_200         = "200" #+1
   BASE_SHAPE_E4_FLEX      = "VM.Standard.E4.Flex" #+1
   CLOUD_USER              = "mlkroot" #+1
   DEFAULT_TIMEZONE        = "America/Chicago" #+1
   OCI_PROFILE             = "DEFAULT" #+1
   OCI_REGION              = "us-chicago-1" #+1
-  OCI_TENANCY_ID          = "ocid1.tenancy.oc1..xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" #+1
+  OCI_TENANCY_ID          = "ocid1.tenancy.oc1..axxxxxxxxxxxxxxxxxxxxxxxx" #+1
   TALOS_SOURCE            = "oracle-amd64.raw.xz"
   OCI_PUBLIC_KEY_PAIR     = "/etc/pki/tls/oci_platform.pub" #+1
   OCI_PRIVATE_KEY_PAIR    = "/etc/pki/tls/oci_platform.pem" #+1
@@ -105,12 +106,40 @@ inputs = {
   # Talos Kubernetes Cluster (Kubernetes)
   ###########################################################################
   #TALOS CONTROLPLANE NODES
-  TALOS_CTRL_INSTANCE_SIZE    = "VM.Standard.E2.2"
   TALOS_CTRL_BASE_VOLUME_TYPE = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
   TALOS_CTRL_NODES            = {
     node01 = "evotalos-cp01"
     node02 = "evotalos-cp02"
     node03 = "evotalos-cp03"
+  }#+1
+  #Talos Worker Nodes
+  TALOS_WKLD_BASE_VOLUME_TYPE   = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
+
+  TALOS_WKLD_NODES              = {
+    node01 = {
+      short_name = "evotalos-wk01"
+      extra_volume = true
+    }
+    node02 = {
+      short_name = "evotalos-wk02"
+      extra_volume = true
+    }
+    node03 = {
+      short_name = "evotalos-wk03"
+      extra_volume = true
+    }
+    node04 = {
+      short_name = "evotalos-wk04"
+      extra_volume = true
+    }
+    node05 = {
+      short_name = "evotalos-wk05"
+      extra_volume = true
+    }
+    node06 = {
+      short_name = "evotalos-wk06"
+      extra_volume = true
+    }
   }
 
   TALOS_AMI_NAME     = "evocluster-os-1-11-0"#+1
@@ -135,8 +164,9 @@ inputs = {
   } #+1
 
   TALOS_LB_NODES            = {
-    node01 = "evotalos-lb"
-  }
+    node01 = "evotalos-lb01"
+    node02 = "evotalos-lb02"
+  } #+1
   TALOS_LB_INSTANCE_SIZE    = "VM.Standard.E2.2"
   TALOS_LB_BASE_VOLUME_TYPE = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
 
@@ -148,7 +178,7 @@ inputs = {
 remote_state {
   backend = "oci"
   config     = {
-    namespace = "axxxxxxxx"
+    namespace = "ax1xxxxxxxx"
     bucket    = "evocloud-tf-state"
     key       = "${basename(get_parent_terragrunt_dir())}/${path_relative_to_include()}"
   }
