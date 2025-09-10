@@ -5,33 +5,35 @@ inputs = {
   ###########################################################################
   # Miscellaneous Variables
   ###########################################################################
-  DOMAIN_TLD     = "evocloud.dev"
-  CLOUD_PLATFORM = "oci"
+  DOMAIN_TLD      = "evocloud.dev" #+1
+  CLOUD_PLATFORM  = "oci"
+  OCI_METADATA_NS = "169.254.169.254" #Changes depending on zone
 
   ###########################################################################
   # Common Variables
   ###########################################################################
-  BASE_AMI_NAME          = "evovm-os-8-10" #+1
-  BASE_AMI_VERSION       = "8.10"
-  BASE_SOURCE            = "Rocky-8-GenericCloud-Base.latest.x86_64.qcow2"
-  BASE_VOLUME_50         = "50" #+1
-  BASE_SHAPE_E4_FLEX     = "VM.Standard.E4.Flex" #+1
-  CLOUD_USER             = "mlkroot"
-  DEFAULT_TIMEZONE       = "America/Chicago"
-  OCI_PROFILE            = "DEFAULT" #+1
-  OCI_REGION             = "us-chicago-1" #+1
-  OCI_TENANCY_ID         = "ocid1.tenancy.oc1..axxxxxxxxxxxxxxxxx" #+1
-  TALOS_SOURCE           = "oracle-amd64.raw.xz"
-  OCI_PUBLIC_KEY_PAIR    = "/etc/pki/tls/oci_platform.pub"
-  OCI_PRIVATE_KEY_PAIR   = "/etc/pki/tls/oci_platform.pem"
-  NODE_PUBLIC_KEY_PAIR   = "/etc/pki/tls/evonode.pub" #+1
-  NODE_PRIVATE_KEY_PAIR  = "/etc/pki/tls/evonode.pem" #+1
+  BASE_AMI_NAME           = "evovm-os-8-10" #+1
+  BASE_AMI_VERSION        = "8.10"
+  BASE_SOURCE             = "Rocky-8-GenericCloud-Base.latest.x86_64.qcow2"
+  BASE_VOLUME_50          = "50" #+1
+  BASE_SHAPE_E4_FLEX      = "VM.Standard.E4.Flex" #+1
+  CLOUD_USER              = "mlkroot" #+1
+  DEFAULT_TIMEZONE        = "America/Chicago" #+1
+  OCI_PROFILE             = "DEFAULT" #+1
+  OCI_REGION              = "us-chicago-1" #+1
+  OCI_TENANCY_ID          = "ocid1.tenancy.oc1..xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" #+1
+  TALOS_SOURCE            = "oracle-amd64.raw.xz"
+  OCI_PUBLIC_KEY_PAIR     = "/etc/pki/tls/oci_platform.pub" #+1
+  OCI_PRIVATE_KEY_PAIR    = "/etc/pki/tls/oci_platform.pem" #+1
+  NODE_PUBLIC_KEY_PAIR    = "/etc/pki/tls/evonode.pub" #+1
+  NODE_PRIVATE_KEY_PAIR   = "/etc/pki/tls/evonode.pem" #+1
+  OCI_CONFIG_CREDS        = "config" #+1
 
   ###########################################################################
   # Ansible/Automation Runtime Environment Configurations
   ###########################################################################
-  ANSIBLE_DEBUG_FLAG  = false
-  AUTOMATION_FOLDER   = "/opt/EVOCLOUD"
+  ANSIBLE_DEBUG_FLAG  = false #+1
+  AUTOMATION_FOLDER   = "/opt/EVOCLOUD" #+1
   AUTOMATION_LOGS     = "/opt/EVOCLOUD/Logs"
 
   ###########################################################################
@@ -146,7 +148,7 @@ inputs = {
 remote_state {
   backend = "oci"
   config     = {
-    namespace = "ax1xxxxxxxxxxxx"
+    namespace = "axxxxxxxx"
     bucket    = "evocloud-tf-state"
     key       = "${basename(get_parent_terragrunt_dir())}/${path_relative_to_include()}"
   }

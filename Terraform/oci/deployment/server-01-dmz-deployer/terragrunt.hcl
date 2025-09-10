@@ -5,6 +5,7 @@
 inputs = {
   dmz_subnet_id       = dependency.network-subnet.outputs.dmz_subnet_id
   public_nsg          = dependency.network-security.outputs.public_nsg
+  deployer_revision   = "0.1.0"
 }
 
 #--------------------------------------------------

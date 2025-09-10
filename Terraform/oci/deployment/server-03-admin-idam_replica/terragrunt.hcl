@@ -3,8 +3,10 @@
 # Input Variables
 #--------------------------------------------------
 inputs = {
-  admin_subnet_id     = dependency.network-subnet.outputs.admin_subnet_id
-  private_nsg          = dependency.network-security.outputs.private_nsg
+  admin_subnet_id       = dependency.network-subnet.outputs.admin_subnet_id
+  private_nsg           = dependency.network-security.outputs.private_nsg
+  idam_server_ip        = dependency.server-admin-idam.outputs.private_ip
+  idam_replica_revision = "0.1.0"
 }
 
 #--------------------------------------------------
@@ -14,7 +16,6 @@ include "root" {
   path = find_in_parent_folders("root.hcl")
 }
 
-
 #--------------------------------------------------
 # Set network-security module dependency
 #--------------------------------------------------
@@ -22,12 +23,18 @@ dependency "network-security" {
   config_path = "${get_terragrunt_dir()}/../network-03-security"
 }
 
-
 #--------------------------------------------------
 # Set network-subnet module dependency
 #--------------------------------------------------
 dependency "network-subnet" {
   config_path   = "${get_terragrunt_dir()}/../network-04-subnet"
+}
+
+#--------------------------------------------------
+# Set server-admin-idam module dependency
+#--------------------------------------------------
+dependency "server-admin-idam" {
+  config_path   = "${get_terragrunt_dir()}/../server-02-admin-idam"
 }
 
 #--------------------------------------------------

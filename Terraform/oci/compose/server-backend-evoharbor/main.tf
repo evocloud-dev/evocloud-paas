@@ -71,3 +71,27 @@ resource "oci_core_instance" "evoharbor_server" {
 #--------------------------------------------------
 # Ansible Configuration Management Code
 #--------------------------------------------------
+resource "terraform_data" "trigger_redeploy" {
+  input = var.evoharbor_revision
+}
+
+resource "terraform_data" "evoharbor_server_configuration" {
+  depends_on = [oci_core_instance.evoharbor_server]
+
+  #Uncomment below if we want to run Triggers when VM ID changes
+  #triggers_replace = [google_compute_instance.evoharbor_server.id]
+  #or Uncomment below if we want to run Triggers on Revision number increase
+  lifecycle {
+    replace_triggered_by = [terraform_data.trigger_redeploy]
+  }
+
+  provisioner "local-exec" {
+    command = <<EOF
+      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/server-backend-evoharbor.yml --forks 10 --inventory-file ${oci_core_instance.evoharbor_server.private_ip}, --user ${var.CLOUD_USER} --private-key ${var.NODE_PRIVATE_KEY_PAIR} --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml server_ip=${oci_core_instance.evoharbor_server.private_ip} idam_server_ip=${var.idam_server_ip} idam_replica_ip=${var.idam_replica_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} server_short_hostname=${var.EVOHARBOR_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} server_timezone=${var.DEFAULT_TIMEZONE} cloud_user=${var.CLOUD_USER} metadata_ns_ip=${var.OCI_METADATA_NS} cloud_platform=${var.CLOUD_PLATFORM}'
+    EOF
+    #Ansible logs
+    environment = {
+      ANSIBLE_LOG_PATH = "/home/${var.CLOUD_USER}/EVOCLOUD/Logs/server-backend-evoharbor-ansible.log"
+    }
+  }
+}

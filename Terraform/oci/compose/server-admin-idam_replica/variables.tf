@@ -23,6 +23,11 @@ variable "IDAM_REPLICA_SHORT_HOSTNAME" {
   type        = string
 }
 
+variable "IDAM_SHORT_HOSTNAME" {
+  description = "IDAM Server Short Hostname"
+  type        = string
+}
+
 variable "BASE_SHAPE_E4_FLEX" {
   description = "Compute Instance Flavor Range"
   type        = string
@@ -48,6 +53,36 @@ variable "IDAM_REPLICA_BASE_VOLUME_TYPE" {
   type        = string
 }
 
+variable "CLOUD_USER" {
+  description = "Server Default Login User"
+  type        = string
+}
+
+variable "ANSIBLE_DEBUG_FLAG" {
+  description = "Ansible Debug Flag"
+  type        = bool
+}
+
+variable "DOMAIN_TLD" {
+  description = "Platform Domain Name"
+  type        = string
+}
+
+variable "DEFAULT_TIMEZONE" {
+  description = "Platform Default Timezone"
+  type        = string
+}
+
+variable "CLOUD_PLATFORM" {
+  description = "IaaS Infrastructure"
+  type        = string
+}
+
+variable "OCI_METADATA_NS" {
+  description = "OCI Metadata Nameserver IP"
+  type        = string
+}
+
 variable "private_nsg" {
   description = "Network Security Group ID"
   type        = string
@@ -56,4 +91,13 @@ variable "private_nsg" {
 variable "admin_subnet_id" {
   description = "ADMIN Subnet ID"
   type        = string
+}
+
+variable "idam_server_ip" {
+  description = "IDAM Server Private IPv4"
+  type        = string
+}
+
+variable "idam_replica_revision" {
+  description = "IDAM Replica revision version"
 }

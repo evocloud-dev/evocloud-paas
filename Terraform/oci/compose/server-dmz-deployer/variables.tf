@@ -13,15 +13,6 @@ variable "OCI_TENANCY_ID" {
   type        = string
 }
 
-variable "OCI_VPC_CIDR" {
-  description = "OCI VPC CIDR"
-  type        = list(string)
-}
-
-variable "OCI_VPC" {
-  description = "Main VPC Name"
-  type        = string
-}
 
 variable "BASE_AMI_NAME" {
   description = "Base Image Name"
@@ -48,6 +39,26 @@ variable "NODE_PRIVATE_KEY_PAIR" {
   type        = string
 }
 
+variable "OCI_PRIVATE_KEY_PAIR" {
+  description = "OCI Platform Private Key Pair"
+  type        = string
+}
+
+variable "OCI_PUBLIC_KEY_PAIR" {
+  description = "OCI Platform Public Key Pair"
+  type        = string
+}
+
+variable "AUTOMATION_FOLDER" {
+  description = "Path for the Platform Automation Code"
+  type        = string
+}
+
+variable "OCI_CONFIG_CREDS" {
+  description = "OCI Secret Key File"
+  type        = string
+}
+
 variable "BASE_VOLUME_50" {
   description = "Base Volume Size 50GB"
   type        = string
@@ -58,6 +69,16 @@ variable "DEPLOYER_BASE_VOLUME_TYPE" {
   type        = string
 }
 
+variable "CLOUD_USER" {
+  description = "Server Default Login User"
+  type        = string
+}
+
+variable "ANSIBLE_DEBUG_FLAG" {
+  description = "Ansible Debug Flag"
+  type        = bool
+}
+
 variable "public_nsg" {
   description = "Network Security Group ID"
   type        = string
@@ -66,4 +87,8 @@ variable "public_nsg" {
 variable "dmz_subnet_id" {
   description = "DMZ Subnet ID"
   type        = string
+}
+
+variable "deployer_revision" {
+  description = "Deployer revision version"
 }

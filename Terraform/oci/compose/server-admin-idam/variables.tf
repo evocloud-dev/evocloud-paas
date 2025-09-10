@@ -58,6 +58,26 @@ variable "IDAM_BASE_VOLUME_TYPE" {
   type        = string
 }
 
+variable "CLOUD_USER" {
+  description = "Server Default Login User"
+  type        = string
+}
+
+variable "ANSIBLE_DEBUG_FLAG" {
+  description = "Ansible Debug Flag"
+  type        = bool
+}
+
+variable "DOMAIN_TLD" {
+  description = "Platform Domain Name"
+  type        = string
+}
+
+variable "DEFAULT_TIMEZONE" {
+  description = "Platform Default Timezone"
+  type        = string
+}
+
 variable "private_nsg" {
   description = "Network Security Group ID"
   type        = string
@@ -66,4 +86,8 @@ variable "private_nsg" {
 variable "admin_subnet_id" {
   description = "ADMIN Subnet ID"
   type        = string
+}
+
+variable "idam_revision" {
+  description = "IDAM revision version"
 }
