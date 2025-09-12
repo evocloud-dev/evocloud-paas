@@ -69,6 +69,11 @@ variable "DEPLOYER_BASE_VOLUME_TYPE" {
   type        = string
 }
 
+variable "DOMAIN_TLD" {
+  description = "Platform Domain Name"
+  type        = string
+}
+
 variable "CLOUD_USER" {
   description = "Server Default Login User"
   type        = string

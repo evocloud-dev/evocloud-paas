@@ -3,8 +3,8 @@
 # Input Variables
 #--------------------------------------------------
 inputs = {
-  backend_subnet_id   = dependency.network-subnet.outputs.backend_subnet_id
-  private_nsg         = dependency.network-security.outputs.private_nsg
+  backend_subnet_id     = dependency.network-subnet.outputs.backend_subnet_id
+  private_nsg           = dependency.network-security.outputs.private_nsg
   idam_server_ip        = dependency.server-admin-idam.outputs.private_ip
   idam_replica_ip       = dependency.server-admin-idam_replica.outputs.private_ip
   evocode_revision      = "0.1.0"

@@ -4,6 +4,6 @@
 
 output "private_ip" {
   description = "Idam Private IP Address"
-  value = oci_core_instance.idam_server.public_ip
-  sensitive = true
+  value = oci_core_instance.idam_server.private_ip
+  sensitive = false
 }

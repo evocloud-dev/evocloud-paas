@@ -17,6 +17,7 @@ data "oci_identity_availability_domains" "az_domains" {
 #--------------------------------------------------
 resource "oci_core_instance" "deployer_server" {
   display_name                            = var.DEPLOYER_SHORT_HOSTNAME
+  hostname_label                          = "${var.DEPLOYER_SHORT_HOSTNAME}.${var.DOMAIN_TLD}"
   compartment_id                          = var.OCI_TENANCY_ID
   availability_domain                     = data.oci_identity_availability_domains.az_domains.availability_domains[0].name
   shape                                   = var.BASE_SHAPE_E4_FLEX
@@ -119,7 +120,7 @@ resource "terraform_data" "staging_automation_code" {
 
   provisioner "file" {
     source        = "${var.AUTOMATION_FOLDER}/Keys/${var.OCI_CONFIG_CREDS}"
-    destination   = "/home/${var.CLOUD_USER}/.oci/${var.OCI_CONFIG_CREDS}"
+    destination   = "/home/${var.CLOUD_USER}/${var.OCI_CONFIG_CREDS}"
   }
 
   provisioner "file" {
@@ -165,8 +166,12 @@ resource "terraform_data" "staging_automation_code" {
       "mv /home/${var.CLOUD_USER}/secret-store.yml /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml",
       "mv /home/${var.CLOUD_USER}/ansible-vault-pass.txt /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt",
 
-      # Move root.hcl into deployment folder
+      # Moves root.hcl into deployment folder
       "mv /home/${var.CLOUD_USER}/root.hcl /home/${var.CLOUD_USER}/EVOCLOUD/Terraform/oci/deployment/root.hcl",
+
+      # Moves OCI Config file
+      "mkdir /home/${var.CLOUD_USER}/.oci",
+      "mv /home/${var.CLOUD_USER}/config /home/${var.CLOUD_USER}/.oci",
 
       "sudo yum update -y",
       "hostnamectl status"

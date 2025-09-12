@@ -18,6 +18,41 @@ variable "BASE_AMI_NAME" {
   type        = string
 }
 
+variable "IDAM_SHORT_HOSTNAME" {
+  description = "IDAM Server Short Hostname"
+  type        = string
+}
+
+variable "CLOUD_USER" {
+  description = "Server Default Login User"
+  type        = string
+}
+
+variable "ANSIBLE_DEBUG_FLAG" {
+  description = "Ansible Debug Flag"
+  type        = bool
+}
+
+variable "DOMAIN_TLD" {
+  description = "Platform Domain Name"
+  type        = string
+}
+
+variable "DEFAULT_TIMEZONE" {
+  description = "Platform Default Timezone"
+  type        = string
+}
+
+variable "CLOUD_PLATFORM" {
+  description = "IaaS Infrastructure"
+  type        = string
+}
+
+variable "OCI_METADATA_NS" {
+  description = "OCI Metadata Nameserver IP"
+  type        = string
+}
+
 variable "EVOCODE_RUNNER_SHORT_HOSTNAME" {
   description = "EvoCODE RUNNER Short Hostname"
   type        = string
@@ -56,4 +91,23 @@ variable "private_nsg" {
 variable "backend_subnet_id" {
   description = "BACKEND Subnet ID"
   type        = string
+}
+
+variable "idam_server_ip" {
+  description = "IDAM Server Private IPv4"
+  type        = string
+}
+
+variable "idam_replica_ip" {
+  description = "IDAM Replica Server Private IPv4"
+  type        = string
+}
+
+variable "evocode_hostname_fqdn" {
+  description = "EvoCode Server FQDN"
+  type        = string
+}
+
+variable "evocode_runner_revision" {
+  description = "EVOCODE RUNNER revision version"
 }
