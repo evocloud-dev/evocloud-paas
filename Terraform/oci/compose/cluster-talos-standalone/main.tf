@@ -44,6 +44,7 @@ resource "oci_core_instance" "talos_ctrlplane" {
     source_type = "image"
     source_id   = data.oci_core_images.talos_images.images[0].id #var.talos_image_id
     boot_volume_size_in_gbs = var.BASE_VOLUME_50
+    boot_volume_vpus_per_gb = var.TALOS_STANDALONE_VOLUME_TYPE
   }
 
   agent_config {

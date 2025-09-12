@@ -13,11 +13,6 @@ variable "OCI_TENANCY_ID" {
   type        = string
 }
 
-variable "OCI_VPC_CIDR" {
-  description = "OCI VPC CIDR"
-  type        = list(string)
-}
-
 variable "BASE_AMI_NAME" {
   description = "Base Image Name"
   type        = string

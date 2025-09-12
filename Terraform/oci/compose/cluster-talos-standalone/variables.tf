@@ -23,6 +23,12 @@ variable "TALOS_CTRL_STANDALONE" {
   type        = map(string)
 }
 
+variable "TALOS_STANDALONE_VOLUME_TYPE" {
+  description = "Talos VM Base Volume Type"
+  type        = string
+  default     = "pd-balanced"
+}
+
 variable "BASE_VOLUME_50" {
   description = "Base Volume Size 50GB"
   type        = string

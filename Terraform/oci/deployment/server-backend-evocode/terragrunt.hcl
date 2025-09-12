@@ -32,6 +32,20 @@ dependency "network-subnet" {
 }
 
 #--------------------------------------------------
+# Set server-admin-idam module dependency
+#--------------------------------------------------
+dependency "server-admin-idam" {
+  config_path   = "${get_terragrunt_dir()}/../server-02-admin-idam"
+}
+
+#--------------------------------------------------
+# Set server-admin-idam-replica module dependency
+#--------------------------------------------------
+dependency "server-admin-idam_replica" {
+  config_path   = "${get_terragrunt_dir()}/../server-03-admin-idam_replica"
+}
+
+#--------------------------------------------------
 # EvoCODE Repository Server module
 #--------------------------------------------------
 terraform {

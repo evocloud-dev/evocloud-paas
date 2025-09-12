@@ -22,7 +22,7 @@ inputs = {
   DEFAULT_TIMEZONE        = "America/Chicago" #+1
   OCI_PROFILE             = "DEFAULT" #+1
   OCI_REGION              = "us-chicago-1" #+1
-  OCI_TENANCY_ID          = "ocid1.tenancy.oc1..axxxxxxxxxxxxxxxxxxxxxxxx" #+1
+  OCI_TENANCY_ID          = "ocid1.tenancy.oc1..xxxxxxxxxxxxxxxxxxxxxxxx" #+1
   TALOS_SOURCE            = "oracle-amd64.raw.xz"
   OCI_PUBLIC_KEY_PAIR     = "/etc/pki/tls/oci_platform.pub" #+1
   OCI_PRIVATE_KEY_PAIR    = "/etc/pki/tls/oci_platform.pem" #+1
@@ -103,18 +103,20 @@ inputs = {
   EVOCODE_RUNNER_BASE_VOLUME_TYPE = "10" #0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
 
   ###########################################################################
-  # Talos Kubernetes Cluster (Kubernetes)
+  # ADMIN/MANAGEMENT Kubernetes Cluster (Kubernetes)
   ###########################################################################
-  #TALOS CONTROLPLANE NODES
-  TALOS_CTRL_BASE_VOLUME_TYPE = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
+  TALOS_AMI_NAME     = "evocluster-os-1-11-0"#+1
+
+  #CONTROLPLANE NODES
+  TALOS_CTRL_BASE_VOLUME_TYPE = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High #+1
   TALOS_CTRL_NODES            = {
     node01 = "evotalos-cp01"
     node02 = "evotalos-cp02"
     node03 = "evotalos-cp03"
   }#+1
-  #Talos Worker Nodes
-  TALOS_WKLD_BASE_VOLUME_TYPE   = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
 
+  #WORKER NODES
+  TALOS_WKLD_BASE_VOLUME_TYPE   = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High #+1
   TALOS_WKLD_NODES              = {
     node01 = {
       short_name = "evotalos-wk01"
@@ -140,13 +142,16 @@ inputs = {
       short_name = "evotalos-wk06"
       extra_volume = true
     }
-  }
+  } #+1
 
-  TALOS_AMI_NAME     = "evocluster-os-1-11-0"#+1
-  TALOS_CTRL_INSTANCE_SIZE    = "VM.Standard.E4.Flex"
-  TALOS_CTRL_BASE_VOLUME_TYPE = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
+  # KUBE API LB NODES
+  TALOS_LB_BASE_VOLUME_TYPE = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
+  TALOS_LB_NODES            = {
+    node01 = "evotalos-lb01"
+    node02 = "evotalos-lb02"
+  } #+1
 
-  #TALOS EXTRA KUBERNETES MANIFESTS
+  #INLINE KUBERNETES MANIFESTS
   TALOS_EXTRA_MANIFESTS     = {
     gateway_api_std       = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml"
     gateway_api_exp       = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/experimental-install.yaml"
@@ -156,20 +161,13 @@ inputs = {
     kube-buildpack        = "https://github.com/buildpacks-community/kpack/releases/download/v0.16.1/release-0.16.1.yaml"
   }
 
-  #TALOS STANDALONE
-  TALOS_CTRL_STANDALONE_SIZE   = "VM.Standard.E4.Flex"
-  TALOS_STANDALONE_VOLUME_TYPE = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
+  ###########################################################################
+  # STANDALONE Kubernetes Cluster (Kubernetes)
+  ###########################################################################
+  TALOS_STANDALONE_VOLUME_TYPE = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High #+1
   TALOS_CTRL_STANDALONE        = {
     node01 = "evotalos-workstation"
   } #+1
-
-  TALOS_LB_NODES            = {
-    node01 = "evotalos-lb01"
-    node02 = "evotalos-lb02"
-  } #+1
-  TALOS_LB_INSTANCE_SIZE    = "VM.Standard.E2.2"
-  TALOS_LB_BASE_VOLUME_TYPE = "10" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High
-
 } # End inputs
 
 #--------------------------------------------------
@@ -178,7 +176,7 @@ inputs = {
 remote_state {
   backend = "oci"
   config     = {
-    namespace = "ax1xxxxxxxx"
+    namespace = "ax1xxxxxxxxxxxxx"
     bucket    = "evocloud-tf-state"
     key       = "${basename(get_parent_terragrunt_dir())}/${path_relative_to_include()}"
   }
