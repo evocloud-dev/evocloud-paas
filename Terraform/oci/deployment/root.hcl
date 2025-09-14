@@ -22,7 +22,7 @@ inputs = {
   DEFAULT_TIMEZONE        = "America/Chicago" #+1
   OCI_PROFILE             = "DEFAULT" #+1
   OCI_REGION              = "us-chicago-1" #+1
-  OCI_TENANCY_ID          = "ocid1.tenancy.oc1..xxxxxxxxxxxxxxxxxxxxxxxxxx" #+1
+  OCI_TENANCY_ID          = "ocid1.tenancy.oc1..aaxxxxxxxxxxxxxxxxxxxxxxxxxxxx" #+1
   TALOS_SOURCE            = "oracle-amd64.raw.xz"
   OCI_PUBLIC_KEY_PAIR     = "/etc/pki/tls/oci_platform.pub" #+1
   OCI_PRIVATE_KEY_PAIR    = "/etc/pki/tls/oci_platform.pem" #+1
@@ -176,7 +176,7 @@ inputs = {
 remote_state {
   backend = "oci"
   config     = {
-    namespace = "ax1nxxxxxxxxxxxxxxxx"
+    namespace = "ax1nxxxxxxxxxxxxxx"
     bucket    = "evocloud-tf-state"
     key       = "${basename(get_parent_terragrunt_dir())}/${path_relative_to_include()}"
   }

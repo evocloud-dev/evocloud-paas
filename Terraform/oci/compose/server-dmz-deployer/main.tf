@@ -17,7 +17,6 @@ data "oci_identity_availability_domains" "az_domains" {
 #--------------------------------------------------
 resource "oci_core_instance" "deployer_server" {
   display_name                            = var.DEPLOYER_SHORT_HOSTNAME
-  hostname_label                          = "${var.DEPLOYER_SHORT_HOSTNAME}.${var.DOMAIN_TLD}"
   compartment_id                          = var.OCI_TENANCY_ID
   availability_domain                     = data.oci_identity_availability_domains.az_domains.availability_domains[0].name
   shape                                   = var.BASE_SHAPE_E4_FLEX
@@ -68,6 +67,25 @@ resource "oci_core_instance" "deployer_server" {
 
   freeform_tags            = {"Platform"= "EvoCloud"}
 }
+
+#--------------------------------------------------
+# Policy for delegating permissions to deployer vm
+#--------------------------------------------------
+#resource "oci_identity_dynamic_group" "sa_automation" {
+#  name           = "sa_automation"
+#  compartment_id = var.OCI_TENANCY_ID
+#  description    = "Delegates automation privileges to deployer vm"
+#  matching_rule = "ANY {instance.id = '${oci_core_instance.deployer_server.id}'}"
+#}
+
+#resource "oci_identity_policy" "sa_automation_policy" {
+#  name           = "sa_automation_policy"
+#  compartment_id = var.OCI_TENANCY_ID
+#  description    = "Assigns required permissions"
+#  statements = [
+#    "Allow dynamic-group ${oci_identity_dynamic_group.sa_automation.name} to manage all-resources in compartment ${var.OCI_TENANCY_ID}"
+#  ]
+#}
 
 #--------------------------------------------------
 # Staging Deployment Artifacts

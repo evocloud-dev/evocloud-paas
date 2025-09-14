@@ -29,11 +29,21 @@ data "oci_identity_availability_domains" "az_domains" {
 #--------------------------------------------------
 resource "oci_core_private_ip" "gateway_vip" {
   display_name    = "${var.cluster_name}-gateway-vip"
-  subnet_id       = var.admin_subnet_id
-  lifetime        = "Reserved"
-  #route_table_id = oci_core_route_table.test_route_table.id
+  #subnet_id       = var.admin_subnet_id
+  vnic_id         = data.oci_core_vnic_attachments.lb01_vnic_attachment.vnic_attachments[0].vnic_id
   freeform_tags   = {"Platform"= "EvoCloud"}
 }
+
+data "oci_core_vnic_attachments" "lb01_vnic_attachment" {
+  depends_on = [
+    oci_core_instance.talos_loadbalancer["node01"]
+  ]
+
+  compartment_id = var.OCI_TENANCY_ID
+  instance_id    = oci_core_instance.talos_loadbalancer["node01"].id
+}
+
+#resource "attachment" "" {}
 
 #--------------------------------------------------
 # Loadbalancer VMs
@@ -54,6 +64,10 @@ resource "oci_core_instance" "talos_loadbalancer" {
   shape_config {
     ocpus         = "2"
     memory_in_gbs = "4"
+  }
+
+  metadata = {
+    ssh_authorized_keys = file("${var.NODE_PRIVATE_KEY_PAIR}")
   }
 
   create_vnic_details {
@@ -89,6 +103,17 @@ resource "oci_core_instance" "talos_loadbalancer" {
 
   instance_options {
     are_legacy_imds_endpoints_disabled = true
+  }
+
+  provisioner "remote-exec" {
+    inline = [ "echo 'EvoNODE Readiness Check Succeeded: Instance is fully up.'" ]
+    connection {
+      type = "ssh"
+      user = var.CLOUD_USER
+      timeout = "10"
+      private_key = file(var.NODE_PRIVATE_KEY_PAIR)
+      host = self.private_ip
+    }
   }
 
   freeform_tags               = {"Platform"= "EvoCloud"}
@@ -239,7 +264,7 @@ resource "terraform_data" "talos_lb_configuration" {
 
   provisioner "local-exec" {
     command = <<EOF
-      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/talos-kube-lb.yml --forks 10 --inventory-file ${each.value.private_ip}, --user ${var.CLOUD_USER} --private-key ${var.NODE_PRIVATE_KEY_PAIR} --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args "-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'" --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml server_ip=${each.value.private_ip} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} server_short_hostname=${each.value.display_name} domain_tld=${var.DOMAIN_TLD} server_timezone=${var.DEFAULT_TIMEZONE} cloud_user=${var.CLOUD_USER} metadata_ns_ip=${var.OCI_METADATA_NS} idam_replica_ip=${var.idam_replica_ip} upstream_servers=${join(",", values(oci_core_instance.talos_ctrlplane)[*].private_ip)} ports_list=[80,443,6443,50000] lb_node01_ip=${oci_core_instance.talos_loadbalancer["node01"].private_ip} lb_node02_ip=${oci_core_instance.talos_loadbalancer["node02"].private_ip} gateway_vip=${trimsuffix(oci_core_private_ip.gateway_vip.ip_address, ",")} zone=${trimsuffix(each.value.availability_domain, ", ")}'
+      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/talos-kube-lb.yml --forks 10 --inventory-file ${each.value.private_ip}, --user ${var.CLOUD_USER} --private-key ${var.NODE_PRIVATE_KEY_PAIR} --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args "-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'" --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml server_ip=${each.value.private_ip} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} server_short_hostname=${each.value.display_name} domain_tld=${var.DOMAIN_TLD} server_timezone=${var.DEFAULT_TIMEZONE} cloud_user=${var.CLOUD_USER} metadata_ns_ip=${var.OCI_METADATA_NS} idam_replica_ip=${var.idam_replica_ip} upstream_servers=${join(",", values(oci_core_instance.talos_ctrlplane)[*].private_ip)} ports_list=[80,443,6443,50000] lb_node01_ip=${oci_core_instance.talos_loadbalancer["node01"].private_ip} lb_node02_ip=${oci_core_instance.talos_loadbalancer["node02"].private_ip} gateway_vip=${trimsuffix(oci_core_private_ip.gateway_vip.ip_address, ",")} zone=${trimsuffix(each.value.availability_domain, ", ")}'
     EOF
     #Ansible logs
     environment = {
