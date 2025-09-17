@@ -67,7 +67,7 @@ resource "oci_core_instance" "talos_loadbalancer" {
   }
 
   metadata = {
-    ssh_authorized_keys = file("${var.NODE_PRIVATE_KEY_PAIR}")
+    ssh_authorized_keys = file("${var.NODE_PUBLIC_KEY_PAIR}")
   }
 
   create_vnic_details {

@@ -18,6 +18,11 @@ variable "CLOUD_USER" {
   type        = string
 }
 
+variable "NODE_PUBLIC_KEY_PAIR" {
+  description = "Public Key Pair for Node SSH Login"
+  type        = string
+}
+
 variable "NODE_PRIVATE_KEY_PAIR" {
   description = "Private Key Pair for Node SSH Login"
   type        = string
