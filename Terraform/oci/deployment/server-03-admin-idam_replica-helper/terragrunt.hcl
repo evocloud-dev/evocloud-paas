@@ -4,6 +4,10 @@
 #--------------------------------------------------
 inputs = {
   deployer_server_eip = dependency.server-dmz-deployer.outputs.public_ip
+  admin_subnet_id       = dependency.network-subnet.outputs.admin_subnet_id
+  private_nsg           = dependency.network-security.outputs.private_nsg
+  idam_server_ip        = dependency.server-admin-idam.outputs.private_ip
+  idam_replica_revision = "0.1.0"
 }
 
 #--------------------------------------------------

@@ -4,6 +4,11 @@
 #--------------------------------------------------
 inputs = {
   deployer_server_eip = dependency.server-dmz-deployer.outputs.public_ip
+  dmz_subnet_id       = dependency.network-subnet.outputs.dmz_subnet_id
+  public_nsg          = dependency.network-security.outputs.public_nsg
+  cluster_name        = "evo-cluster-std"
+  talos_version       = "v1.11.0"
+  kubernetes_version  = "v1.34.0"
 }
 
 #--------------------------------------------------
