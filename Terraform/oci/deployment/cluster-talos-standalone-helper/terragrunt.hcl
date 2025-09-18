@@ -19,6 +19,21 @@ include "root" {
 }
 
 #--------------------------------------------------
+# Set network-security module dependency
+#--------------------------------------------------
+dependency "network-security" {
+  config_path = "${get_terragrunt_dir()}/../network-03-security"
+}
+
+
+#--------------------------------------------------
+# Set network-subnet module dependency
+#--------------------------------------------------
+dependency "network-subnet" {
+  config_path   = "${get_terragrunt_dir()}/../network-04-subnet"
+}
+
+#--------------------------------------------------
 # Set server-dmz-deployer module dependency
 #--------------------------------------------------
 dependency "server-dmz-deployer" {

@@ -18,6 +18,27 @@ include "root" {
 }
 
 #--------------------------------------------------
+# Set network-security module dependency
+#--------------------------------------------------
+dependency "network-security" {
+  config_path = "${get_terragrunt_dir()}/../network-03-security"
+}
+
+#--------------------------------------------------
+# Set network-subnet module dependency
+#--------------------------------------------------
+dependency "network-subnet" {
+  config_path   = "${get_terragrunt_dir()}/../network-04-subnet"
+}
+
+#--------------------------------------------------
+# Set server-admin-idam module dependency
+#--------------------------------------------------
+dependency "server-admin-idam" {
+  config_path   = "${get_terragrunt_dir()}/../server-02-admin-idam"
+}
+
+#--------------------------------------------------
 # Set server-dmz-deployer module dependency
 #--------------------------------------------------
 dependency "server-dmz-deployer" {
@@ -25,7 +46,7 @@ dependency "server-dmz-deployer" {
 }
 
 #--------------------------------------------------
-# Load server-admin-idam module
+# Load server-admin-idam_replica-helper module
 #--------------------------------------------------
 terraform {
   source = "${get_terragrunt_dir()}/../../compose//server-admin-idam_replica-helper"
