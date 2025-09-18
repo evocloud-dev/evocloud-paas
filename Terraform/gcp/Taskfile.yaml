@@ -1,0 +1,177 @@
+version: 3
+
+silent: true
+
+vars:
+  # Common across tasks
+  DEPLOY_DIR:          "/opt/EVOCLOUD/Terraform/gcp/deployment"
+  GCLOUD_AUTH:         "gcloud auth activate-service-account --key-file"
+  GCLOUD_EXPORT:       "export GOOGLE_APPLICATION_CREDENTIALS"
+  KEYS_DIR:            "/opt/EVOCLOUD/Keys"
+  BUILD_CMD:           "terragrunt run-all apply --non-interactive --queue-include-external -auto-approve"
+  CLUSTER_DESTROY_CMD: "terragrunt apply --non-interactive -auto-approve"
+  DESTROY_CMD:         "terragrunt destroy --non-interactive -auto-approve"
+
+
+tasks:
+  # Internal tasks that remove redundant code and simplifies logic
+  # Internal tasks do not show up available task list.
+  # SERVER is the server being operated on.
+  # ACTION is BUILD_CMD or DESTROY_CMD
+  vm-operation:
+    internal: true
+    cmds:
+      - |
+        {{.GCLOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
+        {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
+        cd {{.DEPLOY_DIR}}/{{.SERVER}}/ && \
+        {{.ACTION}}  
+
+  ###############################
+  # Neutral/Dependency Tasks
+  ###############################
+  copy-files:
+    # Task only runs if one or more status commands not satisfied"
+    # Files: gcp-evocloud.pem, gcp-evocloud.pub, ansible-vault-pass.txt, secret-store.yml and root.hcl
+    desc: "GCP: Copies files from mount directory inside container to their respective locations."
+    status:
+      - "ls -al /etc/pki/tls | grep gcp-evocloud.pem"
+      - "ls -al /etc/pki/tls | grep gcp-evocloud.pub"
+      - "ls -al Ansible/secret-vault | grep ansible-vault-pass.txt"
+      - "ls -al Ansible/secret-vault | grep secret-store.yml"
+    cmds:
+      # The slash in front of the cp commands is required to prevent user from being prompted to confirm.
+      # The cp command in rocky linux is aliased to cp -i.
+      - \cp {{.MNTDIR}}/gcp/*.json {{.KEYS_DIR}}
+      - \cp {{.MNTDIR}}/gcp/*.pem /etc/pki/tls
+      - \cp {{.MNTDIR}}/gcp/*.pub /etc/pki/tls
+      - \cp {{.MNTDIR}}/gcp/ansible-vault-pass.txt {{.MNTDIR}}/gcp/secret-store.yml Ansible/secret-vault
+      - \cp {{.MNTDIR}}/gcp/root.hcl {{.DEPLOY_DIR}}
+      - chmod 0600 /etc/pki/tls/*.pem
+      - chmod 0644 /etc/pki/tls/*.pub
+
+  ###############################
+  # Build Tasks
+  ###############################
+  build-evo-master:
+    desc: "GCP: Build evo-master Server"
+    deps: [copy-files]
+    cmds:
+      - echo "GCP':' Building evo-master"
+      - task: vm-operation
+        vars:
+          SERVER: server-01-dmz-deployer
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-evo-idp:
+    desc: "GCP: Build EvoCloud IdM Server"
+    deps: [copy-files]
+    cmds:
+      - echo "GCP':' Building EvoCloud IdM Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-02-admin-idam-helper
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-evo-idpr:
+    desc: "GCP: Build EvoCloud IdM Replica Server"
+    deps: [copy-files]
+    cmds:
+      - echo "GCP':' Building EvoCloud IdM Replica Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-03-admin-idam_replica-helper
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-evo-rdp:
+    desc: "GCP: Build EvoCloud Remote Desktop Server"
+    deps: [copy-files]
+    cmds:
+      - echo "GCP':' Building EvoCloud Remote Desktop Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-dmz-rdp-helper
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-evo-cluster-std:
+    desc: "GCP: Build EvoCloud Single Node Cluster"
+    deps: [copy-files]
+    cmds:
+      - echo "GCP':' Building EvoCloud Single Node Kube Cluster"
+      - task: vm-operation
+        vars:
+          SERVER: cluster-talos-standalone-helper
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-evo-cluster-mgr:
+    desc: "GCP: Build EvoCloud Full Kube Cluster"
+    deps: [copy-files]
+    cmds:
+      - echo "GCP':' Building Full EvoCloud Kube Cluster"
+      - task: vm-operation
+        vars:
+          SERVER: cluster-admin-talos-helper
+          ACTION: "{{.BUILD_CMD}}"
+
+  ###############################
+  # Destroy Tasks
+  ###############################
+  destroy-evo-master:
+    desc: "GCP: Destroy evo-master"
+    deps: [copy-files]
+    cmds:
+      - echo "GCP':' Destroying evo-master"
+      - task: vm-operation
+        vars:
+          SERVER: server-01-dmz-deployer
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-idp:
+    desc: "GCP: Destroy EvoCloud IdM Server"
+    deps: [copy-files]
+    cmds:
+      - echo "GCP':' Destroying EvoCloud IdM Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-02-admin-idam
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-idpr:
+    desc: "GCP: Destroy EvoCloud IdM Replica Server"
+    deps: [copy-files]
+    cmds:
+      - echo "GCP':' Destroying EvoCloud IdM Replica Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-03-admin-idam_replica
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-rdp:
+    desc: "GCP: Destroy EvoCloud Remote Desktop Server"
+    deps: [copy-files]
+    cmds:
+      - echo "GCP':' Destroying EvoCloud Remote Desktop Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-dmz-rdp
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-cluster-std:
+    desc: "GCP: Destroy EvoCloud Single Node Kube Cluster"
+    deps: [copy-files]
+    cmds:
+      - echo "GCP':' Destroying EvoCloud Single Node Kube Cluster"
+      - task: vm-operation
+        vars:
+          SERVER: cluster-talos-standalone-helper-destroyer
+          ACTION: "{{.CLUSTER_DESTROY_CMD}}"
+
+  destroy-evo-cluster-mgr:
+    desc: "GCP: Destroy EvoCloud Full  Kube Cluster"
+    deps: [copy-files]
+    cmds:
+      - echo "GCP':' Destroying EvoCloud Full Kube Cluster"
+      - task: vm-operation
+        vars:
+          SERVER: cluster-admin-talos-helper-destroyer
+          ACTION: "{{.CLUSTER_DESTROY_CMD}}"
