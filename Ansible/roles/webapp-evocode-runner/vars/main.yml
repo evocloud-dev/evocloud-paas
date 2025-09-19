@@ -6,7 +6,16 @@
 #Gitlab Runner packages: https://s3.dualstack.us-east-1.amazonaws.com/gitlab-runner-downloads/latest/index.html
 ##wget https://s3.dualstack.us-east-1.amazonaws.com/gitlab-runner-downloads/latest/binaries/gitlab-runner-linux-amd64
 ##wget https://s3.dualstack.us-east-1.amazonaws.com/gitlab-runner-downloads/latest/binaries/gitlab-runner-helper/gitlab-runner-helper.x86_64
-evocode_runner_version: 17.5.3
+
+evocode_runner_version: 18.4.0
+
+evocode_runner_url: 'https://s3.dualstack.us-east-1.amazonaws.com/gitlab-runner-downloads/v18.4.0/binaries/gitlab-runner-linux-amd64'
+
+evocode_runner_checksum: sha256:b2eff9d2eccbf838db72e619dab27a046b1f770d2bf1fc992a8f22efaf638946
+
+evocode_runner_helper_url: 'https://s3.dualstack.us-east-1.amazonaws.com/gitlab-runner-downloads/v18.4.0/binaries/gitlab-runner-helper/gitlab-runner-helper.x86_64'
+
+evocode_runner_helper_checksum: sha256:e52053b09d8898fd7287e2ecbd542a5d000340b038424ab782dad479d784cbaa
 
 evocode_runner_force_update: false
 
