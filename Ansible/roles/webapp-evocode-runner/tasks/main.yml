@@ -17,11 +17,15 @@
 
 - when: "(evocode_runner_check.failed | bool) or (evocode_runner_force_update | bool)"
   block:
-    - name: Unzipping EvoCode-Runner artifacts...
-      ansible.builtin.unarchive:
-        src: 'gitlab-runner-packages.tar.gz'
-        dest: '/home/{{ cloud_user }}'
-        remote_src: false
+    - name: Downloading EvoCode-Runner artifacts...
+      ansible.builtin.get_url:
+        url: '{{ item.url }}'
+        dest: '/tmp'
+        mode: '0644'
+        checksum: '{{ item.checksum }}'
+      loop:
+        - { url: '{{ evocode_runner_url }}', checksum: '{{ evocode_runner_checksum }}' }
+        - { url: '{{ evocode_runner_helper_url }}', checksum: '{{ evocode_runner_helper_checksum }}' }
       become: true
 
     - name: Staging EvoCode-Runner artifacts...
@@ -31,9 +35,9 @@
         mode: "0755"
         remote_src: true
       loop:
-        - src: "/home/{{ cloud_user }}/gitlab-runner-packages/gitlab-runner-helper.x86_64"
+        - src: "/tmp/gitlab-runner-helper.x86_64"
           dest: "{{ evocode_runner_install_dir }}/gitlab-runner-helper"
-        - src: "/home/{{ cloud_user }}/gitlab-runner-packages/gitlab-runner-linux-amd64"
+        - src: "/tmp/gitlab-runner-linux-amd64"
           dest: "{{ evocode_runner_install_dir }}/gitlab-runner"
       become: true
 
@@ -43,7 +47,8 @@
         path: "{{ item }}"
         state: absent
       loop:
-        - '/home/{{ cloud_user }}/gitlab-runner-packages'
+        - '/tmp/gitlab-runner-helper.x86_64'
+        - '/tmp/gitlab-runner-linux-amd64'
       become: true
 
 # Configuring EvoCode Runner
