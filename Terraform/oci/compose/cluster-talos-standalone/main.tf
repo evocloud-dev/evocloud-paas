@@ -280,7 +280,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm repo add cilium https://helm.cilium.io/
                           helm repo update
                           helm upgrade --install cilium cilium/cilium \
-                          --version 1.18.1 \
+                          --version 1.18.2 \
                           --namespace kube-system \
                           --set k8sServiceHost=localhost \
                           --set k8sServicePort=7445 \
@@ -376,7 +376,7 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
 resource "local_file" "talos_kubeconfig_file" {
   depends_on  = [talos_cluster_kubeconfig.kubeconfig]
 
-  filename    = "/opt/kubeconfig/kubeconfig-${var.cluster_name}.yaml"
+  filename    = "/tmp/kubeconfig/kubeconfig-${var.cluster_name}.yaml"
   directory_permission = "0740"
   file_permission      = "0640"
   content     = <<-EOF
@@ -387,7 +387,7 @@ resource "local_file" "talos_kubeconfig_file" {
 resource "local_file" "talos_talosconfig_file" {
   depends_on  = [talos_cluster_kubeconfig.kubeconfig]
 
-  filename    = "/opt/talosconfig/talosconfig-${var.cluster_name}.yaml"
+  filename    = "/tmp/talosconfig/talosconfig-${var.cluster_name}.yaml"
   directory_permission = "0740"
   file_permission      = "0640"
   content     = <<-EOF

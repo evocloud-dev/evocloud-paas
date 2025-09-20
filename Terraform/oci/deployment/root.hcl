@@ -105,6 +105,8 @@ inputs = {
   ###########################################################################
   # ADMIN/MANAGEMENT Kubernetes Cluster (Kubernetes)
   ###########################################################################
+  #Talos GPU IMG: https://factory.talos.dev/image/86a5d7c9beb23b4aea2777e44ca06c8c2ceea8a874ccd2b9a6743c4f734329e0/v1.11.1/oracle-amd64.raw.xz
+  #Talos NON-GPU IMG: https://factory.talos.dev/image/96f8c146a67c80daad900d3fc1a6976fe11062321eee9ab6ae2a6aea88b2d26e/v1.11.1/oracle-amd64.raw.xz
   TALOS_AMI_NAME     = "evocluster-os-1-11-0"#+1
 
   #CONTROLPLANE NODES
