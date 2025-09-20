@@ -1,23 +1,75 @@
-## Community Code of Conduct
-This is Code of Conduct is based on the [CNCF Code of Conduct](https://github.com/cncf/foundation/blob/main/code-of-conduct.md). See the referred document for translated versions into different languages.
+# EvoCloud Code of Conduct
 
-### Contributor Code of Conduct
-As contributors and maintainers of this project, and in the interest of fostering an open and welcoming community, we pledge to respect all people who contribute through reporting issues, posting feature requests, updating documentation, submitting pull requests or patches, and other activities.
+## Our Pledge
 
-We are committed to making participation in this project a harassment-free experience for everyone, regardless of level of experience, gender, sexual orientation, disability, personal appearance, body size, race, ethnicity, age, religion, or nationality.
+We as members, contributors, and maintainers pledge to make participation in the EvoCloud community a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity or expression, experience level, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
 
-Examples of unacceptable behavior by participants include:
+We pledge to act and interact in ways that contribute to an open, welcoming, diverse, inclusive, and healthy community.
 
-- The use of sexualized language or imagery
-- Personal attacks
-- Trolling or insulting/derogatory comments
+---
+
+## Our Standards
+
+Examples of behavior that contributes to a positive environment for our community include:
+
+- Using welcoming and inclusive language
+- Being respectful of differing viewpoints and experiences
+- Gracefully accepting constructive feedback
+- Focusing on what is best for the community
+- Showing empathy and kindness toward other community members
+
+Examples of unacceptable behavior include:
+
+- The use of sexual language or imagery, and sexual attention or advances of any kind
+- Trolling, insulting or derogatory comments, and personal or political attacks
 - Public or private harassment
-- Publishing others' private information, without explicit permission
-- Other unethical or unprofessional conduct
+- Publishing others’ private information, such as a physical or email address, without explicit permission
+- Other conduct which could reasonably be considered inappropriate in a professional setting
 
-Project maintainers have the right and responsibility to remove, edit, or reject comments, commits, code, wiki edits, issues, and other contributions that are not aligned to this Code of Conduct. By adopting this Code of Conduct, project maintainers commit themselves to fairly and consistently applying these principles to every aspect of managing this project. Project maintainers who do not follow or enforce the Code of Conduct may be permanently removed from the project team.
+---
 
-This code of conduct applies both within project spaces and in public spaces when an individual is representing the project or its community.
+## Scope
 
-### Acknowledgements
-This Code of Conduct is adapted from the Contributor Covenant (http://contributor-covenant.org), version 2.0 available at http://contributor-covenant.org/version/2/0/code_of_conduct/.
+This Code of Conduct applies within all EvoCloud community spaces, including:
+
+- The [EvoCloud GitHub repository](https://github.com/evocloud-dev) (issues, pull requests, discussions)
+- The EvoCloud community and social channels
+- EvoCloud related conferences, meetups, or online events
+
+It also applies when an individual is officially representing the EvoCloud community in public spaces.
+
+---
+
+## Enforcement Responsibilities
+
+Community leaders are responsible for clarifying and enforcing our standards of acceptable behavior and will take appropriate and fair corrective action in response to any behavior they deem inappropriate, threatening, offensive, or harmful.
+
+Community leaders have the right and responsibility to remove, edit, or reject comments, commits, code, issues, and other contributions that are not aligned with this Code of Conduct, and will communicate reasons for moderation decisions when appropriate.
+
+---
+
+## Reporting
+
+If you witness or experience unacceptable behavior, please report it as soon as possible via **direct message** to our maintainers at [maintainers@evocloud.dev].
+
+## Enforcement Guidelines
+
+Community leaders will follow these guidelines in determining the consequences for any action they deem in violation of this Code of Conduct:
+
+1. **Correction** – A private, written warning with clear guidance on expected behavior.
+2. **Warning** – A public or private warning, with consequences for continued violations.
+3. **Temporary Ban** – A temporary removal from community spaces for a specified period.
+4. **Permanent Ban** – A permanent removal from community spaces for repeated or severe violations.
+
+---
+
+## Attribution
+
+This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org), version 2.1, available at:  
+[https://www.contributor-covenant.org/version/2/1/code_of_conduct.html](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html)
+
+Community Impact Guidelines are inspired by [Mozilla’s code of conduct enforcement ladder](https://github.com/mozilla/diversity).
+
+---
+
+*Thank you for helping to make EvoCloud a welcoming, respectful, and collaborative community for everyone to join.*
