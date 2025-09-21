@@ -93,6 +93,21 @@
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}",
       "autoReplaceStringTemplate": "sha256:{{newDigest}}"
+    },
+    {
+      "fileMatch": ["Ansible/roles/app-kubectl/vars/main.yml"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*kubectl_ver:\\s*['\"](?<currentValue>[^'\"]+)['\"]"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      "fileMatch": ["Ansible/roles/app-kubectl/vars/main.yml"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)\\s*packageName=(?<packageName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*kubectl_checksum:\\s*sha512:(?<currentDigest>[a-f0-9]{128})"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}",
+      "autoReplaceStringTemplate": "sha256:{{newDigest}}"
     }
   ],
   "packageRules": [],
