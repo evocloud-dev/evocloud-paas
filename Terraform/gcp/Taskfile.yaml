@@ -113,6 +113,46 @@ tasks:
           SERVER: cluster-admin-talos-helper
           ACTION: "{{.BUILD_CMD}}"
 
+  build-evo-code:
+    desc: "GCP: Build EvoCloud Code Server"
+    deps: [copy-files]
+    cmds:
+      - echo "GCP':' Building Full EvoCloud Code Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-backend-evocode-helper
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-evo-code-runner:
+    desc: "GCP: Build EvoCloud Code Runner Server"
+    deps: [copy-files]
+    cmds:
+      - echo "GCP':' Building Full EvoCloud Code Runner Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-backend-evocode-runner-helper
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-evo-harbor:
+    desc: "GCP: Build EvoCloud Harbor Server"
+    deps: [copy-files]
+    cmds:
+      - echo "GCP':' Building Full EvoCloud Harbor Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-backend-evoharbor-helper
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-evo-vcd:
+    desc: "GCP: Build EvoCloud Virtual Cloud Desktop Server"
+    deps: [copy-files]
+    cmds:
+      - echo "GCP':' Building EvoCloud Virtual Cloud Desktop Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-dmz-vcd-helper
+          ACTION: "{{.BUILD_CMD}}"
+
   ###############################
   # Destroy Tasks
   ###############################
@@ -175,3 +215,43 @@ tasks:
         vars:
           SERVER: cluster-admin-talos-helper-destroyer
           ACTION: "{{.CLUSTER_DESTROY_CMD}}"
+
+  destroy-evo-code:
+    desc: "GCP: Destroy EvoCloud Code Server"
+    deps: [copy-files]
+    cmds:
+      - echo "GCP':' Destroying Full EvoCloud Code Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-backend-evocode
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-code-runner:
+    desc: "GCP: Destroy EvoCloud Code Runner Server"
+    deps: [copy-files]
+    cmds:
+      - echo "GCP':' Destroying Full EvoCloud Code Runner Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-backend-evocode-runner
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-harbor:
+    desc: "GCP: Destroy EvoCloud Harbor Server"
+    deps: [copy-files]
+    cmds:
+      - echo "GCP':' Destroying Full EvoCloud Harbor Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-backend-evoharbor
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-vcd:
+    desc: "GCP: Destroy EvoCloud Virtual Cloud Desktop Server"
+    deps: [copy-files]
+    cmds:
+      - echo "GCP':' Destroying EvoCloud Virtual Cloud Desktop Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-dmz-vcd
+          ACTION: "{{.DESTROY_CMD}}"

@@ -91,16 +91,6 @@ tasks:
           SERVER: server-dmz-rdp-helper
           ACTION: "{{.BUILD_CMD}}"
 
-  build-evo-vcd:
-    desc: "OCI: Build EvoCloud Virtual Cloud Desktop"
-    deps: [copy-files]
-    cmds:
-      - echo "OCI':' Building EvoCloud Virtual Cloud Desktop"
-      - task: vm-operation
-        vars:
-          SERVER: server-dmz-vcd-helper
-          ACTION: "{{.BUILD_CMD}}"
-
   build-evo-cluster-std:
     desc: "OCI: Build EvoCloud Single Node Cluster"
     deps: [copy-files]
@@ -151,6 +141,16 @@ tasks:
           SERVER: server-backend-evoharbor-helper
           ACTION: "{{.BUILD_CMD}}"
 
+  build-evo-vcd:
+    desc: "OCI: Build EvoCloud Virtual Cloud Desktop Server"
+    deps: [copy-files]
+    cmds:
+      - echo "OCI':' Building EvoCloud Virtual Cloud Desktop Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-dmz-vcd-helper
+          ACTION: "{{.BUILD_CMD}}"
+
   ###############################
   # Destroy Tasks
   ###############################
@@ -194,15 +194,7 @@ tasks:
           SERVER: server-dmz-rdp
           ACTION: "{{.DESTROY_CMD}}"
 
-  destroy-evo-vcd:
-    desc: "OCI: Destroy EvoCloud Virtual Cloud Desktop"
-    deps: [copy-files]
-    cmds:
-      - echo "OCI':' Destroying EvoCloud Virtual Cloud Desktop"
-      - task: vm-operation
-        vars:
-          SERVER: server-dmz-vcd
-          ACTION: "{{.DESTROY_CMD}}"
+
 
   destroy-evo-cluster-std:
     desc: "OCI: Destroy EvoCloud Single Node Kube Cluster"
@@ -252,4 +244,14 @@ tasks:
       - task: vm-operation
         vars:
           SERVER: server-backend-evoharbor
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-vcd:
+    desc: "OCI: Destroy EvoCloud Virtual Cloud Desktop Server"
+    deps: [copy-files]
+    cmds:
+      - echo "OCI':' Destroying EvoCloud Virtual Cloud Desktop Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-dmz-vcd
           ACTION: "{{.DESTROY_CMD}}"
