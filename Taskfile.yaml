@@ -10,3 +10,22 @@ includes:
     taskfile: ./Terraform/gcp/Taskfile.yaml
   oci:
     taskfile: ./Terraform/oci/Taskfile.yaml
+
+tasks:
+  list:
+    desc: List all tasks from Terraform namespaces
+    cmds:
+      - |
+        # Find and process each namespace
+        find Terraform -name Taskfile.yaml | while read taskfile; do
+          ns=$(basename $(dirname "$taskfile"))
+          echo ""
+          echo "=== $(echo $ns | tr '[:lower:]' '[:upper:]') ==="
+          task --list --taskfile "$taskfile" | grep '^\*' | sed 's/^/  /' || echo "  No tasks defined"
+        done
+
+        # Handle case where no namespaces found
+        if [ -z "$(find Terraform -name Taskfile.yaml | head -n1)" ]; then
+          echo "No Terraform namespaces found!"
+          echo "Expected structure: Terraform/<namespace>/Taskfile.yaml"
+        fi
