@@ -1,6 +1,7 @@
 ---
 cloud_user: ''
 
+# renovate: datasource=github-releases depName=fluxcd/flux2 versioning=semver
 flux_cli_ver: "2.5.1"
 
 flux_cli_install_dir: /usr/local/bin
@@ -12,4 +13,5 @@ flux_cli_force_update: false
 flux_cli_download_url: 'https://github.com/fluxcd/flux2/releases/download/v{{ flux_cli_ver }}/flux_{{ flux_cli_ver }}_linux_amd64.tar.gz'
 
 #https://github.com/fluxcd/flux2/releases/download/v2.5.1/flux_2.5.1_checksums.txt
+# renovate: datasource=github-releases depName=fluxcd/flux2 packageName=flux_.*_linux_amd64.tar.gz versioning=semver
 flux_cli_checksum: "sha256:f64c85db4b94aefcdf6e0f2825c32573fc2bd234e5489ff332fee62776973ec3" # Actual checksum
