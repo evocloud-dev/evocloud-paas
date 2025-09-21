@@ -121,6 +121,36 @@ tasks:
           SERVER: cluster-admin-talos-helper
           ACTION: "{{.BUILD_CMD}}"
 
+  build-evo-code:
+    desc: "OCI: Build EvoCloud Code Server"
+    deps: [copy-files]
+    cmds:
+      - echo "OCI':' Building EvoCloud Code Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-backend-evocode-helper
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-evo-code-runner:
+    desc: "OCI: Build EvoCloud Code Runner Server"
+    deps: [copy-files]
+    cmds:
+      - echo "OCI':' Building EvoCloud Code Runner Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-backend-evocode-runner-helper
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-evo-harbor:
+    desc: "OCI: Build EvoCloud Harbor Server"
+    deps: [copy-files]
+    cmds:
+      - echo "OCI':' Building EvoCloud Harbor Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-backend-evoharbor-helper
+          ACTION: "{{.BUILD_CMD}}"
+
   ###############################
   # Destroy Tasks
   ###############################
@@ -193,3 +223,33 @@ tasks:
         vars:
           SERVER: cluster-admin-talos-helper-destroyer
           ACTION: "{{.CLUSTER_DESTROY_CMD}}"
+
+  destroy-evo-code:
+    desc: "OCI: Destroy EvoCloud Code Server"
+    deps: [copy-files]
+    cmds:
+      - echo "OCI':' Destroy EvoCloud Code Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-backend-evocode
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-code-runner:
+    desc: "OCI: Destroy EvoCloud Code Runner Server"
+    deps: [copy-files]
+    cmds:
+      - echo "OCI':' Destroy EvoCloud Code Runner Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-backend-evocode-runner
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-harbor:
+    desc: "OCI: Destroy EvoCloud Harbor Server"
+    deps: [copy-files]
+    cmds:
+      - echo "OCI':' Destory EvoCloud Harbor Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-backend-evoharbor
+          ACTION: "{{.DESTROY_CMD}}"
