@@ -13,25 +13,44 @@
   ],
   "regexManagers": [
     {
-      "fileMatch": ["Ansible/vars/roles/app-flux-cli/vars/main.yml"],
+      "fileMatch": ["Ansible/roles/app-age/vars/main.yml"],
       "matchStrings": [
-        "flux_cli_ver: \"(?<currentValue>\\d+\\.\\d+\\.\\d+)\"",
-        "flux_cli_checksum: \"sha256:(?<currentValue>[a-f0-9]{64})\""
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*cilium_cli_ver:\\s*['\"](?<currentValue>[^'\"]+)['\"]"
       ],
-      "depNameTemplate": "fluxcd/flux2",
-      "datasourceTemplate": "github-releases",
-      "packageNameTemplate": "fluxcd/flux2",
-      "versioningTemplate": "semver"
-    }
-  ],
-  "packageRules": [
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
     {
-      "matchDepNames": ["fluxcd/flux2"],
-      "matchUpdateTypes": ["major", "minor", "patch"],
-      "commitMessageExtra": "Updated Flux to v{{newVersion}}",
-      "commitBody": "EvoCloud-bot updated Flux CD to version {{newVersion}}\n\nRelease notes: https://github.com/fluxcd/flux2/releases/tag/v{{newVersion}}"
+      "fileMatch": ["Ansible/roles/app-age/vars/main.yml"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)\\s*packageName=(?<packageName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*cilium_cli_checksum:\\s*sha256:(?<currentDigest>[a-f0-9]{64})"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}",
+      "autoReplaceStringTemplate": "sha256:{{newDigest}}"
+    },
+    {
+      "fileMatch": ["Ansible/roles/app-cilium-cli/vars/main.yml"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*cilium_cli_ver:\\s*['\"](?<currentValue>[^'\"]+)['\"]"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      "fileMatch": ["Ansible/roles/app-cilium-cli/vars/main.yml"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)\\s*packageName=(?<packageName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*cilium_cli_checksum:\\s*sha256:(?<currentDigest>[a-f0-9]{64})"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}",
+      "autoReplaceStringTemplate": "sha256:{{newDigest}}"
+    },
+    {
+      "fileMatch": ["Ansible/roles/app-cosign/vars/main.yml"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*cosign_version:\\s*['\"](?<currentValue>[^'\"]+)['\"]"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
     }
   ],
+  "packageRules": [],
   "ansible": {
     "fileMatch": [
        "Ansible/.+\\.ya?ml$"
