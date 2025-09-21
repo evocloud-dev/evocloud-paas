@@ -48,6 +48,21 @@
         "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*cosign_version:\\s*['\"](?<currentValue>[^'\"]+)['\"]"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      "fileMatch": ["Ansible/roles/app-flux-cli/vars/main.yml"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*flux_cli_ver:\\s*['\"](?<currentValue>[^'\"]+)['\"]"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      "fileMatch": ["Ansible/roles/app-flux-cli/vars/main.yml"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)\\s*packageName=(?<packageName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*flux_cli_checksum:\\s*['\"]?sha256:(?<currentDigest>[a-f0-9]{64})['\"]?"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}",
+      "autoReplaceStringTemplate": "\"sha256:{{newDigest}}\""
     }
   ],
   "packageRules": [],
