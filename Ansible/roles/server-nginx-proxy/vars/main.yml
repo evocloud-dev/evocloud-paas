@@ -3,6 +3,6 @@ ports_list: [] #This variable takes a list of port numbers
 
 nginx_user: nginx
 
-nginx_version: '1.26.3'
+nginx_version: '1.28.0'
 
 nginx_package: 'http://nginx.org/packages/centos/8/x86_64/RPMS/nginx-{{ nginx_version }}-1.el8.ngx.x86_64.rpm'

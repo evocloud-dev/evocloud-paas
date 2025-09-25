@@ -27,4 +27,4 @@ cert_dir: '/etc/pki/host_certs'
 evocode_conf_dir: '/etc/gitlab'
 
 #Gitlab packages: https://packages.gitlab.com/gitlab/gitlab-ee
-# wget --content-disposition https://packages.gitlab.com/gitlab/gitlab-ee/packages/el/8/gitlab-ee-17.5.1-ee.0.el8.x86_64.rpm/download.rpm
+# wget --content-disposition https://packages.gitlab.com/gitlab/gitlab-ee/packages/el/8/gitlab-ee-18.4.0-ee.0.el8.x86_64.rpm/download.rpm
