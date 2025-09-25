@@ -1,5 +1,5 @@
 ---
-terragrunt_version: 'v0.87.1'
+terragrunt_version: 'v0.87.6'
 
 os_arch: 'linux_amd64'
 
@@ -7,8 +7,8 @@ terragrunt_install_dir: /usr/local/bin
 
 terragrunt_force_update: false
 
-#https://github.com/gruntwork-io/terragrunt/releases/download/v0.87.1/terragrunt_linux_amd64
+#https://github.com/gruntwork-io/terragrunt/releases/download/v0.87.6/terragrunt_linux_amd64
 terragrunt_download_url: 'https://github.com/gruntwork-io/terragrunt/releases/download/{{ terragrunt_version }}/terragrunt_{{ os_arch }}'
 
-# https://github.com/gruntwork-io/terragrunt/releases/download/v0.87.1/SHA256SUMS
-terragrunt_checksum: sha256:7b22b88407068619304fed0af9f1a8ee929771cedf6387f10ac72ffe8b99e36c
+# https://github.com/gruntwork-io/terragrunt/releases/download/v0.87.6/SHA256SUMS
+terragrunt_checksum: sha256:d8d79d0b39ded3db3eca079a903af3be9a46cfff5a8127f3e2651c09c67e1d72
