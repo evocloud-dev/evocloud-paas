@@ -1359,6 +1359,75 @@ data "talos_machine_configuration" "talos_controlplane" {
                 driftDetection:
                   mode: enabled
               ---
+              ###################################################
+              #TRIVY  OPERATOR
+              ###################################################
+              # #https://aquasecurity.github.io/trivy-operator/latest/
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: trivy-system
+                labels:
+                  pod-security.kubernetes.io/enforce: privileged #Talos default PodSecurity configuration prevents execution of priviledged pods. Adding a label to the namespace will allow deamonsets to start
+              ---
+              #Dedicated service account for trivy
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRoleBinding
+              metadata:
+                name: flux-kube-trivy
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: cluster-admin
+              subjects:
+              - kind: ServiceAccount
+                name: flux-kube-trivy-sa
+                namespace: trivy-system
+              ---
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: flux-kube-trivy-sa
+                namespace: trivy-system
+              ---
+              apiVersion: source.toolkit.fluxcd.io/v1
+              kind: HelmRepository
+              metadata:
+                name: kube-trivy-release
+                namespace: trivy-system
+              spec:
+                interval: 24h
+                type: oci
+                url: oci://ghcr.io/aquasecurity/helm-charts
+              ---
+              apiVersion: helm.toolkit.fluxcd.io/v2
+              kind: HelmRelease
+              metadata:
+                name: kube-trivy-stack
+                namespace: trivy-system
+              spec:
+                chart:
+                  spec:
+                    chart: trivy-operator
+                    sourceRef:
+                      kind: HelmRepository
+                      name: kube-trivy-release
+                    version: "0.31.*"
+                interval: 30m0s
+                timeout: 25m0s
+                serviceAccountName: flux-kube-trivy-sa
+                install:
+                  remediation:
+                    retries: 3
+                upgrade:
+                  remediation:
+                    retries: 2
+                driftDetection:
+                  mode: enabled
+                values:
+                  server:
+                    replicas: 1
+              ---
             EOT
           },
           {
