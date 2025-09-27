@@ -13,5 +13,5 @@ task_force_update: false
 task_download_url: 'https://github.com/go-task/task/releases/download/{{ task_ver }}/task_linux_amd64.tar.gz'
 
 #Manually computed
-# renovate: datasource=github-releases depName=go-task/task packageName=task_linux_amd64.tar.gz versioning=semver
+# renovate: datasource=github-releases depName=go-task/task packageName=task_linux_amd64.tar.gz
 task_checksum: sha256:4367eba04abcbcb407578d18d2439ee32604a872419601abec76a829c797fb82
