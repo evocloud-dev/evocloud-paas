@@ -82,7 +82,7 @@
         "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)\\s*packageName=(?<packageName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*flux_cli_checksum:\\s*sha256:(?<currentValue>[a-f0-9]{64})"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}",
-      "autoReplaceStringTemplate": "\"sha256:{{newDigest}}\""
+      "autoReplaceStringTemplate": "sha256:{{newDigest}}"
     },
     {
       "customType": "regex",
@@ -136,10 +136,10 @@
       "description": "Update kubectl binary package sha512 checksum",
       "managerFilePatterns": ["Ansible/roles/app-kubectl/vars/main.yml"],
       "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)\\s*packageName=(?<packageName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*kubectl_checksum:\\s*sha512:(?<currentValue>[a-f0-9]{64})"
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)\\s*packageName=(?<packageName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*kubectl_checksum:\\s*sha256:(?<currentValue>[a-f0-9]{64})"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}",
-      "autoReplaceStringTemplate": "sha512:{{newDigest}}"
+      "autoReplaceStringTemplate": "sha256:{{newDigest}}"
     }
   ]
 }
