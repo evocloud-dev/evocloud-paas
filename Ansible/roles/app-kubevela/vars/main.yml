@@ -14,10 +14,10 @@ kubevela_download_url: 'https://github.com/kubevela/kubevela/releases/download/{
 vela_download_url: 'https://github.com/kubevela/kubevela/releases/download/{{ kubevela_ver }}/vela-{{ kubevela_ver }}-linux-amd64.tar.gz'
 
 #https://github.com/kubevela/kubevela/releases/download/v1.10.3/sha256sums.txt
-# renovate: datasource=github-releases depName=kubevela/kubevela packageName=kubectl-vela-*-linux-amd64.tar.gz versioning=semver
+# renovate: datasource=github-releases depName=kubevela/kubevela packageName=kubectl-vela-v<semver>-linux-amd64.tar.gz
 kubevela_checksum: sha256:a67ff3de8d0352513c4921a7163de79d9f8783a424145c86ec2aca13f7fafbdc
 
-# renovate: datasource=github-releases depName=kubevela/kubevela packageName=vela-*-linux-amd64.tar.gz versioning=semver
+# renovate: datasource=github-releases depName=kubevela/kubevela packageName=vela-v<semver>-linux-amd64.tar.gz
 vela_checksum: sha256:58b4e0aada20719bf03bbfe55ae016b4c30de209f638ed88b8b408501409ed89
 
 

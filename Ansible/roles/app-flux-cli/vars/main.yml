@@ -13,5 +13,5 @@ flux_cli_force_update: false
 flux_cli_download_url: 'https://github.com/fluxcd/flux2/releases/download/v{{ flux_cli_ver }}/flux_{{ flux_cli_ver }}_linux_amd64.tar.gz'
 
 #https://github.com/fluxcd/flux2/releases/download/v2.6.4/flux_2.6.4_checksums.txt
-# renovate: datasource=github-releases depName=fluxcd/flux2 packageName=flux_.*_linux_amd64.tar.gz versioning=semver
+# renovate: datasource=github-releases depName=fluxcd/flux2 packageName=flux_<semver>_linux_amd64.tar.gz
 flux_cli_checksum: "sha256:9d3e21ad53baa0d5a062e1bd6f1a22d18b95906c682845bca9ffa272cff8a590" # Actual checksum

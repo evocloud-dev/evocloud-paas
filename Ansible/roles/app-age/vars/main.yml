@@ -11,5 +11,5 @@ age_force_update: false
 
 age_download_url: 'https://github.com/FiloSottile/age/releases/download/{{ age_ver }}/age-{{ age_ver }}-linux-amd64.tar.gz'
 
-# renovate: datasource=github-releases depName=FiloSottile/age packageName=age-v.*-linux-amd64.tar.gz versioning=semver
+# renovate: datasource=github-releases depName=FiloSottile/age packageName=age-v<semver>-linux-amd64.tar.gz versioning=semver
 age_checksum: sha256:7df45a6cc87d4da11cc03a539a7470c15b1041ab2b396af088fe9990f7c79d50

@@ -13,5 +13,5 @@ kubectl_install_dir: '/usr/local/bin'
 kubelogin_install_dir: '/usr/local/bin'
 
 #https://github.com/int128/kubelogin/releases/download/v1.34.1/kubelogin_linux_amd64.zip.sha256
-# renovate: datasource=github-releases depName=int128/kubelogin packageName=kubelogin_linux_amd64.zip versioning=semver
+# renovate: datasource=github-releases depName=int128/kubelogin packageName=kubelogin_linux_amd64.zip
 kubelogin_checksum: sha256:018226f75b7f5f3223e5d46df3af746a778315fa2ea10c422cd4ead086173c96
