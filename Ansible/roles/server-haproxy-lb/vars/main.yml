@@ -11,7 +11,7 @@ lb_node01_ip: ''
 
 lb_node02_ip: ''
 
-haproxy_version: '3.2.1'
+haproxy_version: '3.2.4'
 
 haproxy_package: 'https://packages.zenetys.com/latest/redhat/8/RPMS/x86_64/haproxy32z-{{ haproxy_version }}-1.el8.zenetys.x86_64.rpm'
 

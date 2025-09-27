@@ -1,5 +1,5 @@
 ---
-kube_linter_version: 'v0.7.2'
+kube_linter_version: 'v0.7.6'
 
 kube_linter_install_dir: /usr/local/bin
 
@@ -8,4 +8,4 @@ kube_linter_force_update: false
 # https://github.com/stackrox/kube-linter/releases/
 kube_linter_download_url: 'https://github.com/stackrox/kube-linter/releases/download/{{ kube_linter_version }}/kube-linter-linux'
 
-kube_linter_checksum: sha256:8538c320027e431a7f3b12ad127fdcabeca0b9453cf71c6f810bc670803d5545
+kube_linter_checksum: sha256:ec00b7a871fe575fdada7e2e4e1fdb61f75693b76ba978d4c577f82a6bd0affa

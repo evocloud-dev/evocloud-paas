@@ -8,7 +8,7 @@ openjdk_install_dir: '{{ openjdk_parent_install_dir }}/openjdk'
 openjdk_ver:
   major: 11
   minor: 0
-  patch: 27
+  patch: 28
   b: 6
 
 openjdk_ver_str: '{% if openjdk_ver.major | int > 8 %}{{ openjdk_ver.major }}.{{ openjdk_ver.minor }}.{{ openjdk_ver.patch }}_{{ openjdk_ver.b }}{% else %}{{ openjdk_ver.major }}u{{ openjdk_ver.minor }}b{{ openjdk_ver.b }}{% endif %}'
@@ -25,10 +25,10 @@ openjdk_platform: '{{ openjdk_os }}_{{ openjdk_arch }}'
 
 openjdk_install_subdir: '{{ openjdk_install_dir }}/{% if openjdk_ver.major | int > 8 %}jdk-{{ openjdk_ver.major }}.{{ openjdk_ver.minor }}.{{ openjdk_ver.patch }}+{{ openjdk_ver.b }}{% if openjdk_app == "jre" %}-jre{% endif %}{% else %}jdk{{ openjdk_ver.major }}u{{ openjdk_ver.minor }}-b{{ openjdk_ver.b }}{% if openjdk_app == "jre" %}-jre{% endif %}{% endif %}'
 
-##################### https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.18%2B10/OpenJDK11U-jdk_x64_linux_hotspot_11.0.18_10.tar.gz
+##################### https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.28%2B10/OpenJDK11U-jdk_x64_linux_hotspot_11.0.18_10.tar.gz
 openjdk_download_url: 'https://github.com/adoptium/temurin{{ openjdk_ver.major }}-binaries/releases/download/jdk-{{ openjdk_ver.major }}.{{ openjdk_ver.minor }}.{{ openjdk_ver.patch }}%2B{{ openjdk_ver.b }}/OpenJDK11U-jdk_x64_linux_hotspot_{{ openjdk_ver.major }}.{{ openjdk_ver.minor }}.{{ openjdk_ver.patch }}_{{ openjdk_ver.b }}.tar.gz'
 
 openjdk_install_link: '{{ openjdk_parent_install_dir }}/openjdk-{{ openjdk_app }}'
 
-# https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.27%2B6/OpenJDK11U-jdk_x64_linux_hotspot_11.0.27_6.tar.gz.sha256.txt
-openjdk_checksum: sha256:dc6136eaa8c1898cbf8973bb1e203e1f653f4c9166be0f5bebe0b02c5f3b5ae3
+# https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.28%2B6/OpenJDK11U-jdk_x64_linux_hotspot_11.0.28_6.tar.gz.sha256.txt
+openjdk_checksum: sha256:7dfd551795a8884b26cbb02e0301da95db40160bb194f48271dc2ef9367f50c2

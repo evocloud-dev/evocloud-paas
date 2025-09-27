@@ -1,15 +1,15 @@
 ---
 os_arch: 'linux_amd64'
 
-vault_ver: '1.18.4'
+vault_ver: '1.20.4'
 
 vault_force_update: false
 
 vault_install_dir: /usr/local/bin
 
-# https://releases.hashicorp.com/vault/1.18.4/vault_1.18.4_linux_amd64.zip
+# https://releases.hashicorp.com/vault/1.20.4/vault_1.20.4_linux_amd64.zip
 vault_download_url: 'https://releases.hashicorp.com/vault/{{ vault_ver }}/vault_{{ vault_ver }}_{{ os_arch }}.zip'
 
-# https://releases.hashicorp.com/vault/1.18.4/vault_1.18.4_SHA256SUMS
-vault_checksum: sha256:bdde42660c14700e4d5275760d50c59ed637803cd9c7c12926a2e2e788097a45
+# https://releases.hashicorp.com/vault/1.20.4/vault_1.20.4_SHA256SUMS
+vault_checksum: sha256:fc5fb5d01d192f1216b139fb5c6af17e3af742aaeffc289fd861920ec55f2c9c
 
