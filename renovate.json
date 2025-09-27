@@ -32,7 +32,7 @@
       "description": "Update age binary package sha256 checksum",
       "managerFilePatterns": ["Ansible/roles/app-age/vars/main.yml"],
       "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)\\s*packageName=(?<packageName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*age_checksum:\\s*sha256:(?<currentDigest>[a-f0-9]{64})"
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)\\s*packageName=(?<packageName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*age_checksum:\\s*sha256:(?<currentValue>[a-f0-9]{64})"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}",
       "autoReplaceStringTemplate": "sha256:{{newDigest}}"
@@ -51,7 +51,7 @@
       "description": "Update cilium-cli binary package sha256 checksum",
       "managerFilePatterns": ["Ansible/roles/app-cilium-cli/vars/main.yml"],
       "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)\\s*packageName=(?<packageName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*cilium_cli_checksum:\\s*sha256:(?<currentDigest>[a-f0-9]{64})"
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)\\s*packageName=(?<packageName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*cilium_cli_checksum:\\s*sha256:(?<currentValue>[a-f0-9]{64})"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}",
       "autoReplaceStringTemplate": "sha256:{{newDigest}}"
@@ -79,7 +79,7 @@
       "description": "Update flux-cli binary package sha256 checksum",
       "managerFilePatterns": ["Ansible/roles/app-flux-cli/vars/main.yml"],
       "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)\\s*packageName=(?<packageName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*flux_cli_checksum:\\s*['\"]?sha256:(?<currentDigest>[a-f0-9]{64})['\"]?"
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)\\s*packageName=(?<packageName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*flux_cli_checksum:\\s*sha256:(?<currentValue>[a-f0-9]{64})"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}",
       "autoReplaceStringTemplate": "\"sha256:{{newDigest}}\""
@@ -136,7 +136,7 @@
       "description": "Update kubectl binary package sha512 checksum",
       "managerFilePatterns": ["Ansible/roles/app-kubectl/vars/main.yml"],
       "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)\\s*packageName=(?<packageName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*kubectl_checksum:\\s*sha512:(?<currentDigest>[a-f0-9]{128})"
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)\\s*packageName=(?<packageName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*kubectl_checksum:\\s*sha512:(?<currentValue>[a-f0-9]{64})"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}",
       "autoReplaceStringTemplate": "sha512:{{newDigest}}"
