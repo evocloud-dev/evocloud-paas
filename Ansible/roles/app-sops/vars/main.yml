@@ -3,7 +3,7 @@ sops_force_update: false
 
 #https://github.com/getsops/sops/releases
 # renovate: datasource=github-releases depName=getsops/sops versioning=semver
-sops_ver: 'v3.10.2'
+sops_ver: 'v3.11.0'
 
 #https://github.com/getsops/sops/releases/download/v3.10.2/sops-v3.10.2.linux.amd64
 sops_download_url: 'https://github.com/getsops/sops/releases/download/{{ sops_ver }}/sops-{{ sops_ver }}.linux.amd64'
