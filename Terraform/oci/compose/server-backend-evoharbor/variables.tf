@@ -33,6 +33,26 @@ variable "BASE_SHAPE_E4_FLEX" {
   type        = string
 }
 
+variable "EVOHARBOR_OCPU" {
+  description = "Total number of CPU cores"
+  type        = number
+
+  validation {
+    condition = var.EVOHARBOR_OCPU >= 1 && var.EVOHARBOR_OCPU <= 64
+    error_message = "OCPUs must be between 1 and 64"
+  }
+}
+
+variable "EVOHARBOR_ORAM" {
+  description = "Total number of RAM Memory in GB"
+  type        = number
+
+  validation {
+    condition = var.EVOHARBOR_ORAM >= 1 && var.EVOHARBOR_ORAM <= 1024
+    error_message = "RAM Memory must be between 1 and 1024"
+  }
+}
+
 variable "NODE_PUBLIC_KEY_PAIR" {
   description = "Public Key Pair for Node SSH Login"
   type        = string

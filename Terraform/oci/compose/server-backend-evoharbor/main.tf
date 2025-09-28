@@ -20,9 +20,10 @@ resource "oci_core_instance" "evoharbor_server" {
   compartment_id                          = var.OCI_TENANCY_ID
   availability_domain                     = data.oci_identity_availability_domains.az_domains.availability_domains[2].name
   shape                                   = var.BASE_SHAPE_E4_FLEX
+
   shape_config {
-    ocpus         = "4"
-    memory_in_gbs = "8"
+    ocpus         = var.EVOHARBOR_OCPU
+    memory_in_gbs = var.EVOHARBOR_ORAM
   }
 
   metadata = {

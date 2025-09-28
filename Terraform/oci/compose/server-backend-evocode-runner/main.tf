@@ -20,9 +20,10 @@ resource "oci_core_instance" "evocode_runner_server" {
   compartment_id                          = var.OCI_TENANCY_ID
   availability_domain                     = data.oci_identity_availability_domains.az_domains.availability_domains[2].name
   shape                                   = var.BASE_SHAPE_E4_FLEX
+
   shape_config {
-    ocpus         = "8"
-    memory_in_gbs = "16"
+    ocpus         = var.EVOCODE_RUNNER_OCPU
+    memory_in_gbs = var.EVOCODE_RUNNER_ORAM
   }
 
   metadata = {

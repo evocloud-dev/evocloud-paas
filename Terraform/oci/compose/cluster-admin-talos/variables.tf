@@ -73,6 +73,26 @@ variable "TALOS_LB_BASE_VOLUME_TYPE" {
   type        = string
 }
 
+variable "TALOS_LB_OCPU" {
+  description = "Total number of CPU cores"
+  type        = number
+
+  validation {
+    condition = var.TALOS_LB_OCPU >= 1 && var.TALOS_LB_OCPU <= 64
+    error_message = "OCPUs must be between 1 and 64"
+  }
+}
+
+variable "TALOS_LB_ORAM" {
+  description = "Total number of RAM Memory in GB"
+  type        = number
+
+  validation {
+    condition = var.TALOS_LB_ORAM >= 1 && var.TALOS_LB_ORAM <= 1024
+    error_message = "RAM Memory must be between 1 and 1024"
+  }
+}
+
 variable "BASE_VOLUME_50" {
   description = "Base Volume Size 50GB"
   type        = string
@@ -93,6 +113,26 @@ variable "TALOS_CTRL_BASE_VOLUME_TYPE" {
   type        = string
 }
 
+variable "TALOS_CTRL_OCPU" {
+  description = "Total number of CPU cores"
+  type        = number
+
+  validation {
+    condition = var.TALOS_CTRL_OCPU >= 1 && var.TALOS_CTRL_OCPU <= 64
+    error_message = "OCPUs must be between 1 and 64"
+  }
+}
+
+variable "TALOS_CTRL_ORAM" {
+  description = "Total number of RAM Memory in GB"
+  type        = number
+
+  validation {
+    condition = var.TALOS_CTRL_ORAM >= 1 && var.TALOS_CTRL_ORAM <= 1024
+    error_message = "RAM Memory must be between 1 and 1024"
+  }
+}
+
 variable "TALOS_WKLD_NODES" {
   description = "Talos Worker Nodes"
   type = map(object({
@@ -109,6 +149,26 @@ variable "BASE_VOLUME_200" {
 variable "TALOS_WKLD_BASE_VOLUME_TYPE" {
   description = "Talos Workload Base Volume Type"
   type        = string
+}
+
+variable "TALOS_WKLD_OCPU" {
+  description = "Total number of CPU cores"
+  type        = number
+
+  validation {
+    condition = var.TALOS_WKLD_OCPU >= 1 && var.TALOS_WKLD_OCPU <= 64
+    error_message = "OCPUs must be between 1 and 64"
+  }
+}
+
+variable "TALOS_WKLD_ORAM" {
+  description = "Total number of RAM Memory in GB"
+  type        = number
+
+  validation {
+    condition = var.TALOS_WKLD_ORAM >= 1 && var.TALOS_WKLD_ORAM <= 1024
+    error_message = "RAM Memory must be between 1 and 1024"
+  }
 }
 
 variable "TALOS_EXTRA_MANIFESTS" {
