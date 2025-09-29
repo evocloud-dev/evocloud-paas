@@ -28,9 +28,10 @@ resource "oci_core_instance" "talos_ctrlplane" {
   display_name                            = format("%s", each.value)
   availability_domain                     = data.oci_identity_availability_domains.az_domains.availability_domains[0].name
   shape                                   = var.BASE_SHAPE_E4_FLEX
+
   shape_config {
-    ocpus         = "8"
-    memory_in_gbs = "16"
+    ocpus         = var.TALOS_CTRL_STANDALONE_OCPU
+    memory_in_gbs = var.TALOS_CTRL_STANDALONE_ORAM
   }
 
   create_vnic_details {

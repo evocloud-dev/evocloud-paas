@@ -29,6 +29,26 @@ variable "TALOS_STANDALONE_VOLUME_TYPE" {
   default     = "pd-balanced"
 }
 
+variable "TALOS_CTRL_STANDALONE_OCPU" {
+  description = "Total number of CPU cores"
+  type        = number
+
+  validation {
+    condition = var.TALOS_CTRL_STANDALONE_OCPU >= 1 && var.TALOS_CTRL_STANDALONE_OCPU <= 64
+    error_message = "OCPUs must be between 1 and 64"
+  }
+}
+
+variable "TALOS_CTRL_STANDALONE_ORAM" {
+  description = "Total number of RAM Memory in GB"
+  type        = number
+
+  validation {
+    condition = var.TALOS_CTRL_STANDALONE_ORAM >= 1 && var.TALOS_CTRL_STANDALONE_ORAM <= 1024
+    error_message = "RAM Memory must be between 1 and 1024"
+  }
+}
+
 variable "BASE_VOLUME_50" {
   description = "Base Volume Size 50GB"
   type        = string

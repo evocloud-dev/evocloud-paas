@@ -61,9 +61,10 @@ resource "oci_core_instance" "talos_loadbalancer" {
   display_name                            = format("%s", each.value)
   availability_domain                     = data.oci_identity_availability_domains.az_domains.availability_domains[0].name
   shape                                   = var.BASE_SHAPE_E4_FLEX
+
   shape_config {
-    ocpus         = "2"
-    memory_in_gbs = "4"
+    ocpus         = var.TALOS_LB_OCPU
+    memory_in_gbs = var.TALOS_LB_ORAM
   }
 
   metadata = {
@@ -128,9 +129,10 @@ resource "oci_core_instance" "talos_ctrlplane" {
   display_name                            = format("%s", each.value)
   availability_domain                     = data.oci_identity_availability_domains.az_domains.availability_domains[0].name
   shape                                   = var.BASE_SHAPE_E4_FLEX
+
   shape_config {
-    ocpus         = "4"
-    memory_in_gbs = "8"
+    ocpus         = var.TALOS_CTRL_OCPU
+    memory_in_gbs = var.TALOS_CTRL_ORAM
   }
 
   create_vnic_details {
@@ -180,9 +182,10 @@ resource "oci_core_instance" "talos_workload" {
   display_name                            = format("%s", each.value.short_name)
   availability_domain                     = data.oci_identity_availability_domains.az_domains.availability_domains[0].name
   shape                                   = var.BASE_SHAPE_E4_FLEX
+
   shape_config {
-    ocpus         = "4"
-    memory_in_gbs = "8"
+    ocpus         = var.TALOS_WKLD_OCPU
+    memory_in_gbs = var.TALOS_WKLD_ORAM
   }
 
   create_vnic_details {
