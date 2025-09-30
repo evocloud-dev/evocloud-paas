@@ -3,6 +3,7 @@
 # Input Variables
 #--------------------------------------------------
 inputs = {
+  deployer_server_eip     = dependency.server-dmz-deployer.outputs.public_ip
   backend_subnet_id       = dependency.network-subnet.outputs.backend_subnet_id
   private_nsg             = dependency.network-security.outputs.private_nsg
   idam_server_ip          = dependency.server-admin-idam.outputs.private_ip
@@ -30,6 +31,13 @@ dependency "network-security" {
 #--------------------------------------------------
 dependency "network-subnet" {
   config_path   = "${get_terragrunt_dir()}/../network-04-subnet"
+}
+
+#--------------------------------------------------
+# Set server-dmz-deployer module dependency
+#--------------------------------------------------
+dependency "server-dmz-deployer" {
+  config_path   = "${get_terragrunt_dir()}/../server-01-dmz-deployer"
 }
 
 #--------------------------------------------------
