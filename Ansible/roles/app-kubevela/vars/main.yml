@@ -1,6 +1,6 @@
 ---
 # renovate: datasource=github-releases depName=kubevela/kubevela versioning=semver
-kubevela_ver: 'v1.10.3'
+kubevela_ver: 'v1.10.4'
 
 kubevela_install_dir: /usr/local/bin
 
