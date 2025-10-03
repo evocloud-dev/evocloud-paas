@@ -4,7 +4,7 @@
 #--------------------------------------------------------------
 # Cosign Version
 # renovate: datasource=github-releases depName=sigstore/cosign versioning=semver
-cosign_version: "v2.6.0"
+cosign_version: "v2.6.1"
 
 # Directory
 cosign_dir: "/opt/cosign"
