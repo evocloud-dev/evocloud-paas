@@ -4,8 +4,8 @@
 
 #Uncomment the code snippet below if you uncomment enable-oslogin
 #
-#data "google_client_openid_userinfo" "me" {
-#}
+data "google_client_openid_userinfo" "current" {
+}
 
 #resource "google_os_login_ssh_public_key" "cache" {
 #  user =  data.google_client_openid_userinfo.me.email
