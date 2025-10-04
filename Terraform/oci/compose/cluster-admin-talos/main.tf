@@ -640,7 +640,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install kubevela kubevela/vela-core \
                             --namespace vela-system \
                             --create-namespace \
-                            --version 1.10.3 \
+                            --version 1.10.4 \
                             --wait
                     restartPolicy: OnFailure
                     serviceAccount: vela-install
@@ -675,6 +675,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                 annotations:
                   ttl.after.delete: "86400s" #Automatically deletes SA after 24 hours (86400 seconds)
               ---
+              #https://operatorhub.io/operator/flux-operator
               apiVersion: batch/v1
               kind: Job
               metadata:
@@ -698,7 +699,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install flux-operator oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator \
                             --namespace flux-system \
                             --create-namespace \
-                            --version 0.28.0 \
+                            --version 0.30.0 \
                             --wait
                     restartPolicy: OnFailure
                     serviceAccount: flux-install
@@ -713,10 +714,10 @@ data "talos_machine_configuration" "talos_controlplane" {
                 annotations:
                   fluxcd.controlplane.io/reconcileEvery: "1h"
                   fluxcd.controlplane.io/reconcileArtifactEvery: "15m"
-                  fluxcd.controlplane.io/reconcileTimeout: "15m"
+                  fluxcd.controlplane.io/reconcileTimeout: "20m"
               spec:
                 distribution:
-                  version: "2.x"
+                  version: "2.7.x"
                   registry: "ghcr.io/fluxcd"
                   artifact: "oci://ghcr.io/controlplaneio-fluxcd/flux-operator-manifests"
                 components:
@@ -726,6 +727,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                   - notification-controller
                   - image-reflector-controller
                   - image-automation-controller
+                  - source-watcher
                 cluster:
                   type: kubernetes
                   multitenant: false
@@ -898,7 +900,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: headlamp-release
-                    version: "0.34.*"
+                    version: "0.36.*"
                 serviceAccountName: flux-headlamp-sa
                 interval: 30m0s
                 timeout: 25m0s
@@ -1021,6 +1023,7 @@ data "talos_machine_configuration" "talos_controlplane" {
               ###################################################
               #OpenCost Billing
               ###################################################
+              # #https://opencost.io/docs/configuration/gcp
               apiVersion: v1
               kind: Namespace
               metadata:
@@ -1055,7 +1058,6 @@ data "talos_machine_configuration" "talos_controlplane" {
                 interval: 24h
                 url: https://opencost.github.io/opencost-helm-chart
               ---
-              #https://opencost.io/docs/configuration/gcp
               apiVersion: helm.toolkit.fluxcd.io/v2
               kind: HelmRelease
               metadata:
@@ -1068,7 +1070,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: kube-opencost-release
-                    version: "2.2.*"
+                    version: "2.3.*"
                 interval: 30m0s
                 timeout: 25m0s
                 serviceAccountName: flux-opencost-sa
@@ -1285,7 +1287,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: dapr-release
-                    version: "1.15.*"
+                    version: "1.16.*"
                 interval: 30m0s
                 timeout: 25m0s
                 serviceAccountName: flux-dapr-sa
@@ -1456,7 +1458,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install kyverno kyverno/kyverno \
                             --namespace kyverno \
                             --create-namespace \
-                            --version 3.4.3 \
+                            --version 3.5.2 \
                             --set admissionController.replicas=3 \
                             --set backgroundController.replicas=2 \
                             --set cleanupController.replicas=2 \
