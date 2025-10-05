@@ -922,6 +922,9 @@ data "talos_machine_configuration" "talos_controlplane" {
                 name: headlamp
                 namespace: headlamp
               spec:
+                dependsOn:
+                  - name: rook-ceph-cluster
+                    namespace: rook-ceph
                 chart:
                   spec:
                     chart: headlamp
@@ -1170,6 +1173,9 @@ data "talos_machine_configuration" "talos_controlplane" {
                 name: kubescape-stack
                 namespace: kubescape
               spec:
+                dependsOn:
+                  - name: rook-ceph-cluster
+                    namespace: rook-ceph
                 chart:
                   spec:
                     chart: kubescape-operator
@@ -1189,6 +1195,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                 driftDetection:
                   mode: enabled
                 values:
+                  clusterName: evo-cluster-mgr
                   capabilities:
                     continuousScan: enable
 
@@ -1309,6 +1316,9 @@ data "talos_machine_configuration" "talos_controlplane" {
                 name: dapr-stack
                 namespace: dapr-system
               spec:
+                dependsOn:
+                  - name: rook-ceph-cluster
+                    namespace: rook-ceph
                 chart:
                   spec:
                     chart: dapr
