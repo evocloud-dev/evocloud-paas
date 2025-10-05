@@ -13,11 +13,6 @@ variable "GCP_VPC" {
   type        = string
 }
 
-variable "USE_SPOT" {
-  description = "Use Ephemeral VM Instances that can be Terminated"
-  type        = bool
-}
-
 variable "CLOUD_USER" {
   description = "Server Default Login User"
   type        = string
