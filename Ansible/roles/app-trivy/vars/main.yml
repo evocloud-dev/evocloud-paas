@@ -1,6 +1,6 @@
 ---
 # renovate: datasource=github-releases depName=aquasecurity/trivy versioning=semver
-trivy_version: '0.67.0'
+trivy_version: '0.67.2'
 
 # https://github.com/aquasecurity/trivy/releases/tag/v0.67.0
 trivy_download_url: 'https://github.com/aquasecurity/trivy/releases/download/v{{ trivy_version }}/trivy_{{ trivy_version }}_Linux-64bit.rpm'
