@@ -5,7 +5,7 @@ workflow:
   #  - if: $CI_
 
 image:
-  name:  alpine/terragrunt:1.13.3 #1.4.7 is the Terraform version
+  name:  alpine/terragrunt:1.13.4 #1.4.7 is the Terraform version
   entrypoint:
     - '/usr/bin/env'
     - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
