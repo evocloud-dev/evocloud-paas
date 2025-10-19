@@ -3,7 +3,7 @@ kubelogin_force_update: false
 
 #https://kubernetes.io/releases/
 # renovate: datasource=github-releases depName=int128/kubelogin versioning=semver
-kubelogin_ver: 'v1.34.1' #in lock steps with the Kubernetes version
+kubelogin_ver: 'v1.34.2' #in lock steps with the Kubernetes version
 
 #https://github.com/int128/kubelogin/releases/download/v1.34.1/kubelogin_linux_amd64.zip
 kubelogin_download_url: 'https://github.com/int128/kubelogin/releases/download/{{ kubelogin_ver }}/kubelogin_linux_amd64.zip'
