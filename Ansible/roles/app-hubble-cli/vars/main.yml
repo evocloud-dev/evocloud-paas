@@ -1,6 +1,6 @@
 ---
 # renovate: datasource=github-releases depName=cilium/hubble versioning=semver
-hubble_cli_ver: 'v1.18.0'
+hubble_cli_ver: 'v1.18.3'
 
 hubble_cli_install_dir: /usr/local/bin
 
