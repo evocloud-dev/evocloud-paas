@@ -2,7 +2,7 @@
 cloud_user: ''
 
 # renovate: datasource=github-releases depName=fluxcd/flux2 versioning=semver
-flux_cli_ver: "2.7.1"
+flux_cli_ver: "2.7.3"
 
 flux_cli_install_dir: /usr/local/bin
 
