@@ -1,6 +1,6 @@
 ---
 # renovate: datasource=github-releases depName=gruntwork-io/terragrunt versioning=semver
-terragrunt_version: 'v0.89.0'
+terragrunt_version: 'v0.92.1'
 
 os_arch: 'linux_amd64'
 
