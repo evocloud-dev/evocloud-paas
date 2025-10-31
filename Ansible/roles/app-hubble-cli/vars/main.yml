@@ -6,10 +6,10 @@ hubble_cli_install_dir: /usr/local/bin
 
 hubble_cli_force_update: false
 
-#https://github.com/cilium/hubble/releases/tag/v1.18.0
+#https://github.com/cilium/hubble/releases/tag/v1.18.3
 #https://github.com/cilium/cilium-cli/releases/download/v0.18.7/cilium-linux-amd64.tar.gz
 hubble_cli_download_url: 'https://github.com/cilium/hubble/releases/download/{{ hubble_cli_ver }}/hubble-linux-amd64.tar.gz'
 
-#https://github.com/cilium/hubble/releases/download/v1.18.0/hubble-linux-amd64.tar.gz.sha256sum
+#https://github.com/cilium/hubble/releases/download/v1.18.3/hubble-linux-amd64.tar.gz.sha256sum
 # renovate: datasource=github-releases depName=cilium/hubble packageName=hubble-linux-amd64.tar.gz
-hubble_cli_checksum: sha256:9f1b8167f1beef3656b96def19a75478582579e8d7702307cc0c0c5330eef969
+hubble_cli_checksum: sha256:17d893e708ad1a7dddfb787988924661e1ef26f421a06d7cfcb9410091f9ea9b
