@@ -8,9 +8,9 @@ talosctl_install_dir: /usr/local/bin
 
 talosctl_force_update: false
 
-#https://github.com/siderolabs/talos/releases/download/v1.11.2/talosctl-linux-amd64
+#https://github.com/siderolabs/talos/releases/download/v1.11.3/talosctl-linux-amd64
 talosctl_download_url: 'https://github.com/siderolabs/talos/releases/download/{{ talosctl_version }}/talosctl-{{ os_arch }}'
 
-# https://github.com/siderolabs/talos/releases/download/v1.11.2/sha256sum.txt
+# https://github.com/siderolabs/talos/releases/download/v1.11.3/sha256sum.txt
 # renovate: datasource=github-releases depName=siderolabs/talos packageName=talosctl-linux-amd64
-talosctl_checksum: sha256:d858ae283f2b6e1530b5270d860a80694c4ec0f6299b83a2aaf7795e5a1c8b49
+talosctl_checksum: sha256:7cd3a0d25a8f2dea343c2815431cc07d3e80bab124e7c3e22738819dc09c1b3f
