@@ -3,15 +3,15 @@ kubelogin_force_update: false
 
 #https://kubernetes.io/releases/
 # renovate: datasource=github-releases depName=int128/kubelogin versioning=semver
-kubelogin_ver: 'v1.34.1' #in lock steps with the Kubernetes version
+kubelogin_ver: 'v1.34.2' #in lock steps with the Kubernetes version
 
-#https://github.com/int128/kubelogin/releases/download/v1.34.1/kubelogin_linux_amd64.zip
+#https://github.com/int128/kubelogin/releases/download/v1.34.2/kubelogin_linux_amd64.zip
 kubelogin_download_url: 'https://github.com/int128/kubelogin/releases/download/{{ kubelogin_ver }}/kubelogin_linux_amd64.zip'
 
 kubectl_install_dir: '/usr/local/bin'
 
 kubelogin_install_dir: '/usr/local/bin'
 
-#https://github.com/int128/kubelogin/releases/download/v1.34.1/kubelogin_linux_amd64.zip.sha256
+#https://github.com/int128/kubelogin/releases/download/v1.34.2/kubelogin_linux_amd64.zip.sha256
 # renovate: datasource=github-releases depName=int128/kubelogin packageName=kubelogin_linux_amd64.zip
-kubelogin_checksum: sha256:018226f75b7f5f3223e5d46df3af746a778315fa2ea10c422cd4ead086173c96
+kubelogin_checksum: sha256:5745dafe9f8dea3541c75b4a3da5e2d4778befa4c19f7c7b266e29d59b3deeb0
