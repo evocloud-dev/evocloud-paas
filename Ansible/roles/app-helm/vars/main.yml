@@ -7,9 +7,9 @@ helm_install_dir: /usr/local/bin
 helm_force_update: false
 
 #https://github.com/helm/helm/tags
-# https://get.helm.sh/helm-v3.19.0-linux-amd64.tar.gz
+# https://get.helm.sh/helm-v3.19.2-linux-amd64.tar.gz
 helm_download_url: 'https://get.helm.sh/helm-{{ helm_ver }}-linux-amd64.tar.gz'
 
-# https://get.helm.sh/helm-v3.19.0-linux-amd64.tar.gz.sha256sum
+# https://get.helm.sh/helm-v3.19.2-linux-amd64.tar.gz.sha256sum
 # renovate: datasource=github-releases depName=helm/helm packageName=helm-v<semver>-linux-amd64.tar.gz
-helm_checksum: sha256:a7f81ce08007091b86d8bd696eb4d86b8d0f2e1b9f6c714be62f82f96a594496
+helm_checksum: sha256:2114c9dea2844dce6d0ee2d792a9aae846be8cf53d5b19dc2988b5a0e8fec26e
