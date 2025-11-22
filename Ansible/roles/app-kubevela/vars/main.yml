@@ -15,9 +15,9 @@ vela_download_url: 'https://github.com/kubevela/kubevela/releases/download/{{ ku
 
 #https://github.com/kubevela/kubevela/releases/download/v1.10.5/sha256sums.txt
 # renovate: datasource=github-releases depName=kubevela/kubevela packageName=kubectl-vela-v<semver>-linux-amd64.tar.gz
-kubevela_checksum: sha256:48d57dd962bbd3382205e0cb05d7573192072ebee8e8e59956e228796afa09e0
+kubevela_checksum: sha256:ac14d46aa50e088afbc7c6970f75c6632c7f0c83e4478b7d2a0fcd2824fe98fe
 
 # renovate: datasource=github-releases depName=kubevela/kubevela packageName=vela-v<semver>-linux-amd64.tar.gz
-vela_checksum: sha256:880e6cae08b1f90159dd46fde04385241804a5d361d1dfb59b902bb77571bbef
+vela_checksum: sha256:7e23ef66963fa1a4897152801b20b7ca024ac06b89f4962fd9e679b5f3da6da3
 
 
