@@ -1,15 +1,15 @@
 ---
 # renovate: datasource=github-releases depName=kubescape/kubescape versioning=semver
-kubescape_ver: '3.0.42'
+kubescape_ver: '3.0.45'
 
 kubescape_install_dir: /usr/local/bin
 
 kubescape_force_update: false
 
-#https://github.com/kubescape/kubescape/releases/tag/v3.0.42
-#https://github.com/kubescape/kubescape/releases/download/v3.0.42/kubescape-ubuntu-latest.tar.gz
+#https://github.com/kubescape/kubescape/releases/tag/v3.0.45
+#https://github.com/kubescape/kubescape/releases/download/v3.0.45/kubescape-ubuntu-latest.tar.gz
 kubescape_download_url: 'https://github.com/kubescape/kubescape/releases/download/v{{ kubescape_ver }}/kubescape-ubuntu-latest.tar.gz'
 
-#https://github.com/kubescape/kubescape/releases/download/v3.0.42/kubescape-ubuntu-latest.sha256
+#https://github.com/kubescape/kubescape/releases/download/v3.0.45/kubescape-ubuntu-latest.sha256
 # renovate: datasource=github-releases depName=kubescape/kubescape packageName=kubescape-ubuntu-latest.tar.gz
-kubescape_checksum: sha256:f141f7bb9aec16c8f0af71544c8373af845e5c5f24a4b3ad5b7dc0f6256bc3d7
+kubescape_checksum: sha256:4c37ef23643fedf55702969ddd7b61c49516b9a0ee7eb79e77243aa80bc208be
