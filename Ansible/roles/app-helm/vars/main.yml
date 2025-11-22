@@ -1,6 +1,6 @@
 ---
 # renovate: datasource=github-releases depName=helm/helm versioning=semver
-helm_ver: 'v3.19.0'
+helm_ver: 'v3.19.2'
 
 helm_install_dir: /usr/local/bin
 
