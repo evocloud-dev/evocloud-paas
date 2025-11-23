@@ -14,8 +14,8 @@ inputs = {
   ###########################################################################
   DEFAULT_TIMEZONE  = "America/Detroit"
   HCLOUD_PROJECT_ID    = "evocloud-dev"
-  HCLOUD_REGION        = "us-east5"
-  HCLOUD_REGIONS       = ["us-east5-a", "us-east5-b", "us-east5-c"]
+  HCLOUD_REGION        = "nbg1"
+  HCLOUD_REGIONS       = ["nbg1", "fsn1", "hel1"]
   BASE_AMI_NAME     = "evocloud-rocky8-b0-1-0"
   BASE_VOLUME_SIZE  = "100"
   BASE_VOLUME_10    = "10"
@@ -41,9 +41,9 @@ inputs = {
   HCLOUD_VPC                = "evocloud-vpc"
   HCLOUD_VPC_CIDR           = ["10.10.0.0/16"]
 
-  DMZ_SUBNET_CIDR           = "10.10.0.0/16"
-  ADMIN_SUBNET_CIDR         = "10.100.0.0/16"
-  BACKEND_SUBNET_CIDR       = "10.200.0.0/16"
+  DMZ_SUBNET_CIDR           = "10.10.10.0/24"
+  ADMIN_SUBNET_CIDR         = "10.10.20.0/24"
+  BACKEND_SUBNET_CIDR       = "10.10.30.0/24"
   #Cilium Loadbalancer LB-IPAM
   ADMIN_SUBNET_CIDR_LBIPAM  = "10.100.250.0/24"
 
