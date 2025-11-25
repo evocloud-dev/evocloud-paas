@@ -38,6 +38,7 @@ inputs = {
   ###########################################################################
   # Network Configurations
   ###########################################################################
+  HCLOUD_NETWORK_ZONE       = "eu-central"
   HCLOUD_VPC                = "evocloud-vpc"
   HCLOUD_VPC_CIDR           = ["10.10.0.0/16"]
 

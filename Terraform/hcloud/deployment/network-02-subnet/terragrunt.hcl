@@ -1,4 +1,11 @@
 #--------------------------------------------------
+# Include inputs
+#--------------------------------------------------
+inputs = {
+  vpc_id = dependency.network-vpc.outputs.vpc_id
+}
+
+#--------------------------------------------------
 # Include root terragrunt.hcl file
 #--------------------------------------------------
 include "root" {
@@ -10,7 +17,6 @@ include "root" {
 #--------------------------------------------------
 dependency "network-vpc" {
   config_path   = "${get_terragrunt_dir()}/../network-01-vpc"
-  skip_outputs  = true
 }
 
 #--------------------------------------------------

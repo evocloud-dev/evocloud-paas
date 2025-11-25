@@ -17,3 +17,4 @@ dependency "network-subnet" {
 #--------------------------------------------------
 terraform {
   source = "${get_terragrunt_dir()}/../../compose//network-gateway"
+}
