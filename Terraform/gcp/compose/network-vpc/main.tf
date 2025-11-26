@@ -26,6 +26,28 @@ resource "google_compute_firewall" "firewall_rules_ingress_ssh" {
   }
 }
 
+# Allow Ingress Common Core Rules
+resource "google_compute_firewall" "firewall_rules_ingress_common" {
+  name        = "vpc-main-firewall-common-allow"
+  description = "Allow common core traffic on Main VPC"
+  network     = google_compute_network.main.name
+  direction   = "INGRESS"
+  source_ranges = ["0.0.0.0/0"]
+
+  allow {
+    protocol = "tcp"
+    ports = ["6443"]
+  }
+  allow {
+    protocol = "tcp"
+    ports = ["50000"]
+  }
+  allow {
+    protocol = "tcp"
+    ports = ["50001"]
+  }
+}
+
 # Allow Ingress traffic on all internal IPs
 resource "google_compute_firewall" "firewall_rules_ingress_internal" {
   name        = "vpc-main-firewall-internal-allow"
