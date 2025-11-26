@@ -281,7 +281,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm repo add cilium https://helm.cilium.io/
                           helm repo update
                           helm upgrade --install cilium cilium/cilium \
-                          --version 1.18.2 \
+                          --version 1.18.4 \
                           --namespace kube-system \
                           --set k8sServiceHost=localhost \
                           --set k8sServicePort=7445 \

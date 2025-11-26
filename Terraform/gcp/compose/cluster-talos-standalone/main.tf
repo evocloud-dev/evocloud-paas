@@ -13,11 +13,11 @@
 resource "google_compute_image" "talos_img" {
   count       = var.create_talos_img ? 1 : 0
 
-  name        = "evocloud-talos19-b010"
+  name        = var.TALOS_AMI_NAME
   description = "Talos Base AMI Image"
-  family      = "evocloud-talos19"
+  family      = var.TALOS_AMI_NAME
   labels = {
-    base-image-name = "evocloud-talos19-b010"
+    base-image-name = var.TALOS_AMI_NAME
     os-distro       = "gttech-talos-distro"
     owner           = "geanttech"
   }
@@ -29,15 +29,6 @@ resource "google_compute_image" "talos_img" {
   guest_os_features {
     type = "VIRTIO_SCSI_MULTIQUEUE"
   }
-}
-
-#--------------------------------------------------
-# Gateway LoadBalancer IP
-#--------------------------------------------------
-resource "google_compute_address" "gateway_vip" {
-  name         = "${var.cluster_name}-gateway-vip"
-  subnetwork   = var.dmz_subnet_name
-  address_type = "INTERNAL"
 }
 
 #--------------------------------------------------
@@ -64,7 +55,7 @@ resource "google_compute_instance" "talos_ctrlplane" {
   boot_disk {
     initialize_params {
       image = var.TALOS_AMI_NAME
-      size  = var.BASE_VOLUME_10
+      size  = var.BASE_VOLUME_50
       type  = var.TALOS_STANDALONE_VOLUME_TYPE
       labels = {
         name = format("%s-%s", "base-volume", each.value)
@@ -74,6 +65,9 @@ resource "google_compute_instance" "talos_ctrlplane" {
 
   network_interface {
     subnetwork  = var.dmz_subnet_name
+
+    #Assigning static public ip
+    access_config {}
   }
 
   allow_stopping_for_update = true
@@ -84,10 +78,10 @@ resource "google_compute_instance" "talos_ctrlplane" {
 
   #For selecting Spot Instances - Remove this snippet in production
   scheduling {
-    preemptible = true
+    preemptible = var.use_spot ? true : false
     automatic_restart = false
     provisioning_model = var.use_spot ? "SPOT" : "STANDARD"
-    instance_termination_action = "STOP" #DELETE | STOP
+    instance_termination_action = var.use_spot ? "STOP" : "" #DELETE | STOP
   }
 }
 
@@ -101,17 +95,10 @@ resource "talos_machine_secrets" "talos_vm" {}
 data "talos_client_configuration" "talosconfig" {
   cluster_name         = var.cluster_name
   client_configuration = talos_machine_secrets.talos_vm.client_configuration
-  endpoints = [for xvalue in google_compute_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip]
+  endpoints = [for xvalue in google_compute_instance.talos_ctrlplane : xvalue.network_interface[0].access_config[0].nat_ip]
   nodes = concat(
-    [for xvalue in google_compute_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip],
+    [for xvalue in google_compute_instance.talos_ctrlplane : xvalue.network_interface[0].access_config[0].nat_ip],
   )
-}
-
-#Wait for 45 secondes for VM Instance to be fully available
-resource "time_sleep" "wait_45_seconds" {
-  depends_on = [data.talos_machine_configuration.talos_controlplane]
-
-  create_duration = "45s"
 }
 
 ## Generate the Controlplane configuration and instantiate the Talos Controlplane VMs
@@ -119,7 +106,7 @@ data "talos_machine_configuration" "talos_controlplane" {
   depends_on = [google_compute_instance.talos_ctrlplane]
 
   cluster_name       = var.cluster_name
-  cluster_endpoint   = "https://${google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip}:6443"
+  cluster_endpoint   = "https://${google_compute_instance.talos_ctrlplane["node01"].network_interface[0].access_config[0].nat_ip}:6443"
   machine_type       = "controlplane"
   machine_secrets    = talos_machine_secrets.talos_vm.machine_secrets
   talos_version      = var.talos_version
@@ -145,6 +132,12 @@ data "talos_machine_configuration" "talos_controlplane" {
             }
           ]
         }
+
+        certSANs = [
+          google_compute_instance.talos_ctrlplane["node01"].network_interface[0].access_config[0].nat_ip,
+          google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip,
+        ]
+
         kubelet = {
           extraArgs = {
             rotate-server-certificates = true
@@ -189,6 +182,10 @@ data "talos_machine_configuration" "talos_controlplane" {
           extraArgs = {
             feature-gates = "UserNamespacesSupport=true,UserNamespacesPodSecurityStandards=true"
           }
+          certSANs = [
+            google_compute_instance.talos_ctrlplane["node01"].network_interface[0].access_config[0].nat_ip,
+            google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip,
+          ]
         }
         network = {
           cni = {
@@ -221,8 +218,7 @@ data "talos_machine_configuration" "talos_controlplane" {
           var.TALOS_EXTRA_MANIFESTS["gateway_api_exp"],
           var.TALOS_EXTRA_MANIFESTS["kubelet_serving_cert"],
           var.TALOS_EXTRA_MANIFESTS["kube-metric_server"],
-          var.TALOS_EXTRA_MANIFESTS["local-storage_class"],
-          var.TALOS_EXTRA_MANIFESTS["kube-buildpack"]
+          var.TALOS_EXTRA_MANIFESTS["local-storage_class"]
         ]
         //Inline Manifests
         inlineManifests = [
@@ -309,14 +305,14 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm repo add cilium https://helm.cilium.io/
                           helm repo update
                           helm upgrade --install cilium cilium/cilium \
-                          --version 1.17.5 \
+                          --version 1.18.4 \
                           --namespace kube-system \
                           --set k8sServiceHost=localhost \
                           --set k8sServicePort=7445 \
                           --set k8sClientRateLimit.qps=50 \
                           --set k8sClientRateLimit.burst=200 \
                           --set cluster.name=evo-cluster-std \
-                          --set cluster.id=99 \
+                          --set cluster.id=0 \
                           --set rollOutCiliumPods=true \
                           --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
                           --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
@@ -352,122 +348,6 @@ data "talos_machine_configuration" "talos_controlplane" {
                 name: evocloud-ns
             EOT
           },
-          {
-            name     = "kro-helm-deploy"
-            contents = <<-EOT
-              ---
-              apiVersion: rbac.authorization.k8s.io/v1
-              kind: ClusterRoleBinding
-              metadata:
-                name: kro-install
-                annotations:
-                  ttl.after.delete: "86400s" #Automatically deletes CRB after 24 hours (86400 seconds)
-              roleRef:
-                apiGroup: rbac.authorization.k8s.io
-                kind: ClusterRole
-                name: cluster-admin
-              subjects:
-              - kind: ServiceAccount
-                name: kro-install
-                namespace: kube-system
-              ---
-              apiVersion: v1
-              kind: ServiceAccount
-              metadata:
-                name: kro-install
-                namespace: kube-system
-                annotations:
-                  ttl.after.delete: "86400s" #Automatically deletes SA after 24 hours (86400 seconds)
-              ---
-              apiVersion: batch/v1
-              kind: Job
-              metadata:
-                name: kro-app-deployer
-                namespace: kube-system
-              spec:
-                backoffLimit: 10
-                template:
-                  metadata:
-                    labels:
-                      job: kro-deployment
-                  spec:
-                    containers:
-                    - name: helm
-                      image: alpine/helm:3
-                      command:
-                        - sh
-                        - -c
-                        - |
-                          kubectl create namespace kro || true
-                          helm upgrade --install kro-orchestrator oci://ghcr.io/kro-run/kro/kro \
-                            --namespace kro \
-                            --create-namespace \
-                            --version 0.3.0 \
-                            --wait
-                    restartPolicy: OnFailure
-                    serviceAccount: kro-install
-                    serviceAccountName: kro-install
-            EOT
-          },
-          {
-            name     = "kubevela-helm-deploy"
-            contents = <<-EOT
-              ---
-              apiVersion: rbac.authorization.k8s.io/v1
-              kind: ClusterRoleBinding
-              metadata:
-                name: kubevela-install
-                annotations:
-                  ttl.after.delete: "86400s" #Automatically deletes CRB after 24 hours (86400 seconds)
-              roleRef:
-                apiGroup: rbac.authorization.k8s.io
-                kind: ClusterRole
-                name: cluster-admin
-              subjects:
-              - kind: ServiceAccount
-                name: vela-install
-                namespace: kube-system
-              ---
-              apiVersion: v1
-              kind: ServiceAccount
-              metadata:
-                name: vela-install
-                namespace: kube-system
-                annotations:
-                  ttl.after.delete: "86400s" #Automatically deletes SA after 24 hours (86400 seconds)
-              ---
-              apiVersion: batch/v1
-              kind: Job
-              metadata:
-                name: vela-helm-app-deployer
-                namespace: kube-system
-              spec:
-                backoffLimit: 10
-                template:
-                  metadata:
-                    labels:
-                      job: vela-deployment
-                  spec:
-                    containers:
-                    - name: helm
-                      image: alpine/helm:3
-                      command:
-                        - sh
-                        - -c
-                        - |
-                          kubectl create namespace vela-system || true
-                          helm repo add kubevela https://kubevela.github.io/charts
-                          helm repo update
-                          helm upgrade --install kubevela kubevela/vela-core \
-                            --namespace vela-system \
-                            --create-namespace \
-                            --version 1.10.3 \
-                            --wait
-                    restartPolicy: OnFailure
-                    serviceAccount: vela-install
-                    serviceAccountName: vela-install
-            EOT
-          },
         ]
       }
     }),
@@ -480,8 +360,8 @@ resource "talos_machine_configuration_apply" "controlplane" {
   for_each                    = google_compute_instance.talos_ctrlplane
   client_configuration        = talos_machine_secrets.talos_vm.client_configuration
   machine_configuration_input = data.talos_machine_configuration.talos_controlplane.machine_configuration
-  endpoint                    = each.value.network_interface[0].network_ip
-  node                        = each.value.network_interface[0].network_ip
+  endpoint                    = each.value.network_interface[0].access_config[0].nat_ip
+  node                        = each.value.network_interface[0].access_config[0].nat_ip
 }
 
 ## Start the bootstraping of the Talos Kubernetes Cluster
@@ -489,8 +369,8 @@ resource "talos_machine_bootstrap" "bootstrap_cluster" {
   depends_on           = [talos_machine_configuration_apply.controlplane]
 
   client_configuration = talos_machine_secrets.talos_vm.client_configuration
-  endpoint             = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
-  node                 = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
+  endpoint             = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].access_config[0].nat_ip
+  node                 = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].access_config[0].nat_ip
 }
 
 ## Check whether the Talos Kubernetes Cluster is in a healthy state
@@ -511,8 +391,8 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
   ]
 
   client_configuration = talos_machine_secrets.talos_vm.client_configuration
-  endpoint             = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
-  node                 = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].network_ip
+  endpoint             = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].access_config[0].nat_ip
+  node                 = google_compute_instance.talos_ctrlplane["node01"].network_interface[0].access_config[0].nat_ip
 }
 
 #--------------------------------------------------

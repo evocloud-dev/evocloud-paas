@@ -1,20 +1,20 @@
 #!/bin/bash
 
-{% if lb_short_name == 'evotalos-lb01' %}
-#Unassign Alias IP from evotalos-lb02
-until /usr/bin/gcloud compute instances network-interfaces update evotalos-lb02 --zone {{ zone }} --aliases ""; do sleep 5
+{% if lb_short_name == 'evok8s-lb01' %}
+#Unassign Alias IP from evok8s-lb02
+until /usr/bin/gcloud compute instances network-interfaces update evok8s-lb02 --zone {{ zone }} --aliases ""; do sleep 5
 done
-#Assign LB Virtual IP on evotalos-lb01
-/usr/bin/gcloud compute instances network-interfaces update evotalos-lb01 --zone {{ zone }} --aliases "{{ gateway_vip_cidr }}"
+#Assign LB Virtual IP on evok8s-lb01
+/usr/bin/gcloud compute instances network-interfaces update evok8s-lb01 --zone {{ zone }} --aliases "{{ gateway_vip_cidr }}"
 #Restart Keepalived service
 /usr/bin/systemctl restart keepalived
 
 {% else %}
-#Unassign Alias IP from evotalos-lb01
-until /usr/bin/gcloud compute instances network-interfaces update evotalos-lb01 --zone {{ zone }} --aliases ""; do sleep 5
+#Unassign Alias IP from evok8s-lb01
+until /usr/bin/gcloud compute instances network-interfaces update evok8s-lb01 --zone {{ zone }} --aliases ""; do sleep 5
 done
-#Assign LB Virtual IP on evotalos-lb02
-/usr/bin/gcloud compute instances network-interfaces update evotalos-lb02 --zone {{ zone }} --aliases "{{ gateway_vip_cidr }}"
+#Assign LB Virtual IP on evok8s-lb02
+/usr/bin/gcloud compute instances network-interfaces update evok8s-lb02 --zone {{ zone }} --aliases "{{ gateway_vip_cidr }}"
 #Restart Keepalived service
 /usr/bin/systemctl restart keepalived
 {% endif %}

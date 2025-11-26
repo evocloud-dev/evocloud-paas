@@ -35,15 +35,15 @@ resource "google_compute_instance" "evoharbor_server" {
 
   metadata = {
     #enable-oslogin = "TRUE"
-    ssh-keys       = "${var.CLOUD_USER}:${file("/home/${var.CLOUD_USER}/gcp-evocloud.pub")}"
+    ssh-keys       = "${var.CLOUD_USER}:${file("${var.PUBLIC_KEY_PAIR}")}"
   }
 
   #For selecting Spot Instances - Remove this snippet in production
   scheduling {
-    preemptible = true
+    preemptible = var.use_spot ? true : false
     automatic_restart = false
     provisioning_model = var.use_spot ? "SPOT" : "STANDARD"
-    instance_termination_action = "STOP" #DELETE | STOP
+    instance_termination_action = var.use_spot ? "STOP" : "" #DELETE | STOP
   }
 
   # This ensures cloud-init completes before considering the resource created

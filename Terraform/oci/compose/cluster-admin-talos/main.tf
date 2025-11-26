@@ -488,7 +488,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm repo add cilium https://helm.cilium.io/
                           helm repo update
                           helm upgrade --install cilium cilium/cilium \
-                          --version 1.18.2 \
+                          --version 1.18.4 \
                           --namespace kube-system \
                           --set k8sServiceHost=localhost \
                           --set k8sServicePort=7445 \
@@ -529,63 +529,6 @@ data "talos_machine_configuration" "talos_controlplane" {
               kind: Namespace
               metadata:
                 name: evocloud-ns
-            EOT
-          },
-          {
-            name     = "kro-helm-deploy"
-            contents = <<-EOT
-              ---
-              apiVersion: rbac.authorization.k8s.io/v1
-              kind: ClusterRoleBinding
-              metadata:
-                name: kro-install
-                annotations:
-                  ttl.after.delete: "86400s" #Automatically deletes CRB after 24 hours (86400 seconds)
-              roleRef:
-                apiGroup: rbac.authorization.k8s.io
-                kind: ClusterRole
-                name: cluster-admin
-              subjects:
-              - kind: ServiceAccount
-                name: kro-install
-                namespace: kube-system
-              ---
-              apiVersion: v1
-              kind: ServiceAccount
-              metadata:
-                name: kro-install
-                namespace: kube-system
-                annotations:
-                  ttl.after.delete: "86400s" #Automatically deletes SA after 24 hours (86400 seconds)
-              ---
-              apiVersion: batch/v1
-              kind: Job
-              metadata:
-                name: kro-app-deployer
-                namespace: kube-system
-              spec:
-                backoffLimit: 10
-                template:
-                  metadata:
-                    labels:
-                      job: kro-deployment
-                  spec:
-                    containers:
-                    - name: helm
-                      image: alpine/helm:3
-                      command:
-                        - sh
-                        - -c
-                        - |
-                          kubectl create namespace kro || true
-                          helm upgrade --install kro-orchestrator oci://ghcr.io/kro-run/kro/kro \
-                            --namespace kro \
-                            --create-namespace \
-                            --version 0.4.1 \
-                            --wait
-                    restartPolicy: OnFailure
-                    serviceAccount: kro-install
-                    serviceAccountName: kro-install
             EOT
           },
           {
@@ -640,7 +583,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install kubevela kubevela/vela-core \
                             --namespace vela-system \
                             --create-namespace \
-                            --version 1.10.4 \
+                            --version 1.10.5 \
                             --wait
                     restartPolicy: OnFailure
                     serviceAccount: vela-install
@@ -699,7 +642,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install flux-operator oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator \
                             --namespace flux-system \
                             --create-namespace \
-                            --version 0.30.0 \
+                            --version 0.33.0 \
                             --wait
                     restartPolicy: OnFailure
                     serviceAccount: flux-install
@@ -797,7 +740,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: rook-release
-                    version: "v1.17.*"
+                    version: "v1.18.*"
                 serviceAccountName: flux-rook-ceph-sa
                 interval: 30m0s
                 install:
@@ -828,7 +771,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: rook-release
-                    version: "v1.17.*"
+                    version: "v1.18.*"
                 serviceAccountName: flux-rook-ceph-sa
                 interval: 35m0s
                 install:
@@ -903,7 +846,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: headlamp-release
-                    version: "0.36.*"
+                    version: "0.38.*"
                 serviceAccountName: flux-headlamp-sa
                 interval: 30m0s
                 timeout: 25m0s
@@ -1103,6 +1046,7 @@ data "talos_machine_configuration" "talos_controlplane" {
               #KubeScape Vulnerability Scanner
               ###################################################
               # https://github.com/kubescape/helm-charts
+              # https://github.com/kubescape/helm-charts/tree/main/charts/kubescape-operator
               apiVersion: v1
               kind: Namespace
               metadata:
@@ -1156,7 +1100,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                       name: kubescape-release
                     version: "1.29.*"
                 interval: 30m0s
-                timeout: 25m0s
+                timeout: 60m0s
                 serviceAccountName: flux-kubescape-sa
                 install:
                   remediation:
@@ -1468,7 +1412,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install kyverno kyverno/kyverno \
                             --namespace kyverno \
                             --create-namespace \
-                            --version 3.5.2 \
+                            --version 3.6.0 \
                             --set admissionController.replicas=3 \
                             --set backgroundController.replicas=2 \
                             --set cleanupController.replicas=2 \
