@@ -54,7 +54,7 @@ inputs = {
   DEPLOYER_SHORT_HOSTNAME   = "evo-master"
   BASE_INSTALLER_IMG        = "evocloud-rocky8-b0-1-0"
   DEPLOYER_PRIVATE_IP       = "10.10.10.5"
-  DEPLOYER_INSTANCE_SIZE    = "e2-medium"
+  DEPLOYER_INSTANCE_SIZE    = "cx42"
   DEPLOYER_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 }
 
