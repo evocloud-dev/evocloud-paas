@@ -1,3 +1,12 @@
+variable "AUTOMATION_FOLDER" {
+  description = "Automation Code Folder"
+  type        = string
+}
+
+variable "ANSIBLE_DEBUG_FLAG" {
+  description = "Ansible Debug Flag"
+  type        = string
+}
 
 variable "CLOUD_USER" {
   description = "CLOUD USER"
@@ -34,7 +43,17 @@ variable "PUBLIC_KEY_PAIR" {
   type        = string
 }
 
+variable "PRIVATE_KEY_PAIR" {
+  description = "Private SSH Key"
+  type        = string
+}
+
 variable "dmz_subnet_id" {
   description = "Subnet ID of DMZ Network"
+  type        = string
+}
+
+variable "deployer_revision" {
+  description = "Semantic Version"
   type        = string
 }
