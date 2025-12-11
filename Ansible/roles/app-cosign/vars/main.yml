@@ -17,4 +17,4 @@ cosign_github_url: "https://github.com/sigstore/cosign/releases/download/{{ cosi
 
 #https://github.com/sigstore/cosign/releases/
 # renovate: datasource=github-releases depName=sigstore/cosign packageName=cosign-linux-amd64
-cosign_checksum: sha256:46dbdcb5467a3dfec2526923d0b3365e40c8d9dc00ec23d5aca3437449e8cbfd
+cosign_checksum: sha256:052363a0e23e2e7ed53641351b8b420918e7e08f9c1d8a42a3dd3877a78a2e10
