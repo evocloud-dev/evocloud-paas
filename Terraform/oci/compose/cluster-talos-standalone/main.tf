@@ -324,6 +324,164 @@ data "talos_machine_configuration" "talos_controlplane" {
                 name: evocloud-ns
             EOT
           },
+          {
+            name     = "kubevela-helm-deploy"
+            contents = <<-EOT
+              ---
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRoleBinding
+              metadata:
+                name: kubevela-install
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes CRB after 24 hours (86400 seconds)
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: cluster-admin
+              subjects:
+              - kind: ServiceAccount
+                name: vela-install
+                namespace: kube-system
+              ---
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: vela-install
+                namespace: kube-system
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes SA after 24 hours (86400 seconds)
+              ---
+              apiVersion: batch/v1
+              kind: Job
+              metadata:
+                name: vela-helm-app-deployer
+                namespace: kube-system
+              spec:
+                backoffLimit: 10
+                template:
+                  metadata:
+                    labels:
+                      job: vela-deployment
+                  spec:
+                    containers:
+                    - name: helm
+                      image: alpine/helm:3
+                      command:
+                        - sh
+                        - -c
+                        - |
+                          helm repo add kubevela https://kubevela.github.io/charts
+                          helm repo update
+                          helm upgrade --install kubevela kubevela/vela-core \
+                            --namespace vela-system \
+                            --create-namespace \
+                            --version 1.10.5 \
+                            --wait
+                    restartPolicy: OnFailure
+                    serviceAccount: vela-install
+                    serviceAccountName: vela-install
+            EOT
+          },
+          {
+            name     = "flux-helm-deploy"
+            contents = <<-EOT
+                          ---
+              #Flux Operator Chart Repo: https://github.com/controlplaneio-fluxcd/charts/tree/main/charts/flux-operator
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRoleBinding
+              metadata:
+                name: flux-install
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes CRB after 24 hours (86400 seconds)
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: cluster-admin
+              subjects:
+              - kind: ServiceAccount
+                name: flux-install
+                namespace: kube-system
+              ---
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: flux-install
+                namespace: kube-system
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes SA after 24 hours (86400 seconds)
+              ---
+              #https://operatorhub.io/operator/flux-operator
+              apiVersion: batch/v1
+              kind: Job
+              metadata:
+                name: flux-operator-deploy
+                namespace: kube-system
+              spec:
+                backoffLimit: 10
+                template:
+                  metadata:
+                    labels:
+                      job: flux-operator-deployment
+                  spec:
+                    containers:
+                    - name: helm
+                      image: alpine/helm:3
+                      command:
+                        - sh
+                        - -c
+                        - |
+                          kubectl create namespace flux-system || true
+                          helm upgrade --install flux-operator oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator \
+                            --namespace flux-system \
+                            --create-namespace \
+                            --version 0.33.0 \
+                            --wait
+                    restartPolicy: OnFailure
+                    serviceAccount: flux-install
+                    serviceAccountName: flux-install
+              ---
+              #Deploying Flux Instance with Multi-tenancy Disabled
+              apiVersion: fluxcd.controlplane.io/v1
+              kind: FluxInstance
+              metadata:
+                name: flux
+                namespace: flux-system
+                annotations:
+                  fluxcd.controlplane.io/reconcileEvery: "1h"
+                  fluxcd.controlplane.io/reconcileArtifactEvery: "15m"
+                  fluxcd.controlplane.io/reconcileTimeout: "20m"
+              spec:
+                distribution:
+                  version: "2.7.x"
+                  registry: "ghcr.io/fluxcd"
+                  artifact: "oci://ghcr.io/controlplaneio-fluxcd/flux-operator-manifests"
+                components:
+                  - source-controller
+                  - kustomize-controller
+                  - helm-controller
+                  - notification-controller
+                  - image-reflector-controller
+                  - image-automation-controller
+                  - source-watcher
+                cluster:
+                  type: kubernetes
+                  multitenant: false
+                  networkPolicy: false
+                  domain: "cluster.local"
+                kustomize:
+                  patches:
+                    - target:
+                        kind: Deployment
+                        name: "(kustomize-controller|helm-controller)"
+                      patch: |
+                        - op: add
+                          path: /spec/template/spec/containers/0/args/-
+                          value: --concurrent=10
+                        - op: add
+                          path: /spec/template/spec/containers/0/args/-
+                          value: --requeue-dependency=15s
+            EOT
+          },
         ]
       }
     }),
