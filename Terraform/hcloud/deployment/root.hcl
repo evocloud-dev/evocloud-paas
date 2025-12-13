@@ -23,9 +23,9 @@ inputs = {
   BASE_VOLUME_50    = "50"
   BASE_VOLUME_200   = "200"
   BASE_VOLUME_250   = "250"
-  CLOUD_USER        = "mlkroot"
-  PUBLIC_KEY_PAIR   = "/etc/pki/tls/gcp-evocloud.pub"
-  PRIVATE_KEY_PAIR  = "/etc/pki/tls/gcp-evocloud.pem"
+  CLOUD_USER        = "root"
+  PUBLIC_KEY_PAIR   = "/etc/pki/tls/hcloud-evonode.pub"
+  PRIVATE_KEY_PAIR  = "/etc/pki/tls/hcloud-evonode.pem"
   HCLOUD_TOKEN      = "xxxxxxxx...."
 
   ###########################################################################
@@ -56,7 +56,28 @@ inputs = {
   DEPLOYER_PRIVATE_IP       = "10.10.10.5"
   DEPLOYER_INSTANCE_SIZE    = "cx42"
   DEPLOYER_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
-}
+
+  ###########################################################################
+  # STANDALONE Kubernetes Cluster (Kubernetes)
+  ###########################################################################
+  TALOS_AMI_NAME               = "evocluster-os-1-11-5"
+  TALOS_STANDALONE_VOLUME_TYPE = "pd-balanced" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High #+1
+  TALOS_CTRL_STANDALONE_SIZE   = "cx42"
+  TALOS_CTRL_STANDALONE        = {
+    node01 = "evotalos-workstation"
+  }
+
+  #INLINE KUBERNETES MANIFESTS
+  TALOS_EXTRA_MANIFESTS     = {
+    gateway_api_std       = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml"
+    gateway_api_exp       = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/experimental-install.yaml"
+    kubelet_serving_cert  = "https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml"
+    kube-metric_server    = "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml"
+    local-storage_class   = "https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/local-storageclass.yaml"
+    kube-buildpack        = "https://github.com/buildpacks-community/kpack/releases/download/v0.16.1/release-0.16.1.yaml"
+  }
+
+} #End Inputs
 
 #--------------------------------------------------
 # Tfstate Remote State Storage
@@ -64,14 +85,19 @@ inputs = {
 remote_state {
   backend = "s3"
   config = {
-    project                    = "evocloud-dev"
     region                     = "nbg1" #nbg1 | fsn1 | hel1
     bucket                     = "evocloud-tf-state"
     key                        = "${basename(get_parent_terragrunt_dir())}/${path_relative_to_include()}"
-    endpoint                   = "https://<bucket_name>.<region>.your-objectstorage.com"
-    skip_credential_validation = false
-    skip_region_validation     = false
-    skip_metadata_api_check    = false
+    endpoint                   = "https://<region>.your-objectstorage.com" #https://nbg1.your-objectstore.com
+    access_key                 = "xxxxx"
+    secret_key                 = "xxxxx"
+
+    # Required for non-AWS s3
+    skip_credential_validation = true
+    skip_requesting_account_id = true
+    skip_region_validation     = true
+    skip_metadata_api_check    = true
+    skip_s3_checksum           = true
   }
 }
 

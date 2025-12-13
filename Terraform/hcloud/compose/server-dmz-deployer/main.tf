@@ -4,12 +4,11 @@
 data "hcloud_image" "evovm_snapshot" {
   with_selector = "name=evocloud-rocky-linux-8-b0-1-0"
   most_recent = true
-  #name = "evovm-os-8-10"  # Replace with your snapshot name
 }
 
 resource "hcloud_ssh_key" "pub_key" {
   name       = "public-ssh-key"
-  public_key = "${var.CLOUD_USER}:${file("${var.PUBLIC_KEY_PAIR}")}"
+  public_key = "${file("${var.PUBLIC_KEY_PAIR}")}"
 }
 
 resource "hcloud_server" "deployer_server" {
@@ -82,7 +81,7 @@ resource "terraform_data" "staging_automation_code" {
   }
 
   provisioner "file" {
-    source        = "${var.AUTOMATION_FOLDER}/Terraform/oci/deployment/root.hcl"
+    source        = "${var.AUTOMATION_FOLDER}/Terraform/hcloud/deployment/root.hcl"
     destination   = "/home/${var.CLOUD_USER}/root.hcl"
   }
 
@@ -106,11 +105,7 @@ resource "terraform_data" "staging_automation_code" {
       "mv /home/${var.CLOUD_USER}/ansible-vault-pass.txt /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt",
 
       # Moves root.hcl into deployment folder
-      "mv /home/${var.CLOUD_USER}/root.hcl /home/${var.CLOUD_USER}/EVOCLOUD/Terraform/oci/deployment/root.hcl",
-
-      # Moves OCI Config file
-      "mkdir /home/${var.CLOUD_USER}/.oci",
-      "mv /home/${var.CLOUD_USER}/config /home/${var.CLOUD_USER}/.oci",
+      "mv /home/${var.CLOUD_USER}/root.hcl /home/${var.CLOUD_USER}/EVOCLOUD/Terraform/hcloud/deployment/root.hcl",
 
       "sudo yum update -y",
       "hostnamectl status"
@@ -132,9 +127,6 @@ resource "terraform_data" "deployer_server_configuration" {
     terraform_data.staging_automation_code
   ]
 
-  #Uncomment below if we want to run Triggers when VM ID changes
-  #triggers_replace = [oci_core_instance.deployer_server]
-  #Uncomment below if we want to run Triggers on Revision number increase
   lifecycle {
     replace_triggered_by = [terraform_data.redeploy_deployer]
   }
