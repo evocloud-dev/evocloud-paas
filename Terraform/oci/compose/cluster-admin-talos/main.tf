@@ -577,7 +577,6 @@ data "talos_machine_configuration" "talos_controlplane" {
                         - sh
                         - -c
                         - |
-                          kubectl create namespace vela-system || true
                           helm repo add kubevela https://kubevela.github.io/charts
                           helm repo update
                           helm upgrade --install kubevela kubevela/vela-core \
