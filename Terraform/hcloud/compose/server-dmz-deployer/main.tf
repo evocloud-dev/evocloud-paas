@@ -88,8 +88,8 @@ resource "terraform_data" "staging_automation_code" {
   provisioner "remote-exec" {
     inline = [
       # Unpacks tarball and cleans up
-      #"tar -xzf /home/${var.CLOUD_USER}/evocloud.tar.gz --strip-components=1 -C /home/${var.CLOUD_USER}/EVOCLOUD",
-      #"rm -f /home/${var.CLOUD_USER}/evocloud.tar.gz",
+      "tar -xzf /home/${var.CLOUD_USER}/evocloud.tar.gz --strip-components=1 -C /home/${var.CLOUD_USER}/EVOCLOUD",
+      "rm -f /home/${var.CLOUD_USER}/evocloud.tar.gz",
 
       # Moves Nodes key pairs to /etc/pki/tls folder
       # and gives proper ownership and permissions

@@ -14,8 +14,8 @@ inputs = {
   ###########################################################################
   DEFAULT_TIMEZONE  = "America/Detroit"
   HCLOUD_PROJECT_ID    = "evocloud-dev"
-  HCLOUD_REGION        = "nbg1"
-  HCLOUD_REGIONS       = ["nbg1", "fsn1", "hel1"]
+  HCLOUD_REGION        = "fsn1"
+  HCLOUD_REGIONS       = ["nbg1", "fsn1", "hel1"] #Nuremberg region instance types severely limited!
   BASE_AMI_NAME     = "evocloud-rocky8-b0-1-0"
   BASE_VOLUME_SIZE  = "100"
   BASE_VOLUME_10    = "10"
@@ -54,7 +54,7 @@ inputs = {
   DEPLOYER_SHORT_HOSTNAME   = "evo-master"
   BASE_INSTALLER_IMG        = "evocloud-rocky8-b0-1-0"
   DEPLOYER_PRIVATE_IP       = "10.10.10.5"
-  DEPLOYER_INSTANCE_SIZE    = "cx42"
+  DEPLOYER_INSTANCE_SIZE    = "cx43"
   DEPLOYER_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
   ###########################################################################
@@ -62,7 +62,7 @@ inputs = {
   ###########################################################################
   TALOS_AMI_NAME               = "evocluster-os-1-11-5"
   TALOS_STANDALONE_VOLUME_TYPE = "pd-balanced" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High #+1
-  TALOS_CTRL_STANDALONE_SIZE   = "cx42"
+  TALOS_CTRL_STANDALONE_SIZE   = "cx43"
   TALOS_CTRL_STANDALONE        = {
     node01 = "evotalos-workstation"
   }
@@ -88,7 +88,7 @@ remote_state {
     region                     = "nbg1" #nbg1 | fsn1 | hel1
     bucket                     = "evocloud-tf-state"
     key                        = "${basename(get_parent_terragrunt_dir())}/${path_relative_to_include()}"
-    endpoint                   = "https://<region>.your-objectstorage.com" #https://nbg1.your-objectstore.com
+    endpoint                   = "https://<region>.your-objectstorage.com" #https://fsn1.your-objectstore.com
     access_key                 = "xxxxx"
     secret_key                 = "xxxxx"
 
