@@ -28,10 +28,3 @@ output "talos_controlplane_config" {
   value = data.talos_machine_configuration.talos_controlplane
   sensitive = true
 }
-
-# Retrieve Gateway Loadbalancer IP Address
-output "gateway_vip" {
-  description = "Gateway LoadBalancer IP"
-  value = google_compute_address.gateway_vip.address
-  sensitive = true
-}

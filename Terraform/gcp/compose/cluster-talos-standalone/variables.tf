@@ -40,10 +40,9 @@ variable "TALOS_AMI_SOURCE" {
   default     = "https://storage.cloud.google.com/evocloud-cnpg-cluster-backup/gcp-amd64.raw.tar.gz"
 }
 
-variable "BASE_VOLUME_10" {
-  description = "Base Volume Size 10GB"
+variable "BASE_VOLUME_50" {
+  description = "Base Volume Size 50GB"
   type        = string
-  default     = "10"
 }
 
 variable "TALOS_CTRL_STANDALONE_SIZE" {

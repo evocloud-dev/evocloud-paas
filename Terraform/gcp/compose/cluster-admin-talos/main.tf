@@ -28,9 +28,9 @@ resource "google_compute_image" "talos_img" {
 
   name        = var.TALOS_AMI_NAME
   description = "Talos Base AMI Image"
-  family      = "evocloud-talos19"
+  family      = var.TALOS_AMI_NAME
   labels = {
-    base-image-name = "evocloud-talos19-b010"
+    base-image-name = var.TALOS_AMI_NAME
     os-distro       = "gttech-talos-distro"
     owner           = "geanttech"
   }
@@ -98,17 +98,17 @@ resource "google_compute_instance" "talos_loadbalancer" {
 
   metadata = {
     #enable-oslogin = "TRUE"
-    ssh-keys       = "${var.CLOUD_USER}:${file("/etc/pki/tls/gcp-evocloud.pub")}"
+    ssh-keys       = "${var.CLOUD_USER}:${file("${var.PUBLIC_KEY_PAIR}")}"
   }
 
   metadata_startup_script = "/usr/bin/date"
 
   #For selecting Spot Instances - Remove this snippet in production
   scheduling {
-    preemptible = true
+    preemptible = var.use_spot ? true : false
     automatic_restart = false
     provisioning_model = var.use_spot ? "SPOT" : "STANDARD"
-    instance_termination_action = "STOP" #DELETE | STOP
+    instance_termination_action = var.use_spot ? "STOP" : "" #DELETE | STOP
   }
 
   #Assigning service account for node to be able to update aliased IP in fail over scenario
@@ -200,6 +200,9 @@ resource "google_compute_instance" "talos_ctrlplane" {
 
   network_interface {
     subnetwork  = var.admin_subnet_name
+
+    #Assigning static public ip
+    access_config {}
   }
 
   allow_stopping_for_update = true
@@ -212,10 +215,10 @@ resource "google_compute_instance" "talos_ctrlplane" {
 
   #For selecting Spot Instances - Remove this snippet in production
   scheduling {
-    preemptible = true
+    preemptible = var.use_spot ? true : false
     automatic_restart = false
     provisioning_model = var.use_spot ? "SPOT" : "STANDARD"
-    instance_termination_action = "STOP" #DELETE | STOP
+    instance_termination_action = var.use_spot ? "STOP" : "" #DELETE | STOP
   }
 }
 
@@ -265,10 +268,10 @@ resource "google_compute_instance" "talos_workload" {
 
   #For selecting Spot Instances - Remove this snippet in production
   scheduling {
-    preemptible = true
+    preemptible = var.use_spot ? true : false
     automatic_restart = false
     provisioning_model = var.use_spot ? "SPOT" : "STANDARD"
-    instance_termination_action = "STOP" #DELETE | STOP
+    instance_termination_action = var.use_spot ? "STOP" : "" #DELETE | STOP
   }
 
   lifecycle {
@@ -430,7 +433,6 @@ data "talos_machine_configuration" "talos_controlplane" {
           var.TALOS_EXTRA_MANIFESTS["kubelet_serving_cert"],
           var.TALOS_EXTRA_MANIFESTS["kube-metric_server"],
           var.TALOS_EXTRA_MANIFESTS["local-storage_class"],
-          var.TALOS_EXTRA_MANIFESTS["kube-buildpack"]
         ]
         inlineManifests = [
           {
@@ -516,7 +518,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm repo add cilium https://helm.cilium.io/
                           helm repo update
                           helm upgrade --install cilium cilium/cilium \
-                          --version 1.18.2 \
+                          --version 1.18.4 \
                           --namespace kube-system \
                           --set k8sServiceHost=localhost \
                           --set k8sServicePort=7445 \
@@ -557,63 +559,6 @@ data "talos_machine_configuration" "talos_controlplane" {
               kind: Namespace
               metadata:
                 name: evocloud-ns
-            EOT
-          },
-          {
-            name     = "kro-helm-deploy"
-            contents = <<-EOT
-              ---
-              apiVersion: rbac.authorization.k8s.io/v1
-              kind: ClusterRoleBinding
-              metadata:
-                name: kro-install
-                annotations:
-                  ttl.after.delete: "86400s" #Automatically deletes CRB after 24 hours (86400 seconds)
-              roleRef:
-                apiGroup: rbac.authorization.k8s.io
-                kind: ClusterRole
-                name: cluster-admin
-              subjects:
-              - kind: ServiceAccount
-                name: kro-install
-                namespace: kube-system
-              ---
-              apiVersion: v1
-              kind: ServiceAccount
-              metadata:
-                name: kro-install
-                namespace: kube-system
-                annotations:
-                  ttl.after.delete: "86400s" #Automatically deletes SA after 24 hours (86400 seconds)
-              ---
-              apiVersion: batch/v1
-              kind: Job
-              metadata:
-                name: kro-app-deployer
-                namespace: kube-system
-              spec:
-                backoffLimit: 10
-                template:
-                  metadata:
-                    labels:
-                      job: kro-deployment
-                  spec:
-                    containers:
-                    - name: helm
-                      image: alpine/helm:3
-                      command:
-                        - sh
-                        - -c
-                        - |
-                          kubectl create namespace kro || true
-                          helm upgrade --install kro-orchestrator oci://ghcr.io/kro-run/kro/kro \
-                            --namespace kro \
-                            --create-namespace \
-                            --version 0.4.1 \
-                            --wait
-                    restartPolicy: OnFailure
-                    serviceAccount: kro-install
-                    serviceAccountName: kro-install
             EOT
           },
           {
@@ -662,13 +607,12 @@ data "talos_machine_configuration" "talos_controlplane" {
                         - sh
                         - -c
                         - |
-                          kubectl create namespace vela-system || true
                           helm repo add kubevela https://kubevela.github.io/charts
                           helm repo update
                           helm upgrade --install kubevela kubevela/vela-core \
                             --namespace vela-system \
                             --create-namespace \
-                            --version 1.10.4 \
+                            --version 1.10.5 \
                             --wait
                     restartPolicy: OnFailure
                     serviceAccount: vela-install
@@ -727,7 +671,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install flux-operator oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator \
                             --namespace flux-system \
                             --create-namespace \
-                            --version 0.30.0 \
+                            --version 0.33.0 \
                             --wait
                     restartPolicy: OnFailure
                     serviceAccount: flux-install
@@ -825,7 +769,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: rook-release
-                    version: "v1.17.*"
+                    version: "v1.18.*"
                 serviceAccountName: flux-rook-ceph-sa
                 interval: 30m0s
                 install:
@@ -856,7 +800,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: rook-release
-                    version: "v1.17.*"
+                    version: "v1.18.*"
                 serviceAccountName: flux-rook-ceph-sa
                 interval: 35m0s
                 install:
@@ -931,7 +875,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: headlamp-release
-                    version: "0.36.*"
+                    version: "0.38.*"
                 serviceAccountName: flux-headlamp-sa
                 interval: 30m0s
                 timeout: 25m0s
@@ -1130,7 +1074,7 @@ data "talos_machine_configuration" "talos_controlplane" {
               ###################################################
               #KubeScape Vulnerability Scanner
               ###################################################
-              # https://github.com/kubescape/helm-charts
+              # https://github.com/kubescape/helm-charts/tree/main/charts/kubescape-operator
               apiVersion: v1
               kind: Namespace
               metadata:
@@ -1184,7 +1128,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                       name: kubescape-release
                     version: "1.29.*"
                 interval: 30m0s
-                timeout: 25m0s
+                timeout: 60m0s
                 serviceAccountName: flux-kubescape-sa
                 install:
                   remediation:
@@ -1194,10 +1138,11 @@ data "talos_machine_configuration" "talos_controlplane" {
                     retries: 2
                 driftDetection:
                   mode: enabled
+                #https://github.com/kubescape/helm-charts/blob/main/charts/kubescape-operator/values.yaml
                 values:
                   clusterName: evo-cluster-mgr
                   capabilities:
-                    continuousScan: enable
+                    continuousScan: disable
 
               ---
               ############################################
@@ -1496,7 +1441,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install kyverno kyverno/kyverno \
                             --namespace kyverno \
                             --create-namespace \
-                            --version 3.5.2 \
+                            --version 3.6.0 \
                             --set admissionController.replicas=3 \
                             --set backgroundController.replicas=2 \
                             --set cleanupController.replicas=2 \

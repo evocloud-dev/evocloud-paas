@@ -25,7 +25,7 @@ resource "google_compute_instance" "rdp_server" {
 
     #Assigning static public ip
     access_config {
-      nat_ip = google_compute_address.rdp_server_eip.address
+      nat_ip       = google_compute_address.rdp_server_eip.address
       network_tier = "PREMIUM" #PREMIUM | FIXED_STANDARD | STANDARD
     }
   }
@@ -45,10 +45,10 @@ resource "google_compute_instance" "rdp_server" {
 
   #For selecting Spot Instances - Remove this snippet in production
   scheduling {
-    preemptible = true
+    preemptible = var.use_spot ? true : false
     automatic_restart = false
     provisioning_model = var.use_spot ? "SPOT" : "STANDARD"
-    instance_termination_action = "STOP" #DELETE | STOP
+    instance_termination_action = var.use_spot ? "STOP" : "" #DELETE | STOP
   }
 
   # This ensures cloud-init completes before considering the resource created
@@ -94,17 +94,9 @@ resource "terraform_data" "rdp_server_configuration" {
     replace_triggered_by = [terraform_data.trigger_redeploy]
   }
 
-  #Connection to bastion host (DEPLOYER_Server)
-  connection {
-    host        = var.deployer_server_eip
-    type        = "ssh"
-    user        = var.CLOUD_USER
-    private_key = file(var.PRIVATE_KEY_PAIR)
-  }
-
   provisioner "local-exec" {
     command = <<EOF
-      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/server-dmz-rdp.yml --forks 10 --inventory-file ${google_compute_instance.rdp_server.network_interface[0].network_ip}, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml server_ip=${google_compute_instance.rdp_server.network_interface[0].network_ip} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} server_short_hostname=${var.RDP_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} server_timezone=${var.DEFAULT_TIMEZONE} metadata_ns_ip=${var.GCP_METADATA_NS} idam_replica_ip=${var.idam_replica_ip} cloud_platform=${var.CLOUD_PLATFORM}'
+      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/server-dmz-rdp.yml --forks 10 --inventory-file ${google_compute_instance.rdp_server.network_interface[0].network_ip}, --user ${var.CLOUD_USER} --private-key ${var.PRIVATE_KEY_PAIR} --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args "-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'" --extra-vars "ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml server_ip=${google_compute_instance.rdp_server.network_interface[0].network_ip} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} server_short_hostname=${var.RDP_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} server_timezone=${var.DEFAULT_TIMEZONE} metadata_ns_ip=${var.GCP_METADATA_NS} idam_replica_ip=${var.idam_replica_ip} cloud_platform=${var.CLOUD_PLATFORM}"
     EOF
     #Ansible logs
     environment = {

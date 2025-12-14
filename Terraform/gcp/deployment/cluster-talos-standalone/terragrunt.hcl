@@ -7,8 +7,8 @@ inputs = {
   idam_server_ip      = dependency.server-admin-idam.outputs.private_ip
   idam_replica_ip     = dependency.server-admin-idam_replica.outputs.private_ip
   cluster_name        = "evo-cluster-std"
-  talos_version       = "v1.11.0"
-  kubernetes_version  = "v1.34.0"
+  talos_version       = "v1.11.5"
+  kubernetes_version  = "v1.34.1"
   create_talos_img    = true
   use_spot            = true
 }
