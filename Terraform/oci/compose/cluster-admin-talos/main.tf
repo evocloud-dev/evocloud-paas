@@ -582,11 +582,66 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install kubevela kubevela/vela-core \
                             --namespace vela-system \
                             --create-namespace \
-                            --version 1.10.5 \
+                            --version 1.10.6 \
                             --wait
                     restartPolicy: OnFailure
                     serviceAccount: vela-install
                     serviceAccountName: vela-install
+            EOT
+          },
+          {
+            name     = "kubevela-UI-deploy"
+            contents = <<-EOT
+              ---
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: ClusterRoleBinding
+              metadata:
+                name: kubevela-ui-install
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes CRB after 24 hours (86400 seconds)
+              roleRef:
+                apiGroup: rbac.authorization.k8s.io
+                kind: ClusterRole
+                name: cluster-admin
+              subjects:
+              - kind: ServiceAccount
+                name: vela-ui-install
+                namespace: kube-system
+              ---
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: vela-ui-install
+                namespace: kube-system
+                annotations:
+                  ttl.after.delete: "86400s" #Automatically deletes SA after 24 hours (86400 seconds)
+              ---
+              apiVersion: batch/v1
+              kind: Job
+              metadata:
+                name: vela-ui-addon-deployer
+                namespace: kube-system
+              spec:
+                backoffLimit: 10
+                template:
+                  metadata:
+                    labels:
+                      job: vela-ui-deployment
+                  spec:
+                    containers:
+                    - name: velacli
+                      image: ghcr.io/evocloud-dev/oci/kubevela-cli:1.10.6-amd64
+                      command:
+                        - "vela"
+                      args:
+                        - "addon"
+                        - "enable"
+                        - "velaux"
+                        - "serviceType=NodePort"
+                        - "nodePort=30000"
+                    restartPolicy: OnFailure
+                    serviceAccount: vela-ui-install
+                    serviceAccountName: vela-ui-install
             EOT
           },
           {
