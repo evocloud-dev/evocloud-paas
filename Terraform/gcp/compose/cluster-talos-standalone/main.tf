@@ -409,7 +409,7 @@ data "talos_machine_configuration" "talos_controlplane" {
           {
             name     = "flux-helm-deploy"
             contents = <<-EOT
-                          ---
+              ---
               #Flux Operator Chart Repo: https://github.com/controlplaneio-fluxcd/charts/tree/main/charts/flux-operator
               apiVersion: rbac.authorization.k8s.io/v1
               kind: ClusterRoleBinding
@@ -504,6 +504,65 @@ data "talos_machine_configuration" "talos_controlplane" {
                         - op: add
                           path: /spec/template/spec/containers/0/args/-
                           value: --requeue-dependency=15s
+              ---
+              ############################################
+              #DEPLOYING TOFU FLUX CONTROLLER
+              ############################################
+              #Tofu-repo helm repository object
+              apiVersion: source.toolkit.fluxcd.io/v1
+              kind: HelmRepository
+              metadata:
+                name: tofu-controller-stable
+                namespace: flux-system
+              spec:
+                interval: 24h
+                url: https://flux-iac.github.io/tofu-controller
+              ---
+              #Tofu-deployment logic
+              apiVersion: helm.toolkit.fluxcd.io/v2
+              kind: HelmRelease
+              metadata:
+                name: tofu-controller
+                namespace: flux-system
+              spec:
+                chart:
+                  spec:
+                    chart: tofu-controller
+                    sourceRef:
+                      kind: HelmRepository
+                      name: tofu-controller-stable
+                    version: ">=0.16.0-rc.7"
+                interval: 1h0s
+                releaseName: tofu-controller
+                targetNamespace: flux-system
+                install:
+                  crds: Create
+                  remediation:
+                    retries: 3
+                upgrade:
+                  crds: CreateReplace
+                  remediation:
+                    retries: 3
+                driftDetection:
+                  mode: enabled
+                values:
+                  image:
+                    tag: v0.16.0-rc.7
+                  runner:
+                    image:
+                      tag: v0.16.0-rc.7
+                    grpc:
+                      maxMessageSize: 30
+                  replicaCount: 1
+                  resources:
+                    requests:
+                      cpu: 500m
+                      memory: 256Mi
+                    limits:
+                      memory: 1Gi
+                  caCertValidityDuration: 24h
+                  certRotationCheckFrequency: 60m
+              ---
             EOT
           },
           {
