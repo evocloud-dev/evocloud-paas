@@ -74,6 +74,15 @@ inputs = {
   IDAM_REPLICA_INSTANCE_SIZE    = "cx23"
   IDAM_REPLICA_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
+
+  ###########################################################################
+  # Remote Desktop Server
+  ###########################################################################
+  RDP_SHORT_HOSTNAME   = "evodesktop"
+  RDP_INSTANCE_SIZE    = "e2-medium"
+  RDP_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
+
+
   ###########################################################################
   # STANDALONE Kubernetes Cluster (Kubernetes)
   ###########################################################################
