@@ -5,28 +5,28 @@ inputs = {
   ###########################################################################
   # Miscellaneous Variables
   ###########################################################################
-  DOMAIN_TLD      = "evocloud.dev"
+  DOMAIN_TLD         = "evocloud.dev"
   HCLOUD_METADATA_NS = "169.254.169.254" #Changes depending on zone
-  CLOUD_PLATFORM  = "hcloud"
+  CLOUD_PLATFORM     = "hcloud"
 
   ###########################################################################
   # Common Variables
   ###########################################################################
-  DEFAULT_TIMEZONE  = "America/Detroit"
+  DEFAULT_TIMEZONE     = "America/Detroit"
   HCLOUD_PROJECT_ID    = "evocloud-dev"
   HCLOUD_REGION        = "fsn1"
   HCLOUD_REGIONS       = ["nbg1", "fsn1", "hel1"] #Nuremberg region instance types severely limited!
-  BASE_AMI_NAME     = "evocloud-rocky8-b0-1-0"
-  BASE_VOLUME_SIZE  = "100"
-  BASE_VOLUME_10    = "10"
-  BASE_VOLUME_20    = "20"
-  BASE_VOLUME_50    = "50"
-  BASE_VOLUME_200   = "200"
-  BASE_VOLUME_250   = "250"
-  CLOUD_USER        = "root"
-  PUBLIC_KEY_PAIR   = "/etc/pki/tls/hcloud-evonode.pub"
-  PRIVATE_KEY_PAIR  = "/etc/pki/tls/hcloud-evonode.pem"
-  HCLOUD_TOKEN      = "xxxxxxxx...."
+  BASE_AMI_NAME        = "evocloud-rocky8-b0-1-0"
+  BASE_VOLUME_SIZE     = "100"
+  BASE_VOLUME_10       = "10"
+  BASE_VOLUME_20       = "20"
+  BASE_VOLUME_50       = "50"
+  BASE_VOLUME_200      = "200"
+  BASE_VOLUME_250      = "250"
+  CLOUD_USER           = "root"
+  PUBLIC_KEY_PAIR      = "/etc/pki/tls/hcloud-evonode.pub"
+  PRIVATE_KEY_PAIR     = "/etc/pki/tls/hcloud-evonode.pem"
+  HCLOUD_TOKEN         = "xxxxxxxx...."
 
   ###########################################################################
   # Ansible/Automation Runtime Environment Configurations
@@ -54,8 +54,25 @@ inputs = {
   DEPLOYER_SHORT_HOSTNAME   = "evo-master"
   BASE_INSTALLER_IMG        = "evocloud-rocky8-b0-1-0"
   DEPLOYER_PRIVATE_IP       = "10.10.10.5"
-  DEPLOYER_INSTANCE_SIZE    = "cx43"
+  DEPLOYER_INSTANCE_SIZE    = "cx23"
   DEPLOYER_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
+
+  ###########################################################################
+  # IDAM Identity and Access Management Server (FreeIPA)
+  ###########################################################################
+  IDAM_SHORT_HOSTNAME   = "evoidp"
+  BASE_IPASERVER_IMG    = "evocloud-rocky8-b0-1-0"
+  IDAM_PRIVATE_IP       = "10.100.20.5"
+  IDAM_INSTANCE_SIZE    = "cx43"
+  IDAM_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
+
+  ###########################################################################
+  # IDAM Identity and Access Management Replica Server
+  ###########################################################################
+  IDAM_REPLICA_SHORT_HOSTNAME   = "evoidpr"
+  IDAM_REPLICA_PRIVATE_IP       = "10.100.20.10"
+  IDAM_REPLICA_INSTANCE_SIZE    = "cx23"
+  IDAM_REPLICA_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
   ###########################################################################
   # STANDALONE Kubernetes Cluster (Kubernetes)
