@@ -43,6 +43,11 @@ variable "PRIVATE_KEY_PAIR" {
   type        = string
 }
 
+variable "PUBLIC_KEY_PAIR" {
+  description = "SSH Key"
+  type        = string
+}
+
 variable "IDAM_SHORT_HOSTNAME" {
   description = "IDAM Server Short Hostname"
   type        = string

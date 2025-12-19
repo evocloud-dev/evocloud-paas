@@ -6,9 +6,8 @@ data "hcloud_image" "evovm_snapshot" {
   most_recent = true
 }
 
-resource "hcloud_ssh_key" "pub_key" {
+data "hcloud_ssh_key" "public_key" {
   name       = "public-ssh-key"
-  public_key = "${file("${var.PUBLIC_KEY_PAIR}")}"
 }
 
 resource "hcloud_server" "idam_server" {
@@ -16,9 +15,9 @@ resource "hcloud_server" "idam_server" {
   server_type = var.IDAM_INSTANCE_SIZE         # 2 vCPU, 4GB RAM
   location    = var.HCLOUD_REGION              # Falkenstein
   image       = data.hcloud_image.evovm_snapshot.id
-  ssh_keys    = [hcloud_ssh_key.pub_key.id]
+  ssh_keys    = [data.hcloud_ssh_key.public_key.id]
 
-  labels {
+  labels = {
     hostname = "${var.IDAM_SHORT_HOSTNAME}.${var.DOMAIN_TLD}"
   }
 
