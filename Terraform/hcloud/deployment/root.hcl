@@ -74,7 +74,6 @@ inputs = {
   IDAM_REPLICA_INSTANCE_SIZE    = "cx23"
   IDAM_REPLICA_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
-
   ###########################################################################
   # Remote Desktop Server
   ###########################################################################
@@ -82,6 +81,26 @@ inputs = {
   RDP_INSTANCE_SIZE    = "cx43"
   RDP_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
+  ###########################################################################
+  # Virtual Cloud Desktop
+  ###########################################################################
+  VCD_SHORT_HOSTNAME   = "evovdi"
+  VCD_INSTANCE_SIZE    = "cx43"
+  VCD_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
+
+  ###########################################################################
+  # EvoCode Enterprise Code Repository Platform (Gitlab)
+  ###########################################################################
+  EVOCODE_SHORT_HOSTNAME   = "evocode"
+  EVOCODE_INSTANCE_SIZE    = "cx43"
+  EVOCODE_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
+
+  ###########################################################################
+  # EvoCode Runner Code Executor for the EvoCode Platform (Gitlab-Runner)
+  ###########################################################################
+  EVOCODE_RUNNER_SHORT_HOSTNAME   = "evocode-runner"
+  EVOCODE_RUNNER_INSTANCE_SIZE    = "cx43"
+  EVOCODE_RUNNER_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
   ###########################################################################
   # STANDALONE Kubernetes Cluster (Kubernetes)

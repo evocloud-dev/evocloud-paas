@@ -28,13 +28,13 @@ variable "HCLOUD_METADATA_NS" {
   type        = string
 }
 
-variable "HCLOUD_TOKEN" {
-  description = "HCLOUD Auth Token"
+variable "HCLOUD_REGION" {
+  description = "Server Deployment Region"
   type        = string
 }
 
-variable "HCLOUD_REGION" {
-  description = "Server Deployment Region"
+variable "HCLOUD_TOKEN" {
+  description = "HCLOUD Auth Token"
   type        = string
 }
 
@@ -43,22 +43,17 @@ variable "IDAM_SHORT_HOSTNAME" {
   type        = string
 }
 
-variable "PUBLIC_KEY_PAIR" {
-  description = "SSH Key"
-  type        = string
-}
-
 variable "PRIVATE_KEY_PAIR" {
   description = "Private SSH Key"
   type        = string
 }
 
-variable "RDP_SHORT_HOSTNAME" {
-  description = "Deployer Short Name"
+variable "VCD_SHORT_HOSTNAME" {
+  description = "Virtual Short Name"
   type        = string
 }
 
-variable "RDP_INSTANCE_SIZE" {
+variable "VCD_INSTANCE_SIZE" {
   description = "Instance Size or Shape"
   type        = string
 }
@@ -83,7 +78,8 @@ variable "idam_replica_ip" {
   type        = string
 }
 
-variable "rdp_revision" {
+variable "vcd_revision" {
   description = "Semantic Version"
   type        = string
 }
+

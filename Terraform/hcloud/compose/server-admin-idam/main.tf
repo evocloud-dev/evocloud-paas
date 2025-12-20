@@ -23,7 +23,7 @@ resource "hcloud_server" "idam_server" {
 
   # This gets you an ipv4 primary ip
   public_net {
-    ipv4_enabled = true
+    ipv4_enabled = false
     ipv6_enabled = false
   }
 
@@ -63,6 +63,14 @@ resource "terraform_data" "idam_server_configuration" {
   #Uncomment below if we want to run Triggers on Revision number increase
   lifecycle {
     replace_triggered_by = [terraform_data.redeploy_idam]
+  }
+
+  #Connection to bastion host (DEPLOYER_Server)
+  connection {
+    host        = var.deployer_server_eip
+    type        = "ssh"
+    user        = var.CLOUD_USER
+    private_key = file(var.PRIVATE_KEY_PAIR)
   }
 
   provisioner "local-exec" {

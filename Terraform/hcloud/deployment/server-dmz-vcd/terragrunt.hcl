@@ -3,11 +3,12 @@
 # Input Variables
 #--------------------------------------------------
 inputs = {
-  dmz_subnet_id       = dependency.network-subnet.outputs.dmz_subnet_id
+  dmz_subnet_name     = dependency.network-subnet.outputs.dmz_subnet_name
   deployer_server_eip = dependency.server-dmz-deployer.outputs.public_ip
   idam_server_ip      = dependency.server-admin-idam.outputs.private_ip
   idam_replica_ip     = dependency.server-admin-idam_replica.outputs.private_ip
-  rdp_revision        = "0.1.0"
+  vcd_revision        = "0.1.0"
+
 }
 
 #--------------------------------------------------
@@ -43,8 +44,8 @@ dependency "server-admin-idam_replica" {
 }
 
 #--------------------------------------------------
-# Load server-dmz-rdp module
+# Load server-dmz-vcd module
 #--------------------------------------------------
 terraform {
-  source = "${get_terragrunt_dir()}/../../compose//server-dmz-rdp"
+  source = "${get_terragrunt_dir()}/../../compose//server-dmz-vcd"
 }

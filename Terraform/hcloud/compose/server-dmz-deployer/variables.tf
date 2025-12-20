@@ -48,12 +48,17 @@ variable "PRIVATE_KEY_PAIR" {
   type        = string
 }
 
-variable "dmz_subnet_id" {
-  description = "Subnet ID of DMZ Network"
+variable "deployer_revision" {
+  description = "Semantic Version"
   type        = string
 }
 
-variable "deployer_revision" {
-  description = "Semantic Version"
+variable "deployer_server_eip" {
+  description = "Deployer Server Public IP"
+  type        = string
+}
+
+variable "dmz_subnet_id" {
+  description = "Subnet ID of DMZ Network"
   type        = string
 }

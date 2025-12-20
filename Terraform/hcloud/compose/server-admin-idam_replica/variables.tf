@@ -68,6 +68,11 @@ variable "admin_subnet_id" {
   type        = string
 }
 
+variable "deployer_server_eip" {
+  description = "Deployer Server Public IP"
+  type        = string
+}
+
 variable "idam_replica_revision" {
   description = "IDAM revision version"
 }
