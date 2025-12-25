@@ -2,7 +2,7 @@
 cloud_user: ''
 
 # renovate: datasource=github-releases depName=go-task/task versioning=semver
-task_ver: 'v3.45.5'
+task_ver: 'v3.46.4'
 
 task_install_dir: /usr/local/bin
 
