@@ -25,7 +25,7 @@ resource "hcloud_server" "idam_replica_server" {
 
   # This gets you an ipv4 primary ip
   public_net {
-    ipv4_enabled = true
+    ipv4_enabled = false
     ipv6_enabled = false
   }
 
@@ -42,7 +42,7 @@ resource "hcloud_server" "idam_replica_server" {
       "echo 'Instance is ready'",
     ]
     connection {
-      host        = self.ipv4_address
+      host        = one(self.network[*].ip)
       type        = "ssh"
       user        = var.CLOUD_USER
       private_key = file(var.PRIVATE_KEY_PAIR)
@@ -67,17 +67,9 @@ resource "terraform_data" "idam_replica_server_configuration" {
     replace_triggered_by = [terraform_data.redeploy_idam_replica]
   }
 
-  #Connection to bastion host (DEPLOYER_Server)
-  connection {
-    host        = var.deployer_server_eip
-    type        = "ssh"
-    user        = var.CLOUD_USER
-    private_key = file(var.PRIVATE_KEY_PAIR)
-  }
-
   provisioner "local-exec" {
     command = <<EOF
-      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/server-admin-idam-replica.yml --forks 10 --inventory-file ${hcloud_server.idam_replica_server.ipv4_address}, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml server_ip=${hcloud_server.idam_replica_server.ipv4_address} idam_server_ip=${var.idam_server_ip} idam_replica_ip=${hcloud_server.idam_replica_server.ipv4_address} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} server_short_hostname=${var.IDAM_REPLICA_SHORT_HOSTNAME} idam_replica_short_hostname=${var.IDAM_REPLICA_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} server_timezone=${var.DEFAULT_TIMEZONE} metadata_ns_ip=${var.HCLOUD_METADATA_NS} cloud_platform=${var.CLOUD_PLATFORM}'
+      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/server-admin-idam-replica.yml --forks 10 --inventory-file ${one(hcloud_server.idam_replica_server.network[*].ip)}, --user ${var.CLOUD_USER} --private-key /etc/pki/tls/gcp-evocloud.pem --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml server_ip=${one(hcloud_server.idam_replica_server.network[*].ip)} idam_server_ip=${var.idam_server_ip} idam_replica_ip=${one(hcloud_server.idam_replica_server.network[*].ip)} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} server_short_hostname=${var.IDAM_REPLICA_SHORT_HOSTNAME} idam_replica_short_hostname=${var.IDAM_REPLICA_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} server_timezone=${var.DEFAULT_TIMEZONE} metadata_ns_ip=${var.HCLOUD_METADATA_NS} cloud_platform=${var.CLOUD_PLATFORM}'
     EOF
     #Ansible logs
     environment = {
