@@ -1,6 +1,6 @@
 ---
 # renovate: datasource=github-releases depName=stackrox/kube-linter versioning=semver
-kube_linter_version: 'v0.7.6'
+kube_linter_version: 'v0.8.1'
 
 kube_linter_install_dir: /usr/local/bin
 
@@ -10,4 +10,4 @@ kube_linter_force_update: false
 kube_linter_download_url: 'https://github.com/stackrox/kube-linter/releases/download/{{ kube_linter_version }}/kube-linter-linux'
 
 # renovate: datasource=github-releases depName=stackrox/kube-linter packageName=kube-linter-linux
-kube_linter_checksum: sha256:ec00b7a871fe575fdada7e2e4e1fdb61f75693b76ba978d4c577f82a6bd0affa
+kube_linter_checksum: sha256:cb36fae850360ddec21e81f577774c3bf9d13534c2e7f2ce50c5f695f6461dcf
