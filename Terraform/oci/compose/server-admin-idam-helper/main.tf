@@ -21,7 +21,7 @@ resource "terraform_data" "evotalos_cluster_deployment" {
   provisioner "remote-exec" {
     inline = [
       "cd /home/${var.CLOUD_USER}/EVOCLOUD/Terraform/oci/deployment/server-02-admin-idam",
-      "terragrunt run-all apply --non-interactive --queue-include-external -auto-approve",
+      "terragrunt run --all apply --non-interactive --queue-include-external",
     ]
   }
 }
