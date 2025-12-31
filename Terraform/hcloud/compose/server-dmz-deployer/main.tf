@@ -11,12 +11,34 @@ resource "hcloud_ssh_key" "pub_key" {
   public_key = "${file("${var.PUBLIC_KEY_PAIR}")}"
 }
 
+resource "hcloud_firewall" "deployer_server_firewall" {
+  name = "installer-firewall"
+  rule {
+    direction = "in"
+    protocol  = "tcp"
+    port      = "22"
+    source_ips = [
+      "0.0.0.0/0"
+    ]
+  }
+
+  rule {
+    direction = "out"
+    protocol  = "tcp"
+    port      = "22"
+    source_ips = [
+      "0.0.0.0/0"
+    ]
+  }
+}
+
 resource "hcloud_server" "deployer_server" {
   name        = var.DEPLOYER_SHORT_HOSTNAME
   server_type = var.DEPLOYER_INSTANCE_SIZE     # 2 vCPU, 4GB RAM
   location    = var.HCLOUD_REGION              # Nuremberg
   image       = data.hcloud_image.evovm_snapshot.id
   ssh_keys    = [hcloud_ssh_key.pub_key.id]
+  firewall_ids = [hcloud_firewall.deployer_server_firewall.id]
 
   # This gets you an ipv4 primary ip
   public_net {
