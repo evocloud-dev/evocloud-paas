@@ -1,6 +1,6 @@
 ---
 # renovate: datasource=github-releases depName=gruntwork-io/terragrunt versioning=semver
-terragrunt_version: 'v0.94.0'
+terragrunt_version: 'v0.96.1'
 
 os_arch: 'linux_amd64'
 
@@ -8,9 +8,9 @@ terragrunt_install_dir: /usr/local/bin
 
 terragrunt_force_update: false
 
-#https://github.com/gruntwork-io/terragrunt/releases/download/v0.94.0/terragrunt_linux_amd64
+#https://github.com/gruntwork-io/terragrunt/releases/download/v0.96.1/terragrunt_linux_amd64
 terragrunt_download_url: 'https://github.com/gruntwork-io/terragrunt/releases/download/{{ terragrunt_version }}/terragrunt_{{ os_arch }}'
 
-# https://github.com/gruntwork-io/terragrunt/releases/download/v0.94.0/SHA256SUMS
+# https://github.com/gruntwork-io/terragrunt/releases/download/v0.96.1/SHA256SUMS
 # renovate: datasource=github-releases depName=gruntwork-io/terragrunt packageName=terragrunt_linux_amd64
-terragrunt_checksum: sha256:c735e74c76e5c186941956d17a0fce961c1a918217bea5bb8102471e2be6ccee
+terragrunt_checksum: sha256:513eff2f87e2f5ec84369cc0f9d6c6766b43ca765fec4a3ac3598b933dc3218f
