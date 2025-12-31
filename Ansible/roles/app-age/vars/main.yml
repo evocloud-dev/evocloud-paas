@@ -3,7 +3,7 @@
 #https://github.com/FiloSottile/age/releases/download/v1.2.1/age-v1.2.1-linux-amd64.tar.gz
 
 # renovate: datasource=github-releases depName=FiloSottile/age versioning=semver
-age_ver: 'v1.2.1'
+age_ver: 'v1.3.1'
 
 age_install_dir: /usr/local/bin
 
