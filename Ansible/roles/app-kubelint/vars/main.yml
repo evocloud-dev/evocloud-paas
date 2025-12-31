@@ -1,6 +1,6 @@
 ---
 # renovate: datasource=github-releases depName=stackrox/kube-linter versioning=semver
-kube_linter_version: 'v0.7.6'
+kube_linter_version: 'v0.8.1'
 
 kube_linter_install_dir: /usr/local/bin
 
