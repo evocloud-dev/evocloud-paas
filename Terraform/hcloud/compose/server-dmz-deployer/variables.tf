@@ -53,10 +53,10 @@ variable "deployer_revision" {
   type        = string
 }
 
-variable "deployer_server_eip" {
-  description = "Deployer Server Public IP"
-  type        = string
-}
+#variable "deployer_server_eip" {
+#  description = "Deployer Server Public IP"
+#  type        = string
+#}
 
 variable "dmz_subnet_id" {
   description = "Subnet ID of DMZ Network"

@@ -103,6 +103,13 @@ inputs = {
   EVOCODE_RUNNER_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
   ###########################################################################
+  # EvoHarbor Repository Server
+  ###########################################################################
+  EVOHARBOR_SHORT_HOSTNAME      = "evoharbor"
+  EVOCODE_RUNNER_INSTANCE_SIZE  = "cx43"
+  EVOHARBOR_BASE_VOLUME_TYPE    = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
+
+  ###########################################################################
   # STANDALONE Kubernetes Cluster (Kubernetes)
   ###########################################################################
   TALOS_AMI_NAME               = "evocluster-os-1-11-5"
