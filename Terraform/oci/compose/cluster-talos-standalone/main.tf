@@ -489,7 +489,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install flux-operator oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator \
                             --namespace flux-system \
                             --create-namespace \
-                            --version 0.33.0 \
+                            --version 0.38.1 \
                             --wait
                     restartPolicy: OnFailure
                     serviceAccount: flux-install
