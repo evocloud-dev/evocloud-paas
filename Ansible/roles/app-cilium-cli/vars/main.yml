@@ -1,6 +1,6 @@
 ---
 # renovate: datasource=github-releases depName=cilium/cilium-cli versioning=semver
-cilium_cli_ver: 'v0.18.9'
+cilium_cli_ver: 'v0.19.0'
 
 cilium_cli_install_dir: /usr/local/bin
 
