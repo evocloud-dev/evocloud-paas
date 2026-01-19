@@ -102,8 +102,8 @@ inputs = {
   ###########################################################################
   # Talos Kubernetes Cluster (Kubernetes)
   ###########################################################################
-  #TALOS GPU IMG: https://factory.talos.dev/image/86a5d7c9beb23b4aea2777e44ca06c8c2ceea8a874ccd2b9a6743c4f734329e0/v1.11.5/oracle-amd64.raw.xz
-  ## TALOS NON-GPU IMG: https://factory.talos.dev/image/96f8c146a67c80daad900d3fc1a6976fe11062321eee9ab6ae2a6aea88b2d26e/v1.11.5/gcp-amd64.raw.tar.gz
+  #TALOS GPU IMG: https://factory.talos.dev/image/86a5d7c9beb23b4aea2777e44ca06c8c2ceea8a874ccd2b9a6743c4f734329e0/v1.11.6/oracle-amd64.raw.xz
+  ## TALOS NON-GPU IMG: https://factory.talos.dev/image/96f8c146a67c80daad900d3fc1a6976fe11062321eee9ab6ae2a6aea88b2d26e/v1.11.6/gcp-amd64.raw.tar.gz
   TALOS_AMI_NAME              = "evocloud-talos115-b011"
   TALOS_AMI_SOURCE            = "https://storage.cloud.google.com/evocloud-cnpg-cluster-backup/gcp-amd64.raw.tar.gz"
 

@@ -313,6 +313,12 @@ data "talos_machine_configuration" "talos_controlplane" {
     yamlencode({
       machine = {
         sysctls = {
+          "fs.inotify.max_user_watches" = "1048576"
+          "fs.inotify.max_user_instances" = "8192"
+          "net.ipv4.neigh.default.gc_thresh1" = "4096"
+          "net.ipv4.neigh.default.gc_thresh2" = "8192"
+          "net.ipv4.neigh.default.gc_thresh3" = "16384"
+          "net.ipv4.tcp_slow_start_after_idle" = "0"
           "user.max_user_namespaces" = "11255"
         }
         network = {}
@@ -327,6 +333,8 @@ data "talos_machine_configuration" "talos_controlplane" {
             rotate-server-certificates = true
           }
           extraConfig = {
+            serializeImagePulls = false
+            maxParallelImagePulls = 5
             featureGates = {
               UserNamespacesSupport = true
               UserNamespacesPodSecurityStandards = true
@@ -488,7 +496,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm repo add cilium https://helm.cilium.io/
                           helm repo update
                           helm upgrade --install cilium cilium/cilium \
-                          --version 1.18.4 \
+                          --version 1.18.6 \
                           --namespace kube-system \
                           --set k8sServiceHost=localhost \
                           --set k8sServicePort=7445 \
