@@ -1,0 +1,9 @@
+---
+#--------------------------------------------------
+# This role will configure the deployer server
+#--------------------------------------------------
+- hosts: all
+  gather_facts: false
+  strategy: free
+  roles:
+    - app-fail2ban

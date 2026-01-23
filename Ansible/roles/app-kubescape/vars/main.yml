@@ -8,7 +8,7 @@ kubescape_force_update: false
 
 #https://github.com/kubescape/kubescape/releases/tag/v3.0.46
 #https://github.com/kubescape/kubescape/releases/download/v3.0.46/kubescape-ubuntu-latest.tar.gz
-kubescape_download_url: 'https://github.com/kubescape/kubescape/releases/download/v{{ kubescape_ver }}/kubescape-ubuntu-latest.tar.gz'
+kubescape_download_url: 'https://github.com/kubescape/kubescape/releases/download/v{{ kubescape_ver }}/kubescape_{{ kubescape_ver }}_linux_amd64.tar.gz'
 
 #https://github.com/kubescape/kubescape/releases/download/v3.0.46/kubescape-ubuntu-latest.sha256
 # renovate: datasource=github-releases depName=kubescape/kubescape packageName=kubescape-ubuntu-latest.tar.gz

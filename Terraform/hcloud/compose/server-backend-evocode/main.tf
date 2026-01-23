@@ -10,25 +10,12 @@ data "hcloud_ssh_key" "public_key" {
   name       = "public-ssh-key"
 }
 
-resource "hcloud_firewall" "evocode_server_firewall" {
-  name = "evocode-firewall"
-  rule {
-    direction = "in"
-    protocol  = "tcp"
-    port      = "22"
-    source_ips = [
-      "0.0.0.0/0"
-    ]
-  }
-}
-
 resource "hcloud_server" "evocode_server" {
   name        = var.EVOCODE_SHORT_HOSTNAME
   server_type = var.EVOCODE_INSTANCE_SIZE         # 2 vCPU, 4GB RAM
   location    = var.HCLOUD_REGION              # Falkenstein
   image       = data.hcloud_image.evovm_snapshot.id
   ssh_keys    = [data.hcloud_ssh_key.public_key.id]
-  firewall_ids = [hcloud_firewall.evocode_server_firewall.id]
 
   labels = {
     hostname = "${var.EVOCODE_SHORT_HOSTNAME}.${var.DOMAIN_TLD}"

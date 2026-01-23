@@ -1,11 +1,12 @@
-# Takes approximately 25 minutes to complete
+# Takes approximately 29 minutes to complete
 #--------------------------------------------------
 # Input Variables
 #--------------------------------------------------
 inputs = {
-  admin_subnet_id     = dependency.network-subnet.outputs.admin_subnet_id
-  deployer_server_eip = dependency.server-dmz-deployer.outputs.deployer_server_ip
-  idam_revision       = "0.1.0"
+  admin_subnet_id       = dependency.network-subnet.outputs.admin_subnet_id
+  deployer_server_eip   = dependency.server-dmz-deployer.outputs.public_ip
+  idam_server_ip        = dependency.server-admin-idam.outputs.private_ip
+  idam_replica_revision = "0.1.0"
 }
 
 #--------------------------------------------------
@@ -30,8 +31,22 @@ dependency "server-dmz-deployer" {
 }
 
 #--------------------------------------------------
-# Load server-admin-idam module
+# Set server-dmz-gateway module dependency
+#--------------------------------------------------
+dependency "server-dmz-gateway" {
+  config_path   = "${get_terragrunt_dir()}/../server-02-dmz-gateway"
+}
+
+#--------------------------------------------------
+# Set server-admin-idam module dependency
+#--------------------------------------------------
+dependency "server-admin-idam" {
+  config_path   = "${get_terragrunt_dir()}/../server-03-admin-idam"
+}
+
+#--------------------------------------------------
+# Load server-admin-idam_replica module
 #--------------------------------------------------
 terraform {
-  source = "${get_terragrunt_dir()}/../../compose//server-admin-idam"
+  source = "${get_terragrunt_dir()}/../../compose//server-admin-idam_replica"
 }

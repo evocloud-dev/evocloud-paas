@@ -54,8 +54,17 @@ inputs = {
   DEPLOYER_SHORT_HOSTNAME   = "evo-master"
   BASE_INSTALLER_IMG        = "evocloud-rocky8-b0-1-0"
   DEPLOYER_PRIVATE_IP       = "10.10.10.5"
-  DEPLOYER_INSTANCE_SIZE    = "cx23"
+  DEPLOYER_INSTANCE_SIZE    = "cx43"
   DEPLOYER_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
+
+  ###########################################################################
+  # DMZ Gateway Host
+  ###########################################################################
+  GATEWAY_SHORT_HOSTNAME    = "evo-gateway"
+  GATEWAY_IMG               = "evocloud-rocky8-b0-1-0"
+  GATEWAY_PRIVATE_IP        = "10.10.10.6"
+  GATEWAY_INSTANCE_SIZE     = "cx43"
+  GATEWAY_BASE_VOLUME_TYPE  = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
   ###########################################################################
   # IDAM Identity and Access Management Server (FreeIPA)
@@ -113,11 +122,58 @@ inputs = {
   # STANDALONE Kubernetes Cluster (Kubernetes)
   ###########################################################################
   TALOS_AMI_NAME               = "evocluster-os-1-11-5"
-  TALOS_STANDALONE_VOLUME_TYPE = "pd-balanced" # 0: Lower cost | 10: balanced | 20: Higher Performance | 30-120: Ultra High #+1
+  TALOS_STANDALONE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
   TALOS_CTRL_STANDALONE_SIZE   = "cx43"
   TALOS_CTRL_STANDALONE        = {
     node01 = "evotalos-workstation"
   }
+
+  #CONTROLPLANE NODES
+  TALOS_CTRL_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
+  TALOS_CTRL_SIZE             = "cx43"
+  TALOS_CTRL_NODES            = {
+    node01 = "evotalos-cp01"
+    node02 = "evotalos-cp02"
+    node03 = "evotalos-cp03"
+  }#+1
+
+  #WORKER NODES
+  TALOS_WKLD_BASE_VOLUME_TYPE = "pd-balanced" # #pd-standard | pd-balanced | pd-ssd | pd-extreme
+  TALOS_WKLD_SIZE             = "cx43"
+  TALOS_WKLD_NODES            = {
+    node01 = {
+      short_name = "evotalos-wk01"
+      extra_volume = true
+    }
+    node02 = {
+      short_name = "evotalos-wk02"
+      extra_volume = true
+    }
+    node03 = {
+      short_name = "evotalos-wk03"
+      extra_volume = true
+    }
+    node04 = {
+      short_name = "evotalos-wk04"
+      extra_volume = true
+    }
+    node05 = {
+      short_name = "evotalos-wk05"
+      extra_volume = true
+    }
+    node06 = {
+      short_name = "evotalos-wk06"
+      extra_volume = true
+    }
+  } #+1
+
+  # KUBE API LB NODES
+  TALOS_LB_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
+  TALOS_LB_SIZE             = "cx43"
+  TALOS_LB_NODES            = {
+    node01 = "evotalos-lb01"
+    node02 = "evotalos-lb02"
+  } #+1
 
   #INLINE KUBERNETES MANIFESTS
   TALOS_EXTRA_MANIFESTS     = {

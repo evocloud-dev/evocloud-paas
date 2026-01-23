@@ -1,0 +1,3 @@
+public_interface: "{{ public_interface | default('eth0') }}"
+private_interface: "{{ private_interface | default('eth1') }}"
+private_network_subnet: "{{ private_network_subnet | default('10.0.0.0/16') }}"

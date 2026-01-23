@@ -1,0 +1,115 @@
+---
+- name: Ensure firewalld is installed
+  dnf:
+    name: firewalld
+    state: present
+  become: true
+
+- name: Ensure firewalld is running and enabled
+  systemd:
+    name: firewalld
+    state: started
+    enabled: true
+  become: true
+
+- name: Enable IP forwarding
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    state: present
+    reload: true
+  become: true
+
+- name: Get all IP addresses with their interfaces
+  shell: ip -4 addr show | grep -E '^\s*inet ' | awk '{print $NF, $2}'
+  register: ip_addr_list
+  changed_when: false
+
+- name: Detect public interface
+  shell: ip route show default | grep -oP 'dev \K\S+'
+  register: public_interface
+  changed_when: false
+  ignore_errors: true
+
+- name: Identify private network interfaces
+  shell: |
+    ip -4 addr show | grep -E '^\s*inet (10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.)' | awk '{print $NF}' | head -n1
+  register: private_interface
+  changed_when: false
+  ignore_errors: true
+
+- name: Assign public interface to public zone
+  firewalld:
+    zone: public
+    interface: "{{ public_interface.stdout }}"
+    permanent: true
+    state: enabled
+  become: true
+
+- name: Assign private interface to internal zone
+  firewalld:
+    zone: internal
+    interface: "{{ private_interface.stdout }}"
+    permanent: true
+    state: enabled
+  become: true
+
+- name: Enable masquerading on public zone
+  firewalld:
+    zone: public
+    masquerade: true
+    permanent: true
+    state: enabled
+  become: true
+
+- name: Enable masquerading on internal zone
+  firewalld:
+    zone: internal
+    masquerade: true
+    permanent: true
+    state: enabled
+  become: true
+
+- name: Allow forwarding from internal to public zone
+  firewalld:
+    zone: internal
+    permanent: true
+    state: enabled
+    rich_rule: 'rule family="ipv4" source address="{{ private_network_subnet }}" accept'
+
+- name: Reload firewalld to apply changes
+  systemd:
+    name: firewalld
+    state: reloaded
+  become: true
+
+- name: Verify IP forwarding is enabled
+  command: cat /proc/sys/net/ipv4/ip_forward
+  register: ip_forward_status
+  changed_when: false
+  become: true
+
+- name: Display IP forwarding status
+  debug:
+    msg: "IP forwarding is {{ 'enabled' if ip_forward_status.stdout == '1' else 'disabled' }}"
+
+- name: Display NAT configuration
+  command: firewall-cmd --list-all --zone=public
+  register: firewall_public
+  changed_when: false
+  become: true
+
+- name: Show public zone configuration
+  debug:
+    var: firewall_public.stdout_lines
+
+
+- name: Display internal zone configuration
+  command: firewall-cmd --list-all --zone=internal
+  register: firewall_internal
+  changed_when: false
+  become: true
+
+- name: Show internal zone configuration
+  debug:
+    var: firewall_internal.stdout_lines
