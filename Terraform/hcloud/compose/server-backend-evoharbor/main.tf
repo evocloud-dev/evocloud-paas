@@ -1,6 +1,31 @@
 #--------------------------------------------------
 # Server Evoharbor
 #--------------------------------------------------
+locals {
+  evoharbor_cloud_init = <<-EOF
+  #cloud-config
+    write_files:
+      - path: /etc/NetworkManager/dispatcher.d/ifup-local
+        content: |
+          #!/bin/sh
+
+          nm-online -q --timeout=30
+          if ! ip route show default | grep -q "via 10.10.0.1"; then
+            /sbin/ip route add default via 10.10.0.1
+          fi
+        permissions: '0755'
+
+      - path: /etc/resolv.conf
+        content: |
+          nameserver 185.12.64.2
+          nameserver 185.12.64.1
+
+    runcmd:
+      - dnf remove -y hc-utils
+      - reboot
+  EOF
+}
+
 data "hcloud_image" "evovm_snapshot" {
   with_selector = "name=evocloud-rocky-linux-8-b0-1-0"
   most_recent = true
@@ -44,6 +69,8 @@ resource "hcloud_server" "evoharbor_server" {
   network {
     network_id = var.backend_subnet_id
   }
+
+  user_data = local.evoharbor_cloud_init
 }
 
 

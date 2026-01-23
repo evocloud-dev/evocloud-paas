@@ -2,6 +2,31 @@
 # IDAM Replica Server VM
 #--------------------------------------------------
 
+locals {
+  idam_replica_cloud_init = <<-EOF
+  #cloud-config
+    write_files:
+      - path: /etc/NetworkManager/dispatcher.d/ifup-local
+        content: |
+          #!/bin/sh
+
+          nm-online -q --timeout=30
+          if ! ip route show default | grep -q "via 10.10.0.1"; then
+            /sbin/ip route add default via 10.10.0.1
+          fi
+        permissions: '0755'
+
+      - path: /etc/resolv.conf
+        content: |
+          nameserver 185.12.64.2
+          nameserver 185.12.64.1
+
+    runcmd:
+      - dnf remove -y hc-utils
+      - reboot
+  EOF
+}
+
 data "hcloud_image" "evovm_snapshot" {
   with_selector = "name=evocloud-rocky-linux-8-b0-1-0"
   most_recent = true
@@ -35,19 +60,7 @@ resource "hcloud_server" "idam_replica_server" {
     ip         = var.IDAM_REPLICA_PRIVATE_IP  # Static IP within subnet range
   }
 
-
-  # This ensures cloud-init completes before considering the resource created
-  provisioner "remote-exec" {
-    inline = [
-      "echo 'Instance is ready'",
-    ]
-    connection {
-      host        = one(self.network[*].ip)
-      type        = "ssh"
-      user        = var.CLOUD_USER
-      private_key = file(var.PRIVATE_KEY_PAIR)
-    }
-  }
+  user_data = local.idam_replica_cloud_init
 }
 
 #--------------------------------------------------
