@@ -27,7 +27,7 @@ inputs = {
   CLOUD_USER        = "mlkroot"
   PUBLIC_KEY_PAIR   = "/etc/pki/tls/gcp-evocloud.pub"
   PRIVATE_KEY_PAIR  = "/etc/pki/tls/gcp-evocloud.pem"
-  GCP_JSON_CREDS    = "geanttech-evocloud-aa3aa17df584.json"
+  GCP_JSON_CREDS    = "GCP-Creds-xxxx.json"
 
   ###########################################################################
   # Ansible/Automation Runtime Environment Configurations
@@ -167,7 +167,7 @@ inputs = {
   }
 
   #TALOS STANDALONE
-  TALOS_CTRL_STANDALONE_SIZE    = "e2-highcpu-8"
+  TALOS_CTRL_STANDALONE_SIZE    = "e2-standard-4"
   TALOS_STANDALONE_VOLUME_TYPE  = "pd-balanced"
   TALOS_CTRL_STANDALONE            = {
     node01 = "evok8s-workstation"
