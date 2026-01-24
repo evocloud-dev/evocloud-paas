@@ -40,7 +40,7 @@ inputs = {
   ###########################################################################
   HCLOUD_NETWORK_ZONE       = "eu-central"
   HCLOUD_VPC                = "evocloud-vpc"
-  HCLOUD_VPC_CIDR           = ["10.10.0.0/16"]
+  HCLOUD_VPC_CIDR           = "10.10.0.0/16"
 
   DMZ_SUBNET_CIDR           = "10.10.10.0/24"
   ADMIN_SUBNET_CIDR         = "10.10.20.0/24"
@@ -201,7 +201,7 @@ remote_state {
     secret_key                 = "xxxxx"
 
     # Required for non-AWS s3
-    skip_credential_validation = true
+    skip_credentials_validation = true
     skip_requesting_account_id = true
     skip_region_validation     = true
     skip_metadata_api_check    = true

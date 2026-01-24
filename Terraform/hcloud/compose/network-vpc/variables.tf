@@ -11,5 +11,5 @@ variable "HCLOUD_VPC" {
 
 variable "HCLOUD_VPC_CIDR" {
   description = "HCLOUD_VPC CIDR Range"
-  type        = list(string)
+  type        = string
 }
