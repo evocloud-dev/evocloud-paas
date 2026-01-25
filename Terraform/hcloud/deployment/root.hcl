@@ -41,6 +41,7 @@ inputs = {
   HCLOUD_NETWORK_ZONE       = "eu-central"
   HCLOUD_VPC                = "evocloud-vpc"
   HCLOUD_VPC_CIDR           = "10.10.0.0/16"
+  HCLOUD_GATEWAY            = "10.10.0.1"  #IP Address for hcloud gateway. Used on private vm.
 
   DMZ_SUBNET_CIDR           = "10.10.10.0/24"
   ADMIN_SUBNET_CIDR         = "10.10.20.0/24"

@@ -28,6 +28,11 @@ variable "HCLOUD_METADATA_NS" {
   type        = string
 }
 
+variable "HCLOUD_GATEWAY" {
+  description = "HCLOUD Gateway IP for Routing Private VM Traffic"
+  type        = string
+}
+
 variable "HCLOUD_REGION" {
   description = "Server Deployment Region"
   type        = string

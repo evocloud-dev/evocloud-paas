@@ -33,6 +33,11 @@ variable "EVOCODE_INSTANCE_SIZE" {
   type        = string
 }
 
+variable "HCLOUD_GATEWAY" {
+  description = "HCLOUD Gateway IP for Routing Private VM Traffic"
+  type        = string
+}
+
 variable "HCLOUD_METADATA_NS" {
   description = "GCP Metadata Nameserver IP"
   type        = string

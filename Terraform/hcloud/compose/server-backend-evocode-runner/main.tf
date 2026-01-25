@@ -11,8 +11,8 @@ locals {
           #!/bin/sh
 
           nm-online -q --timeout=30
-          if ! ip route show default | grep -q "via 10.10.0.1"; then
-            /sbin/ip route add default via 10.10.0.1
+          if ! ip route show default | grep -q "via ${var.HCLOUD_GATEWAY}"; then
+            /sbin/ip route add default via "${var.HCLOUD_GATEWAY}"
           fi
         permissions: '0755'
 
