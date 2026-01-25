@@ -17,7 +17,7 @@ inputs = {
   GCP_REGION        = "us-east5"
   GCP_REGIONS       = ["us-east5-a", "us-east5-b", "us-east5-c"]
   GCP_VPC           = "evocloud-vpc"
-  BASE_AMI_NAME     = "evocloud-rocky8-b0-1-0"
+  BASE_AMI_NAME     = "https://www.googleapis.com/compute/v1/projects/geanttech-evocloud/global/images/evocloud-rocky8-b0-1-0"
   BASE_VOLUME_SIZE  = "100"
   BASE_VOLUME_10    = "10"
   BASE_VOLUME_20    = "20"
@@ -27,7 +27,7 @@ inputs = {
   CLOUD_USER        = "mlkroot"
   PUBLIC_KEY_PAIR   = "/etc/pki/tls/gcp-evocloud.pub"
   PRIVATE_KEY_PAIR  = "/etc/pki/tls/gcp-evocloud.pem"
-  GCP_JSON_CREDS    = "geanttech-evocloud-aa3aa17df584.json"
+  GCP_JSON_CREDS    = "GCP-Creds-xxxx.json"
 
   ###########################################################################
   # Ansible/Automation Runtime Environment Configurations
@@ -49,7 +49,7 @@ inputs = {
   # DMZ Controller Host
   ###########################################################################
   DEPLOYER_SHORT_HOSTNAME   = "evo-master"
-  BASE_INSTALLER_IMG        = "evocloud-rocky8-b0-1-0"
+  BASE_INSTALLER_IMG        = "https://www.googleapis.com/compute/v1/projects/geanttech-evocloud/global/images/evocloud-rocky8-b0-1-0"
   DEPLOYER_PRIVATE_IP       = "10.10.10.5"
   DEPLOYER_INSTANCE_SIZE    = "e2-medium"
   DEPLOYER_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
@@ -58,7 +58,7 @@ inputs = {
   # IDAM Identity and Access Management Server (FreeIPA)
   ###########################################################################
   IDAM_SHORT_HOSTNAME   = "evoidp"
-  BASE_IPASERVER_IMG    = "evocloud-rocky8-b0-1-0"
+  BASE_IPASERVER_IMG    = "https://www.googleapis.com/compute/v1/projects/geanttech-evocloud/global/images/evocloud-rocky8-b0-1-0"
   IDAM_PRIVATE_IP       = "10.100.20.5"
   IDAM_INSTANCE_SIZE    = "e2-medium"
   IDAM_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
@@ -102,8 +102,8 @@ inputs = {
   ###########################################################################
   # Talos Kubernetes Cluster (Kubernetes)
   ###########################################################################
-  #TALOS GPU IMG: https://factory.talos.dev/image/86a5d7c9beb23b4aea2777e44ca06c8c2ceea8a874ccd2b9a6743c4f734329e0/v1.11.5/oracle-amd64.raw.xz
-  ## TALOS NON-GPU IMG: https://factory.talos.dev/image/96f8c146a67c80daad900d3fc1a6976fe11062321eee9ab6ae2a6aea88b2d26e/v1.11.5/gcp-amd64.raw.tar.gz
+  #TALOS GPU IMG: https://factory.talos.dev/image/86a5d7c9beb23b4aea2777e44ca06c8c2ceea8a874ccd2b9a6743c4f734329e0/v1.11.6/oracle-amd64.raw.xz
+  ## TALOS NON-GPU IMG: https://factory.talos.dev/image/96f8c146a67c80daad900d3fc1a6976fe11062321eee9ab6ae2a6aea88b2d26e/v1.11.6/gcp-amd64.raw.tar.gz
   TALOS_AMI_NAME              = "evocloud-talos115-b011"
   TALOS_AMI_SOURCE            = "https://storage.cloud.google.com/evocloud-cnpg-cluster-backup/gcp-amd64.raw.tar.gz"
 
@@ -167,7 +167,7 @@ inputs = {
   }
 
   #TALOS STANDALONE
-  TALOS_CTRL_STANDALONE_SIZE    = "e2-highcpu-8"
+  TALOS_CTRL_STANDALONE_SIZE    = "e2-standard-4"
   TALOS_STANDALONE_VOLUME_TYPE  = "pd-balanced"
   TALOS_CTRL_STANDALONE            = {
     node01 = "evok8s-workstation"

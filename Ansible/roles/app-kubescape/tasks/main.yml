@@ -38,10 +38,6 @@
         remote_src: yes
       become: true
 
-    #- name: Renaming kubescape-cli...
-    #  ansible.builtin.command: "/usr/bin/mv {{ kubescape_install_dir }}/kubescape-ubuntu-latest {{ kubescape_install_dir }}/kubescape"
-    #  become: true
-
   always:
     - name: Removing kubescape-cli detritus...
       ansible.builtin.file:

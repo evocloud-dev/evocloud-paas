@@ -1,15 +1,15 @@
 ---
 # renovate: datasource=github-releases depName=helm/helm versioning=semver
-helm_ver: 'v3.19.3'
+helm_ver: 'v3.19.4'
 
 helm_install_dir: /usr/local/bin
 
 helm_force_update: false
 
 #https://github.com/helm/helm/tags
-# https://get.helm.sh/helm-v3.19.3-linux-amd64.tar.gz
+# https://get.helm.sh/helm-v3.19.4-linux-amd64.tar.gz
 helm_download_url: 'https://get.helm.sh/helm-{{ helm_ver }}-linux-amd64.tar.gz'
 
-# https://get.helm.sh/helm-v3.19.3-linux-amd64.tar.gz.sha256sum
+# https://get.helm.sh/helm-v3.19.4-linux-amd64.tar.gz.sha256sum
 # renovate: datasource=github-releases depName=helm/helm packageName=helm-v<semver>-linux-amd64.tar.gz
-helm_checksum: sha256:d9439f58aa72a4580b25b641940f950fe20695345eb16ec8f106134007062df1
+helm_checksum: sha256:759c656fbd9c11e6a47784ecbeac6ad1eb16a9e76d202e51163ab78504848862
