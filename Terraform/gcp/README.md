@@ -36,7 +36,7 @@ This section contains code for deploying infrastructure resources on Google Clou
 ## ⛏️ Build Process
 
 - On the build workstation, create the following directory structure:
-``mkdir -p /tmp/deployer-mount/gcp``
+  * ``mkdir -p /tmp/deployer-mount/gcp``
 
 - Get the following files into that directory:
 ```
@@ -49,12 +49,13 @@ cp ~/<gcp-credentials>.json ./ #(Get the GCP service account key downloaded earl
 ```
 
 - Make the following configuration edits to match your environment and your deployment requirements:
-``vim root.hcl`` # This the Platform single configuration file where you can customize it to your liking
-``vim ansible-vault-pass.txt`` # This is where you set the ansible-vault password. After the deployment you can remove that file for security reasons.
-``vim secret-store.yml`` # This is where you store the encrypted ansible-vault content, containing default application passwords.
+  * ``vim root.hcl`` # This the Platform single configuration file where you can customize it to your liking
+  * ``vim ansible-vault-pass.txt`` # This is where you set the ansible-vault password. After the deployment you can remove that file for security reasons.
+  * ``vim secret-store.yml`` # This is where you store the encrypted ansible-vault content, containing default application passwords.
 
 - Now we can start the EvoCloud Platform buildout:
-To show the list of available commands run
+
+  * To show the list of available commands run: 
 ```
 docker run --rm -d --name evo-deployer \
   -v /tmp/deployer-mount:/mnt \
@@ -62,7 +63,7 @@ docker run --rm -d --name evo-deployer \
   ghcr.io/evocloud-dev/evocloud-oci/evo-deployer:0.1.0 list && \
   docker logs -f evo-deployer
 ```
-Any of the build command options have takes care of dependency resolution by default. So in the following example let's build evo-cluster-std
+  * Any of the build command options have takes care of dependency resolution by default. So in the following example let's build evo-cluster-std:
 ```
 docker run --rm -d --name evo-deployer \
   -v /tmp/deployer-mount:/mnt \
@@ -72,7 +73,7 @@ docker run --rm -d --name evo-deployer \
 ```
 After the build is complete you can head over to the GCP web UI and see the resources that are created.
 
-We can also use the destroy command to delete the resources if we no longer need them. So in the following example let's destroy the evo-cluster-std
+  * We can also use the destroy command to delete the resources if we no longer need them. So in the following example let's destroy the evo-cluster-std:
 ```
 docker run --rm -d --name evo-deployer \
   -v /tmp/deployer-mount:/mnt \
