@@ -497,7 +497,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install flux-operator oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator \
                             --namespace flux-system \
                             --create-namespace \
-                            --version 0.38.1 \
+                            --version 0.40.0 \
                             --wait
                     restartPolicy: OnFailure
                     serviceAccount: flux-install
@@ -606,8 +606,14 @@ data "talos_machine_configuration" "talos_controlplane" {
   ]
 }
 
+## Give time for controlplane nodes readiness
+resource "time_sleep" "timer" {
+  create_duration = "30s"
+  depends_on = [oci_core_instance.talos_ctrlplane, data.talos_machine_configuration.talos_controlplane]
+}
+
 resource "talos_machine_configuration_apply" "controlplane" {
-  depends_on = [data.talos_machine_configuration.talos_controlplane]
+  depends_on = [time_sleep.timer]
 
   for_each                    = oci_core_instance.talos_ctrlplane
   client_configuration        = talos_machine_secrets.talos_vm.client_configuration
@@ -616,9 +622,15 @@ resource "talos_machine_configuration_apply" "controlplane" {
   node                        = each.value.public_ip
 }
 
+## Avoid race condition between talos_machine_configuration_apply and bootstrapping
+resource "time_sleep" "timer2" {
+  create_duration = "30s"
+  depends_on = [talos_machine_configuration_apply.controlplane]
+}
+
 ## Start the bootstraping of the Talos Kubernetes Cluster
 resource "talos_machine_bootstrap" "bootstrap_cluster" {
-  depends_on           = [talos_machine_configuration_apply.controlplane]
+  depends_on           = [time_sleep.timer2]
 
   client_configuration = talos_machine_secrets.talos_vm.client_configuration
   endpoint             = oci_core_instance.talos_ctrlplane["node01"].public_ip
