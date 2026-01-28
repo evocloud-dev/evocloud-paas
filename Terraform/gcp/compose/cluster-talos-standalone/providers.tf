@@ -7,6 +7,10 @@ provider "google" {
   region  = var.GCP_REGION
 }
 
+provider "time" {
+  # Configuration options
+}
+
 #--------------------------------------------------
 # Tfstate Remote State Storage
 #--------------------------------------------------

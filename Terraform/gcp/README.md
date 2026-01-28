@@ -71,7 +71,7 @@ docker run --rm -d --name evo-deployer \
   ghcr.io/evocloud-dev/evocloud-oci/evo-deployer:0.1.0 gcp:build-evo-cluster-std && \
   docker logs -f evo-deployer
 ```
-After the build is complete you can head over to the GCP web UI and see the resources that are created.
+  * After the build is complete you can head over to the GCP web UI and see the resources that are created.
 
   * We can also use the destroy command to delete the resources if we no longer need them. So in the following example let's destroy the evo-cluster-std:
 ```

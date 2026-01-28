@@ -8,6 +8,9 @@ provider "oci" {
   region  = var.OCI_REGION
 }
 
+provider "time" {
+  # Configuration options
+}
 
 #--------------------------------------------------
 # Tfstate Remote State Storage
