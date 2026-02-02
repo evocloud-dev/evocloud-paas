@@ -3,7 +3,7 @@ kubectl_force_update: false
 
 #https://kubernetes.io/releases/
 # renovate: datasource=github-releases depName=kubernetes/kubernetes versioning=semver
-kubectl_ver: 'v1.34.1'
+kubectl_ver: 'v1.35.0'
 
 #https://dl.k8s.io/v1.34.1/kubernetes-client-linux-amd64.tar.gz
 kubectl_download_url: 'https://dl.k8s.io/{{ kubectl_ver }}/kubernetes-client-linux-amd64.tar.gz'
