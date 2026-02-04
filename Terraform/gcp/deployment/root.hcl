@@ -100,6 +100,13 @@ inputs = {
   EVOCODE_RUNNER_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
   ###########################################################################
+  # EvoRegistry - OCI Repository (Harbor)
+  ###########################################################################
+  EVOHARBOR_SHORT_HOSTNAME   = "evoregistry"
+  EVOHARBOR_INSTANCE_SIZE    = "e2-standard-4"
+  EVOHARBOR_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
+
+  ###########################################################################
   # Talos Kubernetes Cluster (Kubernetes)
   ###########################################################################
   #TALOS GPU IMG: https://factory.talos.dev/image/86a5d7c9beb23b4aea2777e44ca06c8c2ceea8a874ccd2b9a6743c4f734329e0/v1.11.6/oracle-amd64.raw.xz
