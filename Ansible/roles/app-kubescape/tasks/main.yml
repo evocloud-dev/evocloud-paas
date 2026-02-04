@@ -32,7 +32,7 @@
 
     - name: Installing kubescape-cli...
       ansible.builtin.unarchive:
-        src: '/tmp/kubescape_{{ kubescape_ver }}_linux_amd64.tar.gz'
+        src: '/tmp/kubescape_{{ kubescape_ver}}_linux_amd64.tar.gz'
         dest: '{{ kubescape_install_dir }}'
         mode: '0755'
         remote_src: yes

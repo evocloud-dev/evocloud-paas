@@ -131,6 +131,14 @@ resource "terraform_data" "deployer_server_configuration" {
     replace_triggered_by = [terraform_data.redeploy_deployer]
   }
 
+  #Connection to bastion host (DEPLOYER_Server)
+  connection {
+    host        = hcloud_server.deployer_server.ipv4_address
+    type        = "ssh"
+    user        = var.CLOUD_USER
+    private_key = file(var.PRIVATE_KEY_PAIR)
+  }
+
   provisioner "local-exec" {
     command = <<EOF
       ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 ${var.AUTOMATION_FOLDER}/Ansible/server-dmz-deployer.yml --forks 10 --inventory-file ${hcloud_server.deployer_server.ipv4_address}, --user ${var.CLOUD_USER} --private-key ${var.PRIVATE_KEY_PAIR} --ssh-common-args "-o 'StrictHostKeyChecking=no'"

@@ -24,14 +24,6 @@ dependency "network-subnet" {
 }
 
 #--------------------------------------------------
-# Set network-routing module dependency
-#--------------------------------------------------
-#dependency "network-routing" {
-#  config_path   = "${get_terragrunt_dir()}/../network-03-gateway"
-#  skip_outputs  = true
-#}
-
-#--------------------------------------------------
 # Load server-dmz-deployer module
 #--------------------------------------------------
 terraform {
