@@ -1,6 +1,6 @@
 ---
 # renovate: datasource=github-releases depName=siderolabs/talos versioning=semver
-talosctl_version: 'v1.11.5'
+talosctl_version: 'v1.12.3'
 
 os_arch: 'linux-amd64'
 
