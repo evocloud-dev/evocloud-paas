@@ -60,7 +60,7 @@ inputs = {
   ###########################################################################
   IDAM_SHORT_HOSTNAME   = "evoidp"
   BASE_IPASERVER_IMG    = "https://www.googleapis.com/compute/v1/projects/geanttech-evocloud/global/images/evocloud-rocky8-b0-1-0"
-  IDAM_PRIVATE_IP       = "10.100.20.5"
+  IDAM_PRIVATE_IP       = "10.10.20.5"
   IDAM_INSTANCE_SIZE    = "e2-medium"
   IDAM_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
@@ -68,7 +68,7 @@ inputs = {
   # IDAM Identity and Access Management Replica Server
   ###########################################################################
   IDAM_REPLICA_SHORT_HOSTNAME   = "evoidpr"
-  IDAM_REPLICA_PRIVATE_IP       = "10.100.20.10"
+  IDAM_REPLICA_PRIVATE_IP       = "10.10.20.10"
   IDAM_REPLICA_INSTANCE_SIZE    = "e2-medium"
   IDAM_REPLICA_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
@@ -182,8 +182,8 @@ inputs = {
 remote_state {
   backend = "azurerm"
   config = {
-    resource_group_name  = "remote-state-rg"
-    storage_account_name = "evocloud-storage"
+    resource_group_name  = "evocloud-deploy-rg"
+    storage_account_name = "evocloud-deploy"
     container_name       = "evocloud-tf-state"
     key                  = "${basename(get_parent_terragrunt_dir())}/${path_relative_to_include()}"
   }
