@@ -4,6 +4,11 @@ variable "AZ_PROJECT_ID" {
   type        = string
 }
 
+variable "AZ_REGION" {
+  description = "AZ Region"
+  type        = string
+}
+
 variable "AZ_STORAGE_ACCT" {
   description = "Storage Account Name"
   type        = string

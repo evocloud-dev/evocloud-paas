@@ -16,6 +16,8 @@ inputs = {
   AZ_PROJECT_ID      = "evocloud-dev"
   AZ_REGION          = "EAST US"
   #AZ_REGIONS         = ["us-east5-a", "us-east5-b", "us-east5-c"]
+  AZ_STORAGE_RG              = "evocloud-deploy-rg"
+  AZ_STORAGE_ACCT    = "evocloudstorage"
   AZ_VPC             = "evocloud-vpc"
   BASE_AMI_NAME      = "https://www.googleapis.com/compute/v1/projects/geanttech-evocloud/global/images/evocloud-rocky8-b0-1-0"
   BASE_VOLUME_SIZE   = "100"
@@ -182,7 +184,7 @@ inputs = {
 remote_state {
   backend = "azurerm"
   config = {
-    resource_group_name  = "evocloud-deploy-rg"
+    resource_group_name  = "storage-rg"
     storage_account_name = "evocloud-deploy"
     container_name       = "evocloud-tf-state"
     key                  = "${basename(get_parent_terragrunt_dir())}/${path_relative_to_include()}"

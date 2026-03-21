@@ -3,7 +3,7 @@
 #-------------------------------------------
 resource "azurerm_resource_group" "evocloud-deploy-rg" {
   name = var.AZ_PROJECT_ID
-  location = "EAST US"
+  location = var.AZ_REGION
 
   tags = {
     environment = "prod"
