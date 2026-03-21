@@ -39,7 +39,12 @@ variable "HCLOUD_GATEWAY" {
 }
 
 variable "HCLOUD_METADATA_NS" {
-  description = "GCP Metadata Nameserver IP"
+  description = "Hcloud Metadata Nameserver IP"
+  type        = string
+}
+
+variable "HCLOUD_METADATA_NS2" {
+  description = "Hcloud Metadata Second Nameserver IP"
   type        = string
 }
 
@@ -48,9 +53,15 @@ variable "HCLOUD_REGION" {
   type        = string
 }
 
+variable "BASE_AMI_NAME" {
+  description = "Base Rocky Linux Image Name"
+  type        = string
+}
+
 variable "HCLOUD_TOKEN" {
   description = "HCLOUD Auth Token"
   type        = string
+  sensitive   = true
 }
 
 variable "IDAM_SHORT_HOSTNAME" {

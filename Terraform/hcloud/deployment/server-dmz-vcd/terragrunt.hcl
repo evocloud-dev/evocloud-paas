@@ -3,12 +3,11 @@
 # Input Variables
 #--------------------------------------------------
 inputs = {
-  dmz_subnet_name     = dependency.network-subnet.outputs.dmz_subnet_name
-  deployer_server_eip = dependency.server-dmz-deployer.outputs.public_ip
+  dmz_subnet_id       = dependency.network-subnet.outputs.dmz_subnet_id
+  deployer_server_eip = dependency.server-dmz-deployer.outputs.deployer_server_ip
   idam_server_ip      = dependency.server-admin-idam.outputs.private_ip
   idam_replica_ip     = dependency.server-admin-idam_replica.outputs.private_ip
   vcd_revision        = "0.1.0"
-
 }
 
 #--------------------------------------------------
@@ -36,11 +35,11 @@ dependency "server-dmz-deployer" {
 # Set server-admin-idam module dependency
 #--------------------------------------------------
 dependency "server-admin-idam" {
-  config_path   = "${get_terragrunt_dir()}/../server-02-admin-idam"
+  config_path   = "${get_terragrunt_dir()}/../server-03-admin-idam"
 }
 
 dependency "server-admin-idam_replica" {
-  config_path   = "${get_terragrunt_dir()}/../server-03-admin-idam_replica"
+  config_path   = "${get_terragrunt_dir()}/../server-04-admin-idam_replica"
 }
 
 #--------------------------------------------------

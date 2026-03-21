@@ -1,11 +1,7 @@
-variable "GCP_PROJECT_ID" {
-  description = "GCP Project ID"
+variable "HCLOUD_TOKEN" {
+  description = "HCLOUD Token"
   type        = string
-}
-
-variable "GCP_REGION" {
-  description = "GCP Region"
-  type        = string
+  sensitive   = true
 }
 
 variable "deployer_server_eip" {
@@ -20,10 +16,5 @@ variable "CLOUD_USER" {
 
 variable "PRIVATE_KEY_PAIR" {
   description = "Private Key Pair for SSH Login"
-  type        = string
-}
-
-variable "GCP_JSON_CREDS" {
-  description = "GCP Secret Json Key File"
   type        = string
 }

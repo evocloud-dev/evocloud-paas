@@ -6,6 +6,7 @@
   gather_facts: false
   strategy: free
   roles:
+    - rocky8-hardening
     - app-clamav
     - app-terraform
     - app-packer

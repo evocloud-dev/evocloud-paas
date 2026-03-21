@@ -20,7 +20,7 @@ resource "terraform_data" "rdp_deployment" {
 
   provisioner "remote-exec" {
     inline = [
-      "cd /home/${var.CLOUD_USER}/EVOCLOUD/Terraform/hcloud/deployment/server-dmz-rdp",
+      "cd /${var.CLOUD_USER}/EVOCLOUD/Terraform/hcloud/deployment/server-dmz-rdp",
       "terragrunt run --all apply --non-interactive --queue-include-external",
     ]
   }

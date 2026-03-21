@@ -21,6 +21,7 @@
     creds_store: "{{ lookup('file', ansible_secret) | from_yaml }}"
 
   roles:
+    - rocky8-hardening
     - server-freeipa
     - config-freeipa-certs
     - app-fail2ban

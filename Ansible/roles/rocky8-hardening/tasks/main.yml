@@ -1,0 +1,126 @@
+---
+#--------------------------------------------------
+# Ansible Configuration Code
+#--------------------------------------------------
+- name: Getting the cloud-platform type...
+  ansible.builtin.set_fact:
+    cloud_platform_type: "{{ cloudplatform }}"
+
+- name: Installing required packages...
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  loop: "{{ required_packages }}"
+  register: packages_install
+  until: packages_install is succeeded
+  retries: 2
+
+- name: RHEL-CENTOS | Creating a customized MOTD
+  ansible.builtin.copy:
+    dest: "/etc/profile.d/mymotd.sh"
+    mode: "0755"
+    content: |
+      neofetch
+
+- name: RHEL-CENTOS | Enable SSH firewall rule
+  ansible.posix.firewalld:
+    service: ssh
+    permanent: yes
+    state: enabled
+
+- name: RHEL-CENTOS | Start firewalld service
+  ansible.builtin.systemd_service:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: RHEL-CENTOS | Hardening SSHD configuration
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/etc/ssh/{{ item }}"
+    mode: u=rw
+  loop:
+    - "sshd_config"
+    - "banner"
+
+- when: cloud_platform_type == 'aws'
+  block:
+    - name: Installing AWS SSM Agent...
+      ansible.builtin.dnf:
+        name: "https://s3.us-east-2.amazonaws.com/amazon-ssm-us-east-2/latest/linux_amd64/amazon-ssm-agent.rpm"
+        state: present
+        disable_gpg_check: yes
+      retries: 2
+
+    - name: RHEL-CENTOS | Enable and start amazon-ssm-agent
+      ansible.builtin.service:
+        name: "amazon-ssm-agent"
+        enabled: yes
+        state: started
+
+    # Making nvme drives have aliases mapped to standard /dev/sdX device names
+    - name: RHEL-CENTOS | Setting NVME IDs
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "/usr/local/sbin/{{ item }}"
+        mode: 0755
+      loop:
+        - "ebsnvme-id"
+        - "ec2nvme-nsid"
+
+    - name: RHEL-CENTOS | Setting udev rules
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "/etc/udev/rules.d/{{ item }}"
+        mode: u=rw,g=r,o=r
+      loop:
+        - "80-ec2-nvme-devices.rules"
+    # End - Making nvme drives have aliases mapped to standard /dev/sdX device names
+
+    # Retrieve aws instance metadata
+    - name: RHEL-CENTOS | Retrieving aws instance metadata
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "/etc/profile.d/{{ item }}"
+        mode: u=rw,g=r,o=r
+      loop:
+        - "02-cloud-functions.sh"
+        - "05-cloud-env.sh"
+    # End - Retrieve aws instance metadata
+
+    - name: RHEL-CENTOS | Downloading and Unzipping aws-cli v2
+      ansible.builtin.unarchive:
+        src: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+        dest: "{{ executable_temp_dir | default('/opt') }}"
+        remote_src: yes
+
+- when: cloud_platform_type == 'gcp'
+  block:
+    - name: Setting up gcloud-cli repo...
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "/etc/yum.repos.d/{{ item }}"
+        mode: 0755
+      loop:
+        - "google-cloud-sdk.repo"
+
+    - name: Installing gcloud-cli packages...
+      ansible.builtin.dnf:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+        enablerepo: google-cloud-sdk
+      loop: "{{ gcloud_cli_packages }}"
+      register: gcloud_packages_install
+      until: gcloud_packages_install is succeeded
+      retries: 3
+
+- name: Upgrading all packages...
+  ansible.builtin.dnf:
+    name: "*"
+    state: latest
+
+- name: Removing unneeded packages installed as dependencies...
+  ansible.builtin.dnf:
+    autoremove: yes

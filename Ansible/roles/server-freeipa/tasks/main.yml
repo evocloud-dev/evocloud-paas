@@ -14,10 +14,6 @@
   ansible.builtin.set_fact:
     freeipa_server_fqdn: "{{ idam_short_hostname }}.{{ domain_tld }}"
 
-- name: Setting up hostname with FQDN...
-  ansible.builtin.command: "/usr/bin/hostnamectl set-hostname {{ freeipa_server_fqdn }}"
-  become: true
-
 - name: Setting up FQDN and IP in /etc/hosts...
   ansible.builtin.lineinfile:
     path: /etc/hosts

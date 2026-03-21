@@ -76,7 +76,7 @@ guacamole_pg_db: 'guacamole_db'
 
 guacamole_pg_user: 'guacamole_user'
 
-openjdk_ver: '11.0.27+6'
+openjdk_ver: '11.0.28+6'
 openjdk_install_dir: '/usr/local/openjdk/jdk-{{ openjdk_ver }}'
 
 cert_dir: '/etc/pki/host_certs'

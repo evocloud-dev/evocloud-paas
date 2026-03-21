@@ -5,6 +5,14 @@ provider "hcloud" {
   token = var.HCLOUD_TOKEN
 }
 
+provider "talos" {
+  # Configuration options
+}
+
+provider "time" {
+  # Configuration options
+}
+
 #--------------------------------------------------
 # Tfstate Remote State Storage
 #--------------------------------------------------

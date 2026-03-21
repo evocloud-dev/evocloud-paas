@@ -2,7 +2,7 @@
 # EvoCloud Workstation
 #--------------------------------------------------
 data "hcloud_image" "evok8s" {
-  with_selector = "name=evok8s-talos-1-11-5"
+  with_selector = "name=${var.TALOS_AMI_NAME}" #The Talos Machine Image must be tagged with the name label
   most_recent = true
 }
 
@@ -56,9 +56,10 @@ resource "hcloud_firewall" "evok8s_wks_firewall" {
 resource "hcloud_server" "talos_ctrlplane" {
   for_each    = var.TALOS_CTRL_STANDALONE
   name        = format("%s", each.value)
-  server_type = var.TALOS_CTRL_STANDALONE_SIZE     # 2 vCPU, 4GB RAM
-  location    = var.HCLOUD_REGION              # Nuremberg
+  server_type = var.TALOS_CTRL_STANDALONE_SIZE
+  location    = var.HCLOUD_REGION
   image       = data.hcloud_image.evok8s.id
+
   firewall_ids = [hcloud_firewall.evok8s_wks_firewall.id]
 
   # This gets you an public ipv4 primary ip
@@ -70,7 +71,8 @@ resource "hcloud_server" "talos_ctrlplane" {
   # Attach to private ipv4 ip
   network {
     network_id = var.dmz_subnet_id
-  #  ip         = var.DEPLOYER_PRIVATE_IP  # Static IP within subnet range
+    #There is a bug with Terraform 1.4+ which causes the network to be detached & attached on every apply. Set alias_ips = []
+    alias_ips = [] #Bug: https://github.com/hetznercloud/terraform-provider-hcloud/issues/650#issuecomment-1497160625
   }
 }
 
@@ -116,7 +118,7 @@ data "talos_machine_configuration" "talos_controlplane" {
 
         certSANs = [
           hcloud_server.talos_ctrlplane["node01"].ipv4_address,
-          #hcloud_server.talos_ctrlplane["node01"].network.ip,
+          one(hcloud_server.talos_ctrlplane["node01"].network[*].ip)
         ]
         kubelet = {
           extraArgs = {
@@ -164,7 +166,7 @@ data "talos_machine_configuration" "talos_controlplane" {
           }
           certSANs = [
             hcloud_server.talos_ctrlplane["node01"].ipv4_address,
-            #hcloud_server.talos_ctrlplane["node01"].network.ip,
+            one(hcloud_server.talos_ctrlplane["node01"].network[*].ip)
           ]
         }
         network = {
@@ -283,13 +285,13 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm repo add cilium https://helm.cilium.io/
                           helm repo update
                           helm upgrade --install cilium cilium/cilium \
-                          --version 1.18.2 \
+                          --version 1.19.1 \
                           --namespace kube-system \
                           --set k8sServiceHost=localhost \
                           --set k8sServicePort=7445 \
                           --set k8sClientRateLimit.qps=50 \
                           --set k8sClientRateLimit.burst=200 \
-                          --set cluster.name=evo-cluster-mgr \
+                          --set cluster.name=${var.cluster_name} \
                           --set cluster.id=0 \
                           --set rollOutCiliumPods=true \
                           --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
@@ -351,21 +353,10 @@ resource "talos_machine_bootstrap" "bootstrap_cluster" {
   node                 = hcloud_server.talos_ctrlplane["node01"].ipv4_address
 }
 
-## Check whether the Talos Kubernetes Cluster is in a healthy state
-#data "talos_cluster_health" "cluster_health" {
-#  depends_on = [talos_machine_bootstrap.bootstrap_cluster]
-
-#  client_configuration    = talos_machine_secrets.talos_vm.client_configuration
-#  control_plane_nodes     = [for xvalue in google_compute_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip]
-#  endpoints               = [for xvalue in google_compute_instance.talos_ctrlplane : xvalue.network_interface[0].network_ip]
-#  skip_kubernetes_checks  = true
-#}
-
 ## Collect the Talos Kubeconfig
 resource "talos_cluster_kubeconfig" "kubeconfig" {
   depends_on           = [
     talos_machine_bootstrap.bootstrap_cluster
-    #data.talos_cluster_health.cluster_health,
   ]
 
   client_configuration = talos_machine_secrets.talos_vm.client_configuration
@@ -379,7 +370,7 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
 resource "local_file" "talos_kubeconfig_file" {
   depends_on  = [talos_cluster_kubeconfig.kubeconfig]
 
-  filename    = "/tmp/kubeconfig/kubeconfig-${var.cluster_name}.yaml"
+  filename    = "/${var.CLOUD_USER}/kubeconfig/kubeconfig-${var.cluster_name}.yaml"
   directory_permission = "0740"
   file_permission      = "0640"
   content     = <<-EOF
@@ -390,7 +381,7 @@ resource "local_file" "talos_kubeconfig_file" {
 resource "local_file" "talos_talosconfig_file" {
   depends_on  = [talos_cluster_kubeconfig.kubeconfig]
 
-  filename    = "/tmp/talosconfig/talosconfig-${var.cluster_name}.yaml"
+  filename    = "/${var.CLOUD_USER}/talosconfig/talosconfig-${var.cluster_name}.yaml"
   directory_permission = "0740"
   file_permission      = "0640"
   content     = <<-EOF

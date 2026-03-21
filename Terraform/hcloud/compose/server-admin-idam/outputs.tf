@@ -3,7 +3,7 @@
 #--------------------------------------------------
 
 output "private_ip" {
-  description = "Idam Private IP Address"
+  description = "Idam Server Private IP Address"
   value = one(hcloud_server.idam_server.network[*].ip)
   sensitive = true
 }

@@ -28,9 +28,15 @@ variable "HCLOUD_REGION" {
   type        = string
 }
 
+variable "BASE_AMI_NAME" {
+  description = "Base Rocky Linux Image Name"
+  type        = string
+}
+
 variable "HCLOUD_TOKEN" {
   description = "HCLOUD Token"
   type        = string
+  sensitive   = true
 }
 
 variable "IDAM_INSTANCE_SIZE" {
@@ -48,23 +54,23 @@ variable "PRIVATE_KEY_PAIR" {
   type        = string
 }
 
-variable "PUBLIC_KEY_PAIR" {
-  description = "SSH Key"
-  type        = string
-}
-
 variable "IDAM_SHORT_HOSTNAME" {
   description = "IDAM Server Short Hostname"
   type        = string
 }
 
-variable "admin_subnet_id" {
-  description = "Output for ADMIN Subnet ID"
+variable "HCLOUD_METADATA_NS" {
+  description = "Hcloud Metadata Nameserver IP"
   type        = string
 }
 
-variable "deployer_server_eip" {
-  description = "Deployer Server Public IP"
+variable "HCLOUD_METADATA_NS2" {
+  description = "Hcloud Metadata Second Nameserver IP"
+  type        = string
+}
+
+variable "admin_subnet_id" {
+  description = "Output for ADMIN Subnet ID"
   type        = string
 }
 

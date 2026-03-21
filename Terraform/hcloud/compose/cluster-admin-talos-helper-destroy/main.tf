@@ -20,7 +20,7 @@ resource "terraform_data" "evotalos_cluster_destroy" {
 
   provisioner "remote-exec" {
     inline = [
-      "cd /home/${var.CLOUD_USER}/EVOCLOUD/Terraform/hcloud/deployment/cluster-admin-talos",
+      "cd /${var.CLOUD_USER}/EVOCLOUD/Terraform/hcloud/deployment/cluster-admin-talos",
       "terragrunt destroy --non-interactive -auto-approve",
     ]
   }

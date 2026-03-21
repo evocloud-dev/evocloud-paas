@@ -20,7 +20,7 @@ resource "terraform_data" "evoidam-replica_deployment" {
 
   provisioner "remote-exec" {
     inline = [
-      "cd /home/${var.CLOUD_USER}/EVOCLOUD/Terraform/hcloud/deployment/server-03-admin-idam_replica",
+      "cd /${var.CLOUD_USER}/EVOCLOUD/Terraform/hcloud/deployment/server-03-admin-idam_replica",
       "terragrunt run --all apply --non-interactive --queue-include-external",
     ]
   }

@@ -1,6 +1,7 @@
 variable "HCLOUD_TOKEN" {
   description = "HCLOUD Token"
   type        = string
+  sensitive   = true
 }
 
 variable "TALOS_CTRL_STANDALONE" {
@@ -11,11 +12,20 @@ variable "TALOS_CTRL_STANDALONE" {
 variable "TALOS_CTRL_STANDALONE_SIZE" {
   description = "Talos Standalone Controlplane Compute Instance Flavor Size"
   type        = string
-  default     = "cx42"
 }
 
 variable "HCLOUD_REGION" {
   description = "Server Deployment Region"
+  type        = string
+}
+
+variable "CLOUD_USER" {
+  description = "CLOUD USER"
+  type        = string
+}
+
+variable "TALOS_AMI_NAME" {
+  description = "Talos AMI Name"
   type        = string
 }
 
