@@ -5,11 +5,15 @@ silent: true
 # Creates Namespaces for tasks. To execute as task run the following:
 # task gcp:build-evo-master
 # task oci:build-evo-master
+# task hcloud:build-evo-master
 includes:
   gcp:
     taskfile: ./Terraform/gcp/Taskfile.yaml
   oci:
     taskfile: ./Terraform/oci/Taskfile.yaml
+  hcloud:
+    taskfile: ./Terraform/hcloud/Taskfile.yaml
+
 
 tasks:
   list:
