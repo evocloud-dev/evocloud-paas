@@ -13,3 +13,8 @@ variable "AZ_SUBSCRIPTION_ID" {
   description = "AZ Subscription ID"
   type        = string
 }
+
+variable "AZ_VPC_CIDR" {
+  description = "Azure VPC CIDR"
+  type        = string
+}
