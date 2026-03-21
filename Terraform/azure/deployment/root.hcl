@@ -52,7 +52,7 @@ inputs = {
   DEPLOYER_SHORT_HOSTNAME   = "evo-master"
   BASE_INSTALLER_IMG        = "https://www.googleapis.com/compute/v1/projects/geanttech-evocloud/global/images/evocloud-rocky8-b0-1-0"
   DEPLOYER_PRIVATE_IP       = "10.10.10.5"
-  DEPLOYER_INSTANCE_SIZE    = "e2-medium"
+  DEPLOYER_INSTANCE_SIZE    = "Standard_D4s_v4"
   DEPLOYER_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
   ###########################################################################
@@ -61,7 +61,7 @@ inputs = {
   IDAM_SHORT_HOSTNAME   = "evoidp"
   BASE_IPASERVER_IMG    = "https://www.googleapis.com/compute/v1/projects/geanttech-evocloud/global/images/evocloud-rocky8-b0-1-0"
   IDAM_PRIVATE_IP       = "10.10.20.5"
-  IDAM_INSTANCE_SIZE    = "e2-medium"
+  IDAM_INSTANCE_SIZE    = "Standard_D4s_v4"
   IDAM_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
   ###########################################################################
@@ -69,35 +69,35 @@ inputs = {
   ###########################################################################
   IDAM_REPLICA_SHORT_HOSTNAME   = "evoidpr"
   IDAM_REPLICA_PRIVATE_IP       = "10.10.20.10"
-  IDAM_REPLICA_INSTANCE_SIZE    = "e2-medium"
+  IDAM_REPLICA_INSTANCE_SIZE    = "Standard_D4s_v4"
   IDAM_REPLICA_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
   ###########################################################################
   # Remote Desktop Server
   ###########################################################################
   RDP_SHORT_HOSTNAME   = "evodesktop"
-  RDP_INSTANCE_SIZE    = "e2-medium"
+  RDP_INSTANCE_SIZE    = "Standard_D4s_v4"
   RDP_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
   ###########################################################################
   # Virtual Cloud Desktop
   ###########################################################################
   VCD_SHORT_HOSTNAME   = "evovdi"
-  VCD_INSTANCE_SIZE    = "e2-highcpu-8"
+  VCD_INSTANCE_SIZE    = "Standard_D4s_v4"
   VCD_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
   ###########################################################################
   # EvoCode Enterprise Code Repository Platform (Gitlab)
   ###########################################################################
   EVOCODE_SHORT_HOSTNAME   = "evocode"
-  EVOCODE_INSTANCE_SIZE    = "e2-standard-4"
+  EVOCODE_INSTANCE_SIZE    = "Standard_D4s_v4"
   EVOCODE_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
   ###########################################################################
   # EvoCode Runner Code Executor for the EvoCode Platform (Gitlab-Runner)
   ###########################################################################
   EVOCODE_RUNNER_SHORT_HOSTNAME   = "evocode-runner"
-  EVOCODE_RUNNER_INSTANCE_SIZE    = "e2-standard-4"
+  EVOCODE_RUNNER_INSTANCE_SIZE    = "Standard_D4s_v4"
   EVOCODE_RUNNER_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
   ###########################################################################
@@ -109,7 +109,7 @@ inputs = {
   TALOS_AMI_SOURCE            = "https://storage.cloud.google.com/evocloud-cnpg-cluster-backup/AZ-amd64.raw.tar.gz"
 
   #TALOS CONTROLPLANE NODES
-  TALOS_CTRL_INSTANCE_SIZE    = "e2-standard-4" #"e2-highcpu-8"
+  TALOS_CTRL_INSTANCE_SIZE    = "Standard_D4s_v4" #"e2-highcpu-8"
   TALOS_CTRL_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
   TALOS_CTRL_NODES            = {
     node01 = "evok8s-cp01"
@@ -118,7 +118,7 @@ inputs = {
   }
 
   #TALOS WORKER NODES
-  TALOS_WKLD_INSTANCE_SIZE      = "e2-standard-4"
+  TALOS_WKLD_INSTANCE_SIZE      = "Standard_D4s_v4"
   TALOS_WKLD_BASE_VOLUME_TYPE   = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
   TALOS_WKLD_EXTRA_VOLUME_TYPE  = "pd-balanced"
   TALOS_WKLD_NODES              = {
@@ -150,7 +150,7 @@ inputs = {
 
   #TALOS LOADBALANCER NODE
   # DO NOT CHANGE THE NAMES IF NOT KEEPALIVED CONFIG WILL BREAK
-  TALOS_LB_INSTANCE_SIZE    = "e2-medium"
+  TALOS_LB_INSTANCE_SIZE    = "Standard_D4s_v4"
   TALOS_LB_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
   TALOS_LB_NODES            = {
     node01 = "evok8s-lb01"
@@ -168,7 +168,7 @@ inputs = {
   }
 
   #TALOS STANDALONE
-  TALOS_CTRL_STANDALONE_SIZE    = "e2-standard-4"
+  TALOS_CTRL_STANDALONE_SIZE    = "Standard_D4s_v4"
   TALOS_STANDALONE_VOLUME_TYPE  = "pd-balanced"
   TALOS_CTRL_STANDALONE            = {
     node01 = "evok8s-workstation"
