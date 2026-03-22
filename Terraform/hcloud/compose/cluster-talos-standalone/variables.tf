@@ -29,6 +29,11 @@ variable "TALOS_AMI_NAME" {
   type        = string
 }
 
+variable "BASE_VOLUME_200" {
+  description = "Talos Workload Extra Volume 200GB"
+  type        = string
+}
+
 variable "TALOS_EXTRA_MANIFESTS" {
   description = "Extra Kubernetes Manifest for Talos Machine Configuration"
   type = map(string)
