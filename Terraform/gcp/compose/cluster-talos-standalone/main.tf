@@ -225,8 +225,7 @@ data "talos_machine_configuration" "talos_controlplane" {
           var.TALOS_EXTRA_MANIFESTS["gateway_api_std"],
           var.TALOS_EXTRA_MANIFESTS["gateway_api_exp"],
           var.TALOS_EXTRA_MANIFESTS["kubelet_serving_cert"],
-          var.TALOS_EXTRA_MANIFESTS["kube-metric_server"],
-          var.TALOS_EXTRA_MANIFESTS["local-storage_class"]
+          var.TALOS_EXTRA_MANIFESTS["kube-metric_server"]
         ]
         //Inline Manifests
         inlineManifests = [
@@ -313,13 +312,14 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm repo add cilium https://helm.cilium.io/
                           helm repo update
                           helm upgrade --install cilium cilium/cilium \
-                          --version 1.18.6 \
+                          --version 1.19.1 \
                           --namespace kube-system \
                           --set k8sServiceHost=localhost \
                           --set k8sServicePort=7445 \
+                          --set operator.replicas=1 \
                           --set k8sClientRateLimit.qps=50 \
                           --set k8sClientRateLimit.burst=200 \
-                          --set cluster.name=evo-cluster-std \
+                          --set cluster.name=${var.cluster_name} \
                           --set cluster.id=0 \
                           --set rollOutCiliumPods=true \
                           --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
@@ -466,7 +466,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install flux-operator oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator \
                             --namespace flux-system \
                             --create-namespace \
-                            --version 0.40.0 \
+                            --version 0.45.1 \
                             --wait
                     restartPolicy: OnFailure
                     serviceAccount: flux-install
@@ -484,7 +484,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                   fluxcd.controlplane.io/reconcileTimeout: "20m"
               spec:
                 distribution:
-                  version: "2.7.x"
+                  version: "2.8.x"
                   registry: "ghcr.io/fluxcd"
                   artifact: "oci://ghcr.io/controlplaneio-fluxcd/flux-operator-manifests"
                 components:
@@ -539,7 +539,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: tofu-controller-stable
-                    version: ">=0.16.0-rc.7"
+                    version: ">=0.16.0-rc.8"
                 interval: 1h0s
                 releaseName: tofu-controller
                 targetNamespace: flux-system
