@@ -13,11 +13,12 @@ inputs = {
   # Common Variables
   ###########################################################################
   DEFAULT_TIMEZONE   = "America/Detroit"
+  AZ_DEPLOY_RG       = "evocloud-deployment"
   AZ_PROJECT_ID      = "evocloud-dev"
   AZ_REGION          = "EAST US"
   #AZ_REGIONS         = ["us-east5-a", "us-east5-b", "us-east5-c"]
-  AZ_STORAGE_RG              = "evocloud-deploy-rg"
-  AZ_STORAGE_ACCT    = "evocloudstorage"
+  AZ_STORAGE_RG      = "storage-rg"
+  AZ_STORAGE_ACCT    = "evocloudstate"
   AZ_VPC             = "evocloud-vpc"
   BASE_AMI_NAME      = "https://www.googleapis.com/compute/v1/projects/geanttech-evocloud/global/images/evocloud-rocky8-b0-1-0"
   BASE_VOLUME_SIZE   = "100"
@@ -41,7 +42,7 @@ inputs = {
   ###########################################################################
   # Network Configurations
   ###########################################################################
-  AZ_VPC_CIDR               = ["10.10.0.0/16"]
+  AZ_VPC_CIDR               = "10.10.0.0/16"
   DMZ_SUBNET_CIDR           = "10.10.10.0/24"
   ADMIN_SUBNET_CIDR         = "10.10.20.0/24"
   BACKEND_SUBNET_CIDR       = "10.10.30.0/24"
@@ -185,8 +186,8 @@ remote_state {
   backend = "azurerm"
   config = {
     resource_group_name  = "storage-rg"
-    storage_account_name = "evocloud-deploy"
-    container_name       = "evocloud-tf-state"
+    storage_account_name = "evocloudstate"
+    container_name       = "evo-deploy-tf-state"
     key                  = "${basename(get_parent_terragrunt_dir())}/${path_relative_to_include()}"
   }
 }

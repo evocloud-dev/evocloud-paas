@@ -1,4 +1,9 @@
 
+variable "AZ_DEPLOY_RG" {
+  description = "AZ Deployment RG"
+  type        = string
+}
+
 variable "AZ_PROJECT_ID" {
   description = "AZ Project ID"
   type        = string
