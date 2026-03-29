@@ -1,0 +1,266 @@
+version: 3
+
+silent: true
+
+vars:
+  # Common across tasks
+  DEPLOY_DIR:          "/opt/EVOCLOUD/Terraform/hcloud/deployment"
+  KEYS_DIR:            "/opt/EVOCLOUD/Keys"
+  BUILD_CMD:           "terragrunt run-all apply --non-interactive --queue-include-external -auto-approve"
+  CLUSTER_DESTROY_CMD: "terragrunt apply --non-interactive -auto-approve"
+  DESTROY_CMD:         "terragrunt destroy --non-interactive -auto-approve"
+
+
+tasks:
+  # Internal tasks that remove redundant code and simplifies logic
+  # Internal tasks do not show up available task list.
+  # SERVER is the server being operated on.
+  # ACTION is BUILD_CMD or DESTROY_CMD
+  vm-operation:
+    internal: true
+    cmds:
+      - |
+        cd {{.DEPLOY_DIR}}/{{.SERVER}}/ && \
+        {{.ACTION}}  
+
+  ###############################
+  # Neutral/Dependency Tasks
+  ###############################
+  copy-files:
+    # Task only runs if one or more status commands not satisfied"
+    # Files: gcp-evocloud.pem, gcp-evocloud.pub, ansible-vault-pass.txt, secret-store.yml and root.hcl
+    desc: "HCLOUD: Copies files from mount directory inside container to their respective locations."
+    status:
+      - "ls -al Ansible/secret-vault | grep ansible-vault-pass.txt"
+      - "ls -al Ansible/secret-vault | grep secret-store.yml"
+    cmds:
+      # The slash in front of the cp commands is required to prevent user from being prompted to confirm.
+      # The cp command in rocky linux is aliased to cp -i.
+      - \cp {{.MNTDIR}}/hcloud/ansible-vault-pass.txt {{.MNTDIR}}/hcloud/secret-store.yml Ansible/secret-vault
+      - \cp {{.MNTDIR}}/hcloud/root.hcl {{.DEPLOY_DIR}}
+
+  ###############################
+  # Build Tasks
+  ###############################
+  build-evo-master:
+    desc: "HCLOUD: Build evo-master Server"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Building evo-master"
+      - task: vm-operation
+        vars:
+          SERVER: server-01-dmz-deployer
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-evo-gateway:
+    desc: "HCLOUD: Build evo-gateway Server"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Building evo-gateway"
+      - task: vm-operation
+        vars:
+          SERVER: server-02-dmz-gateway
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-evo-idp:
+    desc: "HCLOUD: Build EvoCloud IdM Server"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Building EvoCloud IdM Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-03-admin-idam-helper
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-evo-idpr:
+    desc: "HCLOUD: Build EvoCloud IdM Replica Server"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Building EvoCloud IdM Replica Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-04-admin-idam_replica-helper
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-evo-rdp:
+    desc: "HCLOUD: Build EvoCloud Remote Desktop Server"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Building EvoCloud Remote Desktop Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-dmz-rdp-helper
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-evo-cluster-std:
+    desc: "HCLOUD: Build EvoCloud Single Node Cluster"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Building EvoCloud Single Node Kube Cluster"
+      - task: vm-operation
+        vars:
+          SERVER: cluster-talos-standalone-helper
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-evo-cluster-mgr:
+    desc: "HCLOUD: Build EvoCloud Full Kube Cluster"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Building Full EvoCloud Kube Cluster"
+      - task: vm-operation
+        vars:
+          SERVER: cluster-admin-talos-helper
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-evo-code:
+    desc: "HCLOUD: Build EvoCloud Code Server"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Building EvoCloud Code Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-backend-evocode-helper
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-evo-code-runner:
+    desc: "HCLOUD: Build EvoCloud Code Runner Server"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Building EvoCloud Code Runner Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-backend-evocode-runner-helper
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-evo-harbor:
+    desc: "HCLOUD: Build EvoCloud Harbor Server"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Building EvoCloud Harbor Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-backend-evoharbor-helper
+          ACTION: "{{.BUILD_CMD}}"
+
+  build-evo-vcd:
+    desc: "HCLOUD: Build EvoCloud Virtual Cloud Desktop Server"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Building EvoCloud Virtual Cloud Desktop Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-dmz-vcd-helper
+          ACTION: "{{.BUILD_CMD}}"
+
+  ###############################
+  # Destroy Tasks
+  ###############################
+  destroy-evo-master:
+    desc: "HCLOUD: Destroy evo-master"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Destroying evo-master"
+      - task: vm-operation
+        vars:
+          SERVER: server-01-dmz-deployer
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-gateway:
+    desc: "HCLOUD: Destroy evo-gateway Server"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Destroying evo-gateway"
+      - task: vm-operation
+        vars:
+          SERVER: server-02-dmz-gateway
+          ACTION: "{{.BUILD_CMD}}"
+
+  destroy-evo-idp:
+    desc: "HCLOUD: Destroy EvoCloud IdM Server"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Destroying EvoCloud IdM Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-03-admin-idam
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-idpr:
+    desc: "HCLOUD: Destroy EvoCloud IdM Replica Server"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Destroying EvoCloud IdM Replica Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-04-admin-idam_replica
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-rdp:
+    desc: "HCLOUD: Destroy EvoCloud Remote Desktop Server"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Destroying EvoCloud Remote Desktop Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-dmz-rdp
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-cluster-std:
+    desc: "HCLOUD: Destroy EvoCloud Single Node Kube Cluster"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Destroying EvoCloud Single Node Kube Cluster"
+      - task: vm-operation
+        vars:
+          SERVER: cluster-talos-standalone-helper-destroyer
+          ACTION: "{{.CLUSTER_DESTROY_CMD}}"
+
+  destroy-evo-cluster-mgr:
+    desc: "HCLOUD: Destroy EvoCloud Full  Kube Cluster"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Destroying EvoCloud Full Kube Cluster"
+      - task: vm-operation
+        vars:
+          SERVER: cluster-admin-talos-helper-destroyer
+          ACTION: "{{.CLUSTER_DESTROY_CMD}}"
+
+  destroy-evo-code:
+    desc: "HCLOUD: Destroy EvoCloud Code Server"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Destroy EvoCloud Code Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-backend-evocode
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-code-runner:
+    desc: "HCLOUD: Destroy EvoCloud Code Runner Server"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Destroy EvoCloud Code Runner Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-backend-evocode-runner
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-harbor:
+    desc: "HCLOUD: Destroy EvoCloud Harbor Server"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Destory EvoCloud Harbor Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-backend-evoharbor
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-vcd:
+    desc: "HCLOUD: Destroy EvoCloud Virtual Cloud Desktop Server"
+    deps: [copy-files]
+    cmds:
+      - echo "HCLOUD':' Destroying EvoCloud Virtual Cloud Desktop Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-dmz-vcd
+          ACTION: "{{.DESTROY_CMD}}"
