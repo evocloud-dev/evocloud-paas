@@ -129,7 +129,7 @@ inputs = {
   }
 
   #WORKER NODES
-  TALOS_WKLD_INSTANCE_SIZE    = "cx33"
+  TALOS_WKLD_INSTANCE_SIZE    = "cx43"
   TALOS_WKLD_NODES            = {
     node01 = {
       short_name = "evok8s-wk01"
@@ -166,7 +166,6 @@ inputs = {
     gateway_api_exp       = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/experimental-install.yaml"
     kubelet_serving_cert  = "https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml"
     kube-metric_server    = "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml"
-    local-storage_class   = "https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/local-storageclass.yaml"
     kube-buildpack        = "https://github.com/buildpacks-community/kpack/releases/download/v0.16.1/release-0.16.1.yaml"
   }
 

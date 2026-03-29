@@ -1,0 +1,169 @@
+---
+#This playbook will deploy Cert-Manager with integration with IPA to provide automatic certificate issuance for Kubernetes
+#References:
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-essentials ##############"
+
+#python3-kubernetes package is required by the kubernetes.core.k8s ansible module
+- name: Installing python3-kubernetes package...
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  loop:
+    - python3-kubernetes
+  register: packages_install
+  until: packages_install is succeeded
+  retries: 2
+
+- name: Waiting for Kubernetes cluster to fully bootstrap...
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ kubeconfig }}"
+    kind: Deployment
+    wait: yes
+    name: source-controller
+    namespace: flux-system
+    wait_sleep: 10
+    wait_timeout: 900 # 15 minutes
+
+- name: Creating directories for various manifests...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ kubeapp_dir }}/cert-manager"
+    - "{{ kubeapp_dir }}/external-dns"
+    - "{{ kubeapp_dir }}/cilium-ippool"
+    - "{{ kubeapp_dir }}/cilium-gateway"
+
+- name: Creating cert-manager namespace...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    api_version: v1
+    kind: Namespace
+    name: "{{ certmanager_namespace }}"
+    state: present
+
+- name: Reading in IPA ca-bundle certificate...
+  ansible.builtin.slurp:
+    src: /etc/pki/tls/certs/ca-bundle.crt
+  register: ipa_ca_bundle
+  delegate_to: '{{ idam_server_ip }}'
+
+- name: Creating IPA ca-bundle ConfigMap...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: ca-bundle
+        namespace: "{{ certmanager_namespace }}"
+      data:
+        ca-certificates.crt: "{{ ipa_ca_bundle.content | b64decode }}"
+
+- name: Reading in tsig_secret_value for later use...
+  ansible.builtin.shell: |
+    cat /etc/pki/tls/certs/tsig_secret_value
+  become: true
+  register: tsig_secret_value
+  delegate_to: '{{ idam_server_ip }}'
+
+- name: Creating kubernetes secret for ipa-tsig...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ tsig_secret_name }}"
+        namespace: "{{ certmanager_namespace }}"
+      type: Opaque
+      stringData:
+        secret: "{{ tsig_secret_value.stdout }}"
+
+##############################################
+#Deploying cert-manager via flux controller
+##############################################
+- name: Staging cert-manager manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ kubeapp_dir }}/cert-manager/{{ item }}"
+  loop:
+    - flux-cert-manager.yaml
+    - cert-manager-issuer.yaml
+
+- name: Deploying cert-manager manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ kubeapp_dir }}/cert-manager/flux-cert-manager.yaml"
+    - "{{ kubeapp_dir }}/cert-manager/cert-manager-issuer.yaml"
+  register: certmanager_deploy_result
+  until: certmanager_deploy_result is succeeded
+  retries: 10
+  delay: 30
+
+
+##############################################
+#Deploying external-dns via flux controller
+##############################################
+- name: Staging external-dns manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ kubeapp_dir }}/external-dns/{{ item }}"
+  loop:
+    - flux-external-dns.yaml
+
+- name: Deploying external-dns manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ kubeapp_dir }}/external-dns/flux-external-dns.yaml"
+
+##############################################
+#Deploying cilium ippool and l2announcement
+##############################################
+- name: Staging cilium manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ kubeapp_dir }}/cilium-ippool/{{ item }}"
+  loop:
+    - cilium-ip-pool.yaml
+    - cilium-l2announcement-policy.yaml
+
+- name: Deploying cilium manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ kubeapp_dir }}/cilium-ippool/cilium-ip-pool.yaml"
+    - "{{ kubeapp_dir }}/cilium-ippool/cilium-l2announcement-policy.yaml"
+
+##############################################
+#Deploying cilium-gateway endpoint
+##############################################
+- name: Staging cilium-gateway manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ kubeapp_dir }}/cilium-gateway/{{ item }}"
+  loop:
+    - gateway.yaml
+    - httproute.yaml
+
+- name: Deploying cilium-gateway manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ kubeapp_dir }}/cilium-gateway/gateway.yaml"
+    - "{{ kubeapp_dir }}/cilium-gateway/httproute.yaml"

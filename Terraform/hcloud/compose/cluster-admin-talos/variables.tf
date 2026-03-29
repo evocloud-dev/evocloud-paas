@@ -67,6 +67,26 @@ variable "HCLOUD_METADATA_NS" {
   type        = string
 }
 
+variable "IDAM_SHORT_HOSTNAME" {
+  description = "IDAM Server Short Hostname"
+  type        = string
+}
+
+variable "ANSIBLE_DEBUG_FLAG" {
+  description = "Ansible Debug Flag"
+  type        = string
+}
+
+variable "PRIVATE_KEY_PAIR" {
+  description = "Private SSH Key"
+  type        = string
+}
+
+variable "DOMAIN_TLD" {
+  description = "Platform Domain Name"
+  type        = string
+}
+
 variable "vpc_id" {
   description = "VPC ID"
   type        = string
@@ -98,4 +118,8 @@ variable "idam_server_ip" {
 variable "idam_replica_ip" {
   description = "IDAM Replica Server Private IPv4"
   type        = string
+}
+
+variable "cluster_post_config_revision" {
+  description = "Cluster Admin Post Configs version"
 }

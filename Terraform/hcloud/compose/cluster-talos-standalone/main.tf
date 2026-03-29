@@ -331,36 +331,31 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm repo add cilium https://helm.cilium.io/
                           helm repo update
                           helm upgrade --install cilium cilium/cilium \
-                          --version 1.19.1 \
+                          --version 1.19.2 \
                           --namespace kube-system \
+                          --set operator.replicas=1 \
                           --set k8sServiceHost=localhost \
                           --set k8sServicePort=7445 \
-                          --set operator.replicas=1 \
                           --set k8sClientRateLimit.qps=50 \
                           --set k8sClientRateLimit.burst=200 \
                           --set cluster.name=${var.cluster_name} \
-                          --set cluster.id=0 \
+                          --set cluster.id=1 \
                           --set rollOutCiliumPods=true \
-                          --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
-                          --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
                           --set l2announcements.enabled=true \
-                          --set l2announcements.leaseDuration=15s \
-                          --set l2announcements.leaseRenewDeadline=5s \
-                          --set l2announcements.leaseRetryPeriod=1s \
                           --set envoyConfig.enabled=true \
                           --set gatewayAPI.enabled=true \
                           --set gatewayAPI.enableAppProtocol=true \
                           --set gatewayAPI.enableAlpn=true \
+                          --set devices="{eth0,e+}" \
                           --set-string gatewayAPI.gatewayClass.create=true \
                           --set externalIPs.enabled=true \
                           --set ipam.mode=kubernetes \
                           --set kubeProxyReplacement=true \
-                          --set maglev.tableSize=65521 \
                           --set operator.rollOutPods=true \
                           --set cgroup.autoMount.enabled=false \
                           --set cgroup.hostRoot=/sys/fs/cgroup \
-                          --set envoy.securityContext.capabilities.envoy="{NET_ADMIN,NET_BIND_SERVICE,PERFMON,BPF}" \
-                          --set envoy.securityContext.capabilities.keepCapNetBindService=true
+                          --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
+                          --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}"
                     serviceAccount: cilium-install-sa
                     serviceAccountName: cilium-install-sa
                     hostNetwork: true
@@ -608,12 +603,7 @@ data "talos_machine_configuration" "talos_controlplane" {
               ############################################
               #HEADLAMP DEPLOYMENT
               ############################################
-              apiVersion: v1
-              kind: Namespace
-              metadata:
-                name: headlamp
-              ---
-              #Dedicated service account for headlamp in headlamp namespace
+              #Dedicated service account for headlamp
               apiVersion: rbac.authorization.k8s.io/v1
               kind: ClusterRoleBinding
               metadata:
@@ -625,19 +615,19 @@ data "talos_machine_configuration" "talos_controlplane" {
               subjects:
               - kind: ServiceAccount
                 name: flux-headlamp-sa
-                namespace: headlamp
+                namespace: kube-system
               ---
               apiVersion: v1
               kind: ServiceAccount
               metadata:
                 name: flux-headlamp-sa
-                namespace: headlamp
+                namespace: kube-system
               ---
               apiVersion: source.toolkit.fluxcd.io/v1
               kind: HelmRepository
               metadata:
                 name: headlamp-release
-                namespace: headlamp
+                namespace: kube-system
               spec:
                 interval: 24h
                 url: https://kubernetes-sigs.github.io/headlamp
@@ -646,18 +636,18 @@ data "talos_machine_configuration" "talos_controlplane" {
               kind: HelmRelease
               metadata:
                 name: headlamp
-                namespace: headlamp
+                namespace: kube-system
               spec:
                 dependsOn:
-                  - name: local-path-storage-provisioner
-                    namespace: local-path-storage
+                  - name: rook-ceph-cluster
+                    namespace: rook-ceph
                 chart:
                   spec:
                     chart: headlamp
                     sourceRef:
                       kind: HelmRepository
                       name: headlamp-release
-                    version: "0.38.*"
+                    version: "0.41.*"
                 serviceAccountName: flux-headlamp-sa
                 interval: 30m0s
                 timeout: 25m0s
@@ -830,4 +820,17 @@ resource "local_file" "talos_talosconfig_file" {
   content     = <<-EOF
     ${data.talos_client_configuration.talosconfig.talos_config}
   EOF
+}
+
+## Validate Kubernetes endpoint is up
+data "http" "k8s_health_check" {
+  depends_on     = [ local_file.talos_kubeconfig_file ]
+
+  url            = "https://${one(hcloud_server.talos_ctrlplane["node01"].network[*].ip)}:6443/version"
+  insecure       = true
+  retry {
+    attempts     = 60
+    min_delay_ms = 5000
+    max_delay_ms = 5000
+  }
 }

@@ -11,6 +11,15 @@ resource "hcloud_firewall" "evok8s_firewall_rule" {
   rule {
     direction = "in"
     protocol  = "tcp"
+    port      = "80"
+    source_ips = [
+      "0.0.0.0/0"
+    ]
+  }
+
+  rule {
+    direction = "in"
+    protocol  = "tcp"
     port      = "443"
     source_ips = [
       "0.0.0.0/0"
@@ -82,6 +91,22 @@ resource "hcloud_load_balancer_service" "apid" {
   protocol         = "tcp"
   listen_port      = 50000
   destination_port = 50000
+  proxyprotocol    = false
+}
+
+resource "hcloud_load_balancer_service" "httproute" {
+  load_balancer_id = hcloud_load_balancer.this.id
+  protocol         = "tcp"
+  listen_port      = 80
+  destination_port = 80
+  proxyprotocol    = false
+}
+
+resource "hcloud_load_balancer_service" "httpsroute" {
+  load_balancer_id = hcloud_load_balancer.this.id
+  protocol         = "tcp"
+  listen_port      = 443
+  destination_port = 443
   proxyprotocol    = false
 }
 
@@ -336,8 +361,7 @@ data "talos_machine_configuration" "talos_controlplane" {
           var.TALOS_EXTRA_MANIFESTS["gateway_api_std"],
           var.TALOS_EXTRA_MANIFESTS["gateway_api_exp"],
           var.TALOS_EXTRA_MANIFESTS["kubelet_serving_cert"],
-          var.TALOS_EXTRA_MANIFESTS["kube-metric_server"],
-          var.TALOS_EXTRA_MANIFESTS["local-storage_class"],
+          var.TALOS_EXTRA_MANIFESTS["kube-metric_server"]
         ]
         inlineManifests = [
           {
@@ -423,35 +447,31 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm repo add cilium https://helm.cilium.io/
                           helm repo update
                           helm upgrade --install cilium cilium/cilium \
-                          --version 1.19.1 \
+                          --version 1.19.2 \
                           --namespace kube-system \
+                          --set operator.replicas=2 \
                           --set k8sServiceHost=localhost \
                           --set k8sServicePort=7445 \
                           --set k8sClientRateLimit.qps=50 \
                           --set k8sClientRateLimit.burst=200 \
                           --set cluster.name=${var.cluster_name} \
-                          --set cluster.id=0 \
+                          --set cluster.id=1 \
                           --set rollOutCiliumPods=true \
-                          --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
-                          --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
                           --set l2announcements.enabled=true \
-                          --set l2announcements.leaseDuration=15s \
-                          --set l2announcements.leaseRenewDeadline=5s \
-                          --set l2announcements.leaseRetryPeriod=1s \
                           --set envoyConfig.enabled=true \
                           --set gatewayAPI.enabled=true \
                           --set gatewayAPI.enableAppProtocol=true \
                           --set gatewayAPI.enableAlpn=true \
+                          --set devices="{eth0,e+}" \
                           --set-string gatewayAPI.gatewayClass.create=true \
                           --set externalIPs.enabled=true \
                           --set ipam.mode=kubernetes \
                           --set kubeProxyReplacement=true \
-                          --set maglev.tableSize=65521 \
                           --set operator.rollOutPods=true \
                           --set cgroup.autoMount.enabled=false \
                           --set cgroup.hostRoot=/sys/fs/cgroup \
-                          --set envoy.securityContext.capabilities.envoy="{NET_ADMIN,NET_BIND_SERVICE,PERFMON,BPF}" \
-                          --set envoy.securityContext.capabilities.keepCapNetBindService=true
+                          --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
+                          --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}"
                     serviceAccount: cilium-install-sa
                     serviceAccountName: cilium-install-sa
                     hostNetwork: true
@@ -608,6 +628,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                   ttl.after.delete: "86400s" #Automatically deletes SA after 24 hours (86400 seconds)
               ---
               #https://operatorhub.io/operator/flux-operator
+              #https://github.com/controlplaneio-fluxcd/charts/tree/main/charts/flux-operator
               apiVersion: batch/v1
               kind: Job
               metadata:
@@ -631,7 +652,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install flux-operator oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator \
                             --namespace flux-system \
                             --create-namespace \
-                            --version 0.40.0 \
+                            --version 0.45.1 \
                             --wait
                     restartPolicy: OnFailure
                     serviceAccount: flux-install
@@ -649,7 +670,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                   fluxcd.controlplane.io/reconcileTimeout: "20m"
               spec:
                 distribution:
-                  version: "2.7.x"
+                  version: "2.8.x"
                   registry: "ghcr.io/fluxcd"
                   artifact: "oci://ghcr.io/controlplaneio-fluxcd/flux-operator-manifests"
                 components:
@@ -729,7 +750,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: rook-release
-                    version: "v1.18.*"
+                    version: "v1.19.*"
                 serviceAccountName: flux-rook-ceph-sa
                 interval: 30m0s
                 install:
@@ -760,7 +781,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: rook-release
-                    version: "v1.18.*"
+                    version: "v1.19.*"
                 serviceAccountName: flux-rook-ceph-sa
                 interval: 35m0s
                 install:
@@ -786,12 +807,7 @@ data "talos_machine_configuration" "talos_controlplane" {
               ############################################
               #HEADLAMP DEPLOYMENT
               ############################################
-              apiVersion: v1
-              kind: Namespace
-              metadata:
-                name: headlamp
-              ---
-              #Dedicated service account for headlamp in headlamp namespace
+              #Dedicated service account for headlamp
               apiVersion: rbac.authorization.k8s.io/v1
               kind: ClusterRoleBinding
               metadata:
@@ -803,19 +819,19 @@ data "talos_machine_configuration" "talos_controlplane" {
               subjects:
               - kind: ServiceAccount
                 name: flux-headlamp-sa
-                namespace: headlamp
+                namespace: kube-system
               ---
               apiVersion: v1
               kind: ServiceAccount
               metadata:
                 name: flux-headlamp-sa
-                namespace: headlamp
+                namespace: kube-system
               ---
               apiVersion: source.toolkit.fluxcd.io/v1
               kind: HelmRepository
               metadata:
                 name: headlamp-release
-                namespace: headlamp
+                namespace: kube-system
               spec:
                 interval: 24h
                 url: https://kubernetes-sigs.github.io/headlamp
@@ -824,7 +840,7 @@ data "talos_machine_configuration" "talos_controlplane" {
               kind: HelmRelease
               metadata:
                 name: headlamp
-                namespace: headlamp
+                namespace: kube-system
               spec:
                 dependsOn:
                   - name: rook-ceph-cluster
@@ -835,7 +851,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: headlamp-release
-                    version: "0.38.*"
+                    version: "0.41.*"
                 serviceAccountName: flux-headlamp-sa
                 interval: 30m0s
                 timeout: 25m0s
@@ -848,6 +864,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     enabled: false
                   config:
                     pluginsDir: /build/plugins
+                    baseURL: "/ui"
                   initContainers:
                     - command:
                         - /bin/sh
@@ -929,7 +946,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: kube-promstack-release
-                    version: "77.*"
+                    version: "82.*"
                 interval: 30m0s
                 timeout: 25m0s
                 serviceAccountName: flux-kube-promstack-sa
@@ -1004,7 +1021,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: kube-opencost-release
-                    version: "2.3.*"
+                    version: "2.5.*"
                 interval: 30m0s
                 timeout: 25m0s
                 serviceAccountName: flux-opencost-sa
@@ -1085,9 +1102,9 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: kubescape-release
-                    version: "1.29.*"
+                    version: "1.30.*"
                 interval: 30m0s
-                timeout: 60m0s
+                timeout: 25m0s
                 serviceAccountName: flux-kubescape-sa
                 install:
                   remediation:
@@ -1154,7 +1171,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: keda-release
-                    version: "2.17.*"
+                    version: "2.19.*"
                 interval: 30m0s
                 timeout: 25m0s
                 serviceAccountName: flux-keda-sa
@@ -1229,7 +1246,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: dapr-release
-                    version: "1.16.*"
+                    version: "1.17.*"
                 interval: 30m0s
                 timeout: 25m0s
                 serviceAccountName: flux-dapr-sa
@@ -1328,7 +1345,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: kube-trivy-release
-                    version: "0.31.*"
+                    version: "0.32.*"
                 interval: 30m0s
                 timeout: 25m0s
                 serviceAccountName: flux-kube-trivy-sa
@@ -1572,4 +1589,42 @@ resource "local_file" "talos_talosconfig_file" {
   content     = <<-EOF
     ${data.talos_client_configuration.talosconfig.talos_config}
   EOF
+}
+
+## Validate Kubernetes endpoint is up
+data "http" "k8s_health_check" {
+  depends_on     = [ local_file.talos_kubeconfig_file ]
+
+  url            = "https://${hcloud_load_balancer.this.ipv4}:6443/version"
+  insecure       = true
+  retry {
+    attempts     = 60
+    min_delay_ms = 5000
+    max_delay_ms = 5000
+  }
+}
+
+#--------------------------------------------------
+# Ansible Configuration Management Code
+#--------------------------------------------------
+resource "terraform_data" "redeploy_cluster_post_configuration" {
+  input = var.cluster_post_config_revision
+}
+
+resource "terraform_data" "cluster_post_configuration" {
+  depends_on = [data.http.k8s_health_check]
+
+  lifecycle {
+    replace_triggered_by = [terraform_data.redeploy_cluster_post_configuration]
+  }
+
+  provisioner "local-exec" {
+    command = <<EOF
+      ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 /${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapp-essentials.yml --forks 10 --inventory-file 127.0.0.1, --user ${var.CLOUD_USER} --private-key ${var.PRIVATE_KEY_PAIR} --vault-password-file /${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' --extra-vars 'ansible_secret=/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} gtw_lb_ip=${hcloud_load_balancer_network.this.ip} kubeapp_dir=/${var.CLOUD_USER}/kubeapps kubeconfig=/${var.CLOUD_USER}/kubeconfig/kubeconfig-${var.cluster_name}.yaml'
+    EOF
+    #Ansible logs
+    environment = {
+      ANSIBLE_LOG_PATH = "/${var.CLOUD_USER}/Logs/kubeapp-essentials-ansible.log"
+    }
+  }
 }

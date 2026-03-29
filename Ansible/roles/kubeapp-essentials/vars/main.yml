@@ -9,13 +9,13 @@ idam_short_hostname: ""
 
 kube_cluster_name: ""
 
-admin_cilium_lbipam_cidr: ""
+gtw_lb_ip: ""
 
 kubeapp_dir: '/home/{{ cloud_user }}/kubeapps'
 
 kubeconfig: '/home/{{ cloud_user }}/kubeconfig/kubeconfig-{{ kube_cluster_name }}.yaml'
 
-certmanager_min_ver: v1.17
+certmanager_min_ver: v1.20
 
 certmanager_namespace: cert-manager
 
