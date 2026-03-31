@@ -9,19 +9,16 @@ terraform {
       source  = "hetznercloud/hcloud"
       version = "< 2.0.0"
     }
-
     #Talos provider
     talos = {
       source  = "siderolabs/talos"
       version = "<= 0.10.1"
     }
-
     #Timer
     time = {
       source = "hashicorp/time"
       version = "0.13.1"
     }
-
     #HTTP CLIENT
     http = {
       source = "hashicorp/http"

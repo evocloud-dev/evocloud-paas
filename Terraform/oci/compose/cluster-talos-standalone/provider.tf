@@ -8,7 +8,15 @@ provider "oci" {
   region  = var.OCI_REGION
 }
 
+provider "talos" {
+  # Configuration options
+}
+
 provider "time" {
+  # Configuration options
+}
+
+provider "http" {
   # Configuration options
 }
 

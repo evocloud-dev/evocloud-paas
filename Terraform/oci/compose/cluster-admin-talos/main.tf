@@ -1607,14 +1607,15 @@ resource "local_file" "talos_kubeconfig_file" {
   EOF
 }
 
-## Save talosconfig to a file
-resource "local_file" "talos_talosconfig_file" {
-  depends_on  = [talos_cluster_kubeconfig.kubeconfig]
+## Validate Kubernetes endpoint is up
+data "http" "k8s_health_check" {
+  depends_on     = [ local_file.talos_kubeconfig_file ]
 
-  filename    = "/home/${var.CLOUD_USER}/talosconfig/talosconfig-${var.cluster_name}.yaml"
-  directory_permission = "0740"
-  file_permission      = "0640"
-  content     = <<-EOF
-    ${data.talos_client_configuration.talosconfig.talos_config}
-  EOF
+  url            = "https://${oci_core_private_ip.gateway_vip.ip_address}:6443/version"
+  insecure       = true
+  retry {
+    attempts     = 60
+    min_delay_ms = 5000
+    max_delay_ms = 5000
+  }
 }

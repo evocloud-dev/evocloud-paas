@@ -2,7 +2,7 @@
 # Expose EvoCode Runner Platform Information
 #--------------------------------------------------
 output "private_ip" {
-  value = hcloud_server.evocode_runner_server.network[*].ip
+  value = one(hcloud_server.evocode_runner_server.network[*].ip)
   sensitive = false
 }
 

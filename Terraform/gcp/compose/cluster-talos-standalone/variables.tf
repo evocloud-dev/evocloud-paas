@@ -45,6 +45,11 @@ variable "BASE_VOLUME_50" {
   type        = string
 }
 
+variable "BASE_VOLUME_200" {
+  description = "Base Volume Size 200GB"
+  type        = string
+}
+
 variable "TALOS_CTRL_STANDALONE_SIZE" {
   description = "Talos Standalone Controlplane Compute Instance Flavor Size"
   type        = string

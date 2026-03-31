@@ -1666,6 +1666,19 @@ resource "local_file" "talos_talosconfig_file" {
   EOF
 }
 
+## Validate Kubernetes endpoint is up
+data "http" "k8s_health_check" {
+  depends_on     = [ local_file.talos_kubeconfig_file ]
+
+  url            = "https://${google_compute_address.gateway_vip.address}:6443/version"
+  insecure       = true
+  retry {
+    attempts     = 60
+    min_delay_ms = 5000
+    max_delay_ms = 5000
+  }
+}
+
 #--------------------------------------------------
 # Ansible Configuration Management Code
 #--------------------------------------------------
@@ -1674,7 +1687,7 @@ resource "terraform_data" "redeploy_cluster_post_configuration" {
 }
 
 resource "terraform_data" "cluster_post_configuration" {
-  depends_on = [local_file.talos_kubeconfig_file]
+  depends_on = [data.http.k8s_health_check]
 
   #Uncomment below if we want to run Triggers when VM ID changes
   #triggers_replace = [google_compute_instance.idam_server]

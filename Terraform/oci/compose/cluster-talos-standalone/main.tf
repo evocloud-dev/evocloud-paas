@@ -1,4 +1,23 @@
 #--------------------------------------------------
+# Locals
+#--------------------------------------------------
+locals {
+  user_volume_patch = <<-EOF
+    apiVersion: v1alpha1
+    kind: UserVolumeConfig
+    name: local-storage
+    provisioning:
+      diskSelector:
+        match: disk.dev_path == '/dev/sdb'
+      minSize: 150GB
+    encryption:
+      provider: luks2
+      keys:
+        - slot: 0
+          nodeID: {}
+  EOF
+}
+#--------------------------------------------------
 # Data Source to find Custom Talos Image
 #--------------------------------------------------
 data "oci_core_images" "talos_images" {
@@ -70,6 +89,25 @@ resource "oci_core_instance" "talos_ctrlplane" {
   }
 
   freeform_tags               = {"Platform"= "EvoCloud"}
+}
+
+##Talos Worker VMs Extra disk creation and attachment
+resource "oci_core_volume" "extra_disk" {
+  compartment_id          = var.OCI_TENANCY_ID
+  for_each                = var.TALOS_CTRL_STANDALONE
+
+  display_name            = "${oci_core_instance.talos_ctrlplane[each.key].display_name}-extra-volume"
+  availability_domain     = data.oci_identity_availability_domains.az_domains.availability_domains[0].name
+  vpus_per_gb             = var.TALOS_STANDALONE_VOLUME_TYPE
+  size_in_gbs             = var.BASE_VOLUME_200
+  freeform_tags           = {"Platform"= "EvoCloud"}
+}
+
+resource "oci_core_volume_attachment" "disk_attachment" {
+  for_each        = var.TALOS_CTRL_STANDALONE
+  volume_id       = oci_core_volume.extra_disk[each.key].id
+  instance_id     = oci_core_instance.talos_ctrlplane[each.key].id
+  attachment_type = "PARAVIRTUALIZED"
 }
 
 #--------------------------------------------------
@@ -603,6 +641,7 @@ data "talos_machine_configuration" "talos_controlplane" {
         ]
       }
     }),
+    local.user_volume_patch,
   ]
 }
 
@@ -682,4 +721,17 @@ resource "local_file" "talos_talosconfig_file" {
   content     = <<-EOF
     ${data.talos_client_configuration.talosconfig.talos_config}
   EOF
+}
+
+## Validate Kubernetes endpoint is up
+data "http" "k8s_health_check" {
+  depends_on     = [ local_file.talos_kubeconfig_file ]
+
+  url            = "https://${oci_core_instance.talos_ctrlplane["node01"].public_ip}:6443/version"
+  insecure       = true
+  retry {
+    attempts     = 60
+    min_delay_ms = 5000
+    max_delay_ms = 5000
+  }
 }
