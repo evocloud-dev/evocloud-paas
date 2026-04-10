@@ -180,7 +180,7 @@ remote_state {
     region                     = "nbg1" #nbg1 | fsn1 | hel1
     bucket                     = "evocloud-tf-state"
     key                        = "${basename(get_parent_terragrunt_dir())}/${path_relative_to_include()}"
-    endpoint                   = "https://<region>.your-objectstorage.com" #https://fsn1.your-objectstore.com
+    endpoint                   = "https://<region>.your-objectstorage.com" #https://fsn1.your-objectstorage.com
     access_key                 = "xxxxx"
     secret_key                 = "xxxxx"
 

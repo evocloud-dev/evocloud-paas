@@ -44,9 +44,14 @@ resource "terraform_data" "staging_automation_code" {
     private_key = file(var.PRIVATE_KEY_PAIR)
   }
 
+  # Since we aren't doing the hardening in the image build,
+  # tar needs to be installed and the secret-vault directory needs to
+  # be created
   provisioner "remote-exec" {
     inline = [
-      "mkdir -p /home/${var.CLOUD_USER}/EVOCLOUD"
+      "dnf update -y && dnf install -y tar",
+      "mkdir -p /home/${var.CLOUD_USER}/EVOCLOUD",
+      "mkdir -p /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault"
     ]
   }
 

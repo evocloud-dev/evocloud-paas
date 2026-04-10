@@ -16,6 +16,13 @@ include "root" {
 }
 
 #--------------------------------------------------
+# Set network-route module dependency
+#--------------------------------------------------
+dependency "network-route" {
+  config_path   = "${get_terragrunt_dir()}/../network-03-route"
+}
+
+#--------------------------------------------------
 # Set network-subnet module dependency
 #--------------------------------------------------
 dependency "network-subnet" {
