@@ -20,7 +20,7 @@ resource "terraform_data" "evotalos_standalone_deployment" {
 
   provisioner "remote-exec" {
     inline = [
-      "cd /${var.CLOUD_USER}/EVOCLOUD/Terraform/hcloud/deployment/cluster-talos-standalone",
+      "cd /home/${var.CLOUD_USER}/EVOCLOUD/Terraform/hcloud/deployment/cluster-talos-standalone",
       "terragrunt run --all apply --non-interactive --queue-include-external",
     ]
   }
