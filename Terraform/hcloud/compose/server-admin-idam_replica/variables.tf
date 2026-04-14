@@ -24,7 +24,12 @@ variable "DOMAIN_TLD" {
 }
 
 variable "HCLOUD_METADATA_NS" {
-  description = "GCP Metadata Nameserver IP"
+  description = "Hcloud Metadata Nameserver IP"
+  type        = string
+}
+
+variable "HCLOUD_METADATA_NS2" {
+  description = "Hcloud Metadata Second Nameserver IP"
   type        = string
 }
 
@@ -38,9 +43,15 @@ variable "HCLOUD_REGION" {
   type        = string
 }
 
+variable "BASE_AMI_NAME" {
+  description = "Base Rocky Linux Image Name"
+  type        = string
+}
+
 variable "HCLOUD_TOKEN" {
   description = "HCLOUD Token"
   type        = string
+  sensitive   = true
 }
 
 variable "IDAM_REPLICA_SHORT_HOSTNAME" {
@@ -70,11 +81,6 @@ variable "IDAM_SHORT_HOSTNAME" {
 
 variable "admin_subnet_id" {
   description = "Output for ADMIN Subnet ID"
-  type        = string
-}
-
-variable "deployer_server_eip" {
-  description = "Deployer Server Public IP"
   type        = string
 }
 

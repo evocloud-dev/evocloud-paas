@@ -1,7 +1,7 @@
 # Retrieve Virtual Cloud desktop IP Address
 output "vcd_server_private_ip" {
   description = "Virtual Cloud Desktop Private IP Address"
-  value = hcloud_server.vcd_server.network[0].ip
+  value = hcloud_server.vcd_server.network[*].ip
   sensitive = true
 }
 

@@ -1,0 +1,10 @@
+---
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: "cilium-ip-pool-01"
+spec:
+  blocks:
+    #- cidr: "{{ gtw_lb_ip }}"
+    - start: "{{ gtw_lb_ip }}"
+      stop: "{{ gtw_lb_ip }}"

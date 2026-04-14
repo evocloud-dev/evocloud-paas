@@ -1,10 +1,6 @@
 #--------------------------------------------------
 # Server DMZ Main
 #--------------------------------------------------
-data "hcloud_image" "evovm_snapshot" {
-  with_selector = "name=evocloud-rocky-linux-8-b0-1-0"
-  most_recent = true
-}
 
 resource "hcloud_ssh_key" "pub_key" {
   name       = "public-ssh-key"
@@ -13,9 +9,9 @@ resource "hcloud_ssh_key" "pub_key" {
 
 resource "hcloud_server" "deployer_server" {
   name        = var.DEPLOYER_SHORT_HOSTNAME
-  server_type = var.DEPLOYER_INSTANCE_SIZE     # 2 vCPU, 4GB RAM
-  location    = var.HCLOUD_REGION              # Nuremberg
-  image       = data.hcloud_image.evovm_snapshot.id
+  server_type = var.DEPLOYER_INSTANCE_SIZE
+  location    = var.HCLOUD_REGION
+  image       = var.BASE_AMI_NAME
   ssh_keys    = [hcloud_ssh_key.pub_key.id]
 
   # This gets you an ipv4 primary ip
@@ -26,9 +22,13 @@ resource "hcloud_server" "deployer_server" {
 
   # Attach to private network
   network {
-    network_id = var.dmz_subnet_id
-    ip         = var.DEPLOYER_PRIVATE_IP  # Static IP within subnet range
+    network_id  = var.dmz_subnet_id
+    ip          = var.DEPLOYER_PRIVATE_IP  # Static Private IP within subnet range
+    alias_ips   = [] #Bug: https://github.com/hetznercloud/terraform-provider-hcloud/issues/650#issuecomment-1497160625
   }
+
+  #COME BACK HERE AND SET A FIREWALL RULE
+  #firewall_ids = each.value.SECURITY_GROUP_IDS
 }
 
 #--------------------------------------------------
@@ -44,9 +44,14 @@ resource "terraform_data" "staging_automation_code" {
     private_key = file(var.PRIVATE_KEY_PAIR)
   }
 
+  # Since we aren't doing the hardening in the image build,
+  # tar needs to be installed and the secret-vault directory needs to
+  # be created
   provisioner "remote-exec" {
     inline = [
-      "mkdir -p /home/${var.CLOUD_USER}/EVOCLOUD"
+      "dnf update -y && dnf install -y tar",
+      "mkdir -p /home/${var.CLOUD_USER}/EVOCLOUD",
+      "mkdir -p /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault"
     ]
   }
 

@@ -18,24 +18,31 @@ include "root" {
 }
 
 #--------------------------------------------------
+# Set network-route module dependency
+#--------------------------------------------------
+dependency "network-route" {
+  config_path   = "${get_terragrunt_dir()}/../network-03-route"
+}
+
+#--------------------------------------------------
 # Set network-subnet module dependency
 #--------------------------------------------------
 dependency "network-subnet" {
-  config_path   = "${get_terragrunt_dir()}/../network-04-subnet"
+  config_path   = "${get_terragrunt_dir()}/../network-02-subnet"
 }
 
 #--------------------------------------------------
 # Set server-admin-idam module dependency
 #--------------------------------------------------
 dependency "server-admin-idam" {
-  config_path   = "${get_terragrunt_dir()}/../server-02-admin-idam"
+  config_path   = "${get_terragrunt_dir()}/../server-03-admin-idam"
 }
 
 #--------------------------------------------------
 # Set server-admin-idam-replica module dependency
 #--------------------------------------------------
 dependency "server-admin-idam_replica" {
-  config_path   = "${get_terragrunt_dir()}/../server-03-admin-idam_replica"
+  config_path   = "${get_terragrunt_dir()}/../server-04-admin-idam_replica"
 }
 
 #--------------------------------------------------

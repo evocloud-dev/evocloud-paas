@@ -6,7 +6,8 @@ inputs = {
   # Miscellaneous Variables
   ###########################################################################
   DOMAIN_TLD         = "evocloud.dev"
-  HCLOUD_METADATA_NS = "169.254.169.254" #Changes depending on zone
+  HCLOUD_METADATA_NS = "185.12.64.1" #Changes depending on zone
+  HCLOUD_METADATA_NS2 = "185.12.64.2" #Changes depending on zone
   CLOUD_PLATFORM     = "hcloud"
 
   ###########################################################################
@@ -26,7 +27,7 @@ inputs = {
   CLOUD_USER           = "root"
   PUBLIC_KEY_PAIR      = "/etc/pki/tls/hcloud-evonode.pub"
   PRIVATE_KEY_PAIR     = "/etc/pki/tls/hcloud-evonode.pem"
-  HCLOUD_TOKEN         = "xxxxxxxx...."
+  HCLOUD_TOKEN         = "xxxxxxxx...." #Change it to much your Hetzner Cloud Token
 
   ###########################################################################
   # Ansible/Automation Runtime Environment Configurations
@@ -55,8 +56,7 @@ inputs = {
   DEPLOYER_SHORT_HOSTNAME   = "evo-master"
   BASE_INSTALLER_IMG        = "evocloud-rocky8-b0-1-0"
   DEPLOYER_PRIVATE_IP       = "10.10.10.5"
-  DEPLOYER_INSTANCE_SIZE    = "cx43"
-  DEPLOYER_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
+  DEPLOYER_INSTANCE_SIZE    = "cx33"
 
   ###########################################################################
   # DMZ Gateway Host
@@ -64,8 +64,7 @@ inputs = {
   GATEWAY_SHORT_HOSTNAME    = "evo-gateway"
   GATEWAY_IMG               = "evocloud-rocky8-b0-1-0"
   GATEWAY_PRIVATE_IP        = "10.10.10.6"
-  GATEWAY_INSTANCE_SIZE     = "cx43"
-  GATEWAY_BASE_VOLUME_TYPE  = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
+  GATEWAY_INSTANCE_SIZE     = "cx23"
 
   ###########################################################################
   # IDAM Identity and Access Management Server (FreeIPA)
@@ -73,108 +72,93 @@ inputs = {
   IDAM_SHORT_HOSTNAME   = "evoidp"
   BASE_IPASERVER_IMG    = "evocloud-rocky8-b0-1-0"
   IDAM_PRIVATE_IP       = "10.10.20.5"
-  IDAM_INSTANCE_SIZE    = "cx43"
-  IDAM_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
+  IDAM_INSTANCE_SIZE    = "cx33"
 
   ###########################################################################
   # IDAM Identity and Access Management Replica Server
   ###########################################################################
   IDAM_REPLICA_SHORT_HOSTNAME   = "evoidpr"
   IDAM_REPLICA_PRIVATE_IP       = "10.10.20.10"
-  IDAM_REPLICA_INSTANCE_SIZE    = "cx23"
-  IDAM_REPLICA_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
+  IDAM_REPLICA_INSTANCE_SIZE    = "cx33"
 
   ###########################################################################
   # Remote Desktop Server
   ###########################################################################
   RDP_SHORT_HOSTNAME   = "evodesktop"
-  RDP_INSTANCE_SIZE    = "cx43"
-  RDP_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
+  RDP_INSTANCE_SIZE    = "cx33"
 
   ###########################################################################
   # Virtual Cloud Desktop
   ###########################################################################
   VCD_SHORT_HOSTNAME   = "evovdi"
-  VCD_INSTANCE_SIZE    = "cx43"
-  VCD_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
+  VCD_INSTANCE_SIZE    = "cx33"
 
   ###########################################################################
   # EvoCode Enterprise Code Repository Platform (Gitlab)
   ###########################################################################
   EVOCODE_SHORT_HOSTNAME   = "evocode"
-  EVOCODE_INSTANCE_SIZE    = "cx43"
-  EVOCODE_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
+  EVOCODE_INSTANCE_SIZE    = "cx33"
 
   ###########################################################################
   # EvoCode Runner Code Executor for the EvoCode Platform (Gitlab-Runner)
   ###########################################################################
   EVOCODE_RUNNER_SHORT_HOSTNAME   = "evocode-runner"
-  EVOCODE_RUNNER_INSTANCE_SIZE    = "cx43"
-  EVOCODE_RUNNER_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
+  EVOCODE_RUNNER_INSTANCE_SIZE    = "cx33"
 
   ###########################################################################
   # EvoHarbor Repository Server
   ###########################################################################
   EVOHARBOR_SHORT_HOSTNAME      = "evoharbor"
-  EVOCODE_RUNNER_INSTANCE_SIZE  = "cx43"
-  EVOHARBOR_BASE_VOLUME_TYPE    = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
+  EVOHARBOR_INSTANCE_SIZE       = "cx33"
 
   ###########################################################################
   # STANDALONE Kubernetes Cluster (Kubernetes)
   ###########################################################################
-  TALOS_AMI_NAME               = "evocluster-os-1-11-5"
-  TALOS_STANDALONE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
-  TALOS_CTRL_STANDALONE_SIZE   = "cx43"
+  TALOS_AMI_NAME               = "evok8s-os-1-11-5"
+  TALOS_CTRL_STANDALONE_SIZE   = "cx33"
   TALOS_CTRL_STANDALONE        = {
-    node01 = "evotalos-workstation"
+    node01 = "evok8s-workstation"
   }
 
   #CONTROLPLANE NODES
-  TALOS_CTRL_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
-  TALOS_CTRL_SIZE             = "cx43"
+  TALOS_CTRL_INSTANCE_SIZE    = "cx33"
   TALOS_CTRL_NODES            = {
-    node01 = "evotalos-cp01"
-    node02 = "evotalos-cp02"
-    node03 = "evotalos-cp03"
-  }#+1
+    node01 = "evok8s-cp01"
+    node02 = "evok8s-cp02"
+    node03 = "evok8s-cp03"
+  }
 
   #WORKER NODES
-  TALOS_WKLD_BASE_VOLUME_TYPE = "pd-balanced" # #pd-standard | pd-balanced | pd-ssd | pd-extreme
-  TALOS_WKLD_SIZE             = "cx43"
+  TALOS_WKLD_INSTANCE_SIZE    = "cx43"
   TALOS_WKLD_NODES            = {
     node01 = {
-      short_name = "evotalos-wk01"
+      short_name = "evok8s-wk01"
       extra_volume = true
     }
     node02 = {
-      short_name = "evotalos-wk02"
+      short_name = "evok8s-wk02"
       extra_volume = true
     }
     node03 = {
-      short_name = "evotalos-wk03"
+      short_name = "evok8s-wk03"
       extra_volume = true
     }
     node04 = {
-      short_name = "evotalos-wk04"
+      short_name = "evok8s-wk04"
       extra_volume = true
     }
     node05 = {
-      short_name = "evotalos-wk05"
+      short_name = "evok8s-wk05"
       extra_volume = true
     }
     node06 = {
-      short_name = "evotalos-wk06"
+      short_name = "evok8s-wk06"
       extra_volume = true
     }
-  } #+1
+  }
 
   # KUBE API LB NODES
-  TALOS_LB_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
-  TALOS_LB_SIZE             = "cx43"
-  TALOS_LB_NODES            = {
-    node01 = "evotalos-lb01"
-    node02 = "evotalos-lb02"
-  } #+1
+  TALOS_LB_NAME = "evok8s-lb01"
 
   #INLINE KUBERNETES MANIFESTS
   TALOS_EXTRA_MANIFESTS     = {
@@ -182,7 +166,6 @@ inputs = {
     gateway_api_exp       = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/experimental-install.yaml"
     kubelet_serving_cert  = "https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml"
     kube-metric_server    = "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml"
-    local-storage_class   = "https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/local-storageclass.yaml"
     kube-buildpack        = "https://github.com/buildpacks-community/kpack/releases/download/v0.16.1/release-0.16.1.yaml"
   }
 
@@ -197,7 +180,7 @@ remote_state {
     region                     = "nbg1" #nbg1 | fsn1 | hel1
     bucket                     = "evocloud-tf-state"
     key                        = "${basename(get_parent_terragrunt_dir())}/${path_relative_to_include()}"
-    endpoint                   = "https://<region>.your-objectstorage.com" #https://fsn1.your-objectstore.com
+    endpoint                   = "https://<region>.your-objectstorage.com" #https://fsn1.your-objectstorage.com
     access_key                 = "xxxxx"
     secret_key                 = "xxxxx"
 

@@ -4,7 +4,7 @@
 #--------------------------------------------------
 inputs = {
   admin_subnet_id       = dependency.network-subnet.outputs.admin_subnet_id
-  deployer_server_eip   = dependency.server-dmz-deployer.outputs.public_ip
+  deployer_server_eip   = dependency.server-dmz-deployer.outputs.deployer_server_ip
   idam_server_ip        = dependency.server-admin-idam.outputs.private_ip
   idam_replica_revision = "0.1.0"
 }
@@ -14,6 +14,13 @@ inputs = {
 #--------------------------------------------------
 include "root" {
   path = find_in_parent_folders("root.hcl")
+}
+
+#--------------------------------------------------
+# Set network-route module dependency
+#--------------------------------------------------
+dependency "network-route" {
+  config_path   = "${get_terragrunt_dir()}/../network-03-route"
 }
 
 #--------------------------------------------------

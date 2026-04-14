@@ -1,15 +1,13 @@
-#--------------------------------------------------
-# Supported Terraform Version
-#--------------------------------------------------
 terraform {
-  #Terraform required version
-  required_version = ">= 1.0.0, < 2.0.0"
+  # Terraform Required Version
+  required_version = ">= 1.0, < 2.0.0"
 
-  #Providers required version
+  #Providers Required Version
   required_providers {
-    google = {
-      #source  = "terraform.local/evocloud/google"
-      version = "< 8.0.0"
+    hcloud = {
+      #source  = "terraform.local/evocloud/hcloud"
+      source  = "hetznercloud/hcloud"
+      version = "< 2.0.0"
     }
   }
 }

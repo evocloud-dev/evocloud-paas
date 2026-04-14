@@ -3,18 +3,16 @@
 # Input Variables
 #--------------------------------------------------
 inputs = {
-  admin_subnet_name            = dependency.network-subnet.outputs.admin_subnet_name
-  deployer_server_eip          = dependency.server-dmz-deployer.outputs.public_ip
+  vpc_id                       = dependency.network-vpc.outputs.vpc_id
+  admin_subnet_id            = dependency.network-subnet.outputs.admin_subnet_id
   idam_server_ip               = dependency.server-admin-idam.outputs.private_ip
   idam_replica_ip              = dependency.server-admin-idam_replica.outputs.private_ip
   cluster_name                 = "evo-cluster-mgr"
-  talos_version                = "v1.11.0"
+  talos_version                = "v1.11.6"
   kubernetes_version           = "v1.34.0"
   taloslb_revision             = "0.1.0"
   cluster_post_config_revision = "0.1.0"
   kubeapp_gateway_revision     = "0.1.0"
-  create_talos_img             = true
-  use_spot                     = true
 }
 
 #--------------------------------------------------
@@ -32,10 +30,10 @@ dependency "network-subnet" {
 }
 
 #--------------------------------------------------
-# Set server-dmz-deployer module dependency
+# Set network-vpc module dependency
 #--------------------------------------------------
-dependency "server-dmz-deployer" {
-  config_path   = "${get_terragrunt_dir()}/../server-01-dmz-deployer"
+dependency "network-vpc" {
+  config_path   = "${get_terragrunt_dir()}/../network-01-vpc"
 }
 
 #--------------------------------------------------

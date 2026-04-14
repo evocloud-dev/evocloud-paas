@@ -9,7 +9,8 @@
     creds_store: "{{ lookup('file', ansible_secret) | from_yaml }}"
 
   roles:
-    - app-dnsmasq
+    - app-dnsmasq #Needed by GCP and Hetzner Compute Instances
+    - rocky8-hardening
     - config-freeipa-client
     - config-freeipa-certs
     - webapp-evoharbor

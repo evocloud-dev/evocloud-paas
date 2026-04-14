@@ -5,9 +5,22 @@
 - ansible.builtin.debug:
     msg: "################# STARTING ANSIBLE ROLE: app-trivy ##################"
 
+- name: Download Trivy RPM
+  ansible.builtin.get_url:
+    url: "{{ trivy_download_url }}"
+    dest: "/tmp/trivy_{{ trivy_version }}_Linux-64bit.rpm"
+    mode: '0644'
+  become: true
+
 - name: Installing Trivy...
   ansible.builtin.dnf:
-    name: "{{ trivy_download_url }}"
+    name: "/tmp/trivy_{{ trivy_version }}_Linux-64bit.rpm"
     state: present
     disable_gpg_check: yes
+  become: true
+
+- name: Remove Trivy RPM
+  ansible.builtin.file:
+    path: "/tmp/trivy_{{ trivy_version }}_Linux-64bit.rpm"
+    state: absent
   become: true

@@ -24,7 +24,12 @@ variable "DOMAIN_TLD" {
 }
 
 variable "HCLOUD_METADATA_NS" {
-  description = "GCP Metadata Nameserver IP"
+  description = "Hcloud Metadata Nameserver IP"
+  type        = string
+}
+
+variable "HCLOUD_METADATA_NS2" {
+  description = "Hcloud Metadata Second Nameserver IP"
   type        = string
 }
 
@@ -35,6 +40,17 @@ variable "HCLOUD_REGION" {
 
 variable "HCLOUD_TOKEN" {
   description = "HCLOUD Auth Token"
+  type        = string
+  sensitive   = true
+}
+
+variable "BASE_AMI_NAME" {
+  description = "Base Rocky Linux Image Name"
+  type        = string
+}
+
+variable "HCLOUD_GATEWAY" {
+  description = "HCLOUD Gateway IP for Routing Private VM Traffic"
   type        = string
 }
 
@@ -58,10 +74,10 @@ variable "VCD_INSTANCE_SIZE" {
   type        = string
 }
 
-variable "deployer_server_eip" {
-  description = "Deployer Server Public IP"
-  type        = string
-}
+#variable "deployer_server_eip" {
+#  description = "Deployer Server Public IP"
+#  type        = string
+#}
 
 variable "dmz_subnet_id" {
   description = "Subnet ID of DMZ Network"
