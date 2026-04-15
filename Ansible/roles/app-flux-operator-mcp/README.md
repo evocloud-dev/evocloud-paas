@@ -1,7 +1,7 @@
-Flux Operator CLI
+Flux Operator MCP
 =========
 
-Installs [Flux Operator CLI](https://github.com/controlplaneio-fluxcd/flux-operator)
+Installs [Flux Operator MCP](https://github.com/controlplaneio-fluxcd/flux-operator)
 
 Dependencies
 ------------
@@ -19,7 +19,7 @@ Example Playbook
 ```yml
 - hosts: servers
   roles:
-    - app-flux-operator-cli
+    - app-flux-operator-mcp
 ```
 
 Authors

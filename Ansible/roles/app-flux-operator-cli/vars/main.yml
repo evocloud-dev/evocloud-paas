@@ -13,5 +13,5 @@ flux_operator_cli_force_update: false
 flux_operator_cli_download_url: 'https://github.com/controlplaneio-fluxcd/flux-operator/releases/download/v{{ flux_operator_cli_ver }}/flux-operator_{{ flux_operator_cli_ver }}_linux_amd64.tar.gz'
 
 #https://github.com/controlplaneio-fluxcd/flux-operator/releases/download/v0.46.0/flux-operator_0.46.0_checksums.txt
-# renovate: datasource=github-releases depName=controlplaneio-fluxcd/flux-operator packageName=flux_<semver>_linux_amd64.tar.gz
+# renovate: datasource=github-releases depName=controlplaneio-fluxcd/flux-operator packageName=flux-operator_<semver>_linux_amd64.tar.gz
 flux_operator_cli_checksum: "sha256:1bec616c6433499662f98a9e5571ab0107380e371bb3251ae92e631f5247595c" # Actual checksum
