@@ -1,11 +1,31 @@
 #--------------------------------------------------
 # EvoCloud Admin Cluster
 #--------------------------------------------------
+
+# Locals for better variable manipulation
+locals {
+  trusted_roots_patch = <<-EOF
+    apiVersion: v1alpha1
+    kind: TrustedRootsConfig
+    name: evoidp-ca-certificate
+    certificates: |-
+      ${replace(data.local_file.evoidp_ca.content, "\n", "\n  ")}
+  EOF
+}
+
 data "hcloud_image" "evok8s" {
   with_selector = "name=${var.TALOS_AMI_NAME}" #The Talos Machine Image must be tagged with the name label
   most_recent = true
 }
 
+# IPA CA Certificate Lookup
+data "local_file" "evoidp_ca" {
+  filename = "/etc/ipa/ca.crt"
+}
+
+#---------------------------------------------------------
+# Optional Firewall Rule - Not in use in private networks
+#---------------------------------------------------------
 resource "hcloud_firewall" "evok8s_firewall_rule" {
   name = "evok8s-wks-firewall"
   rule {
@@ -16,7 +36,6 @@ resource "hcloud_firewall" "evok8s_firewall_rule" {
       "0.0.0.0/0"
     ]
   }
-
   rule {
     direction = "in"
     protocol  = "tcp"
@@ -25,7 +44,6 @@ resource "hcloud_firewall" "evok8s_firewall_rule" {
       "0.0.0.0/0"
     ]
   }
-
   rule {
     direction = "in"
     protocol  = "tcp"
@@ -34,7 +52,6 @@ resource "hcloud_firewall" "evok8s_firewall_rule" {
       "0.0.0.0/0"
     ]
   }
-
   rule {
     direction = "in"
     protocol  = "tcp"
@@ -43,7 +60,6 @@ resource "hcloud_firewall" "evok8s_firewall_rule" {
       "0.0.0.0/0"
     ]
   }
-
   rule {
     direction = "in"
     protocol  = "tcp"
@@ -52,7 +68,6 @@ resource "hcloud_firewall" "evok8s_firewall_rule" {
       "0.0.0.0/0"
     ]
   }
-
   rule {
     direction = "in"
     protocol  = "icmp"
@@ -155,13 +170,14 @@ resource "hcloud_server" "controlplane" {
   }
 
   # Firewall attached to the VM_SERVER
+  # On Hetzner if ipv4_enabled = false, then firewall is not used
   firewall_ids = [hcloud_firewall.evok8s_firewall_rule.id]
 
   # no space separator in the key or value
   labels = {
-      managed-by  = "EvoCloud"
-      role        = "controlplane"
-    }
+    managed-by  = "EvoCloud"
+    role        = "controlplane"
+  }
 }
 
 #-----------------------------------------------------
@@ -272,6 +288,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                 {
                   network = "0.0.0.0/0"
                   gateway = var.HCLOUD_GATEWAY
+                  metric  = 1024
                 }
               ]
             }
@@ -1431,6 +1448,7 @@ data "talos_machine_configuration" "talos_controlplane" {
         ]
       }
     }),
+    local.trusted_roots_patch,
   ]
 }
 
@@ -1528,6 +1546,7 @@ data "talos_machine_configuration" "talos_worker" {
         }
       }
     }),
+    local.trusted_roots_patch,
   ]
 }
 
@@ -1592,16 +1611,23 @@ resource "local_file" "talos_talosconfig_file" {
 }
 
 ## Validate Kubernetes endpoint is up
-data "http" "k8s_health_check" {
-  depends_on     = [ local_file.talos_kubeconfig_file ]
+#data "http" "k8s_health_check" {
+#  depends_on     = [ local_file.talos_kubeconfig_file ]
 
-  url            = "https://${hcloud_load_balancer.this.ipv4}:6443/version"
-  insecure       = true
-  retry {
-    attempts     = 60
-    min_delay_ms = 5000
-    max_delay_ms = 5000
-  }
+#  url            = "https://${hcloud_load_balancer.this.ipv4}:6443/version"
+#  insecure       = true
+#  retry {
+#    attempts     = 60
+#    min_delay_ms = 5000
+#    max_delay_ms = 5000
+#  }
+#}
+#--------------------------------------------------
+# Wait for Kubernetes to fully deploy
+#--------------------------------------------------
+resource "time_sleep" "timer3" {
+  create_duration = "120s"
+  depends_on = [local_file.talos_kubeconfig_file]
 }
 
 #--------------------------------------------------
@@ -1612,7 +1638,7 @@ resource "terraform_data" "redeploy_cluster_post_configuration" {
 }
 
 resource "terraform_data" "cluster_post_configuration" {
-  depends_on = [data.http.k8s_health_check]
+  depends_on = [time_sleep.timer3]
 
   lifecycle {
     replace_triggered_by = [terraform_data.redeploy_cluster_post_configuration]
