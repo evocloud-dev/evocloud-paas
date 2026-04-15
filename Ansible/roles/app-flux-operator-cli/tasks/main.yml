@@ -1,0 +1,58 @@
+---
+#This playbook will install Flux-Operator-CLI Binary
+#
+#References:
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-flux-operator-cli ##################"
+
+- name: Checking if flux-operator-cli already exist...
+  ansible.builtin.stat:
+    path: '{{ flux_operator_cli_install_dir }}/flux-operator'
+  changed_when: false
+  become: true
+  register: flux_operator_cli_binary
+
+- name: Uninstalling flux-operator-cli...
+  ansible.builtin.file:
+    path: '{{ flux_operator_cli_install_dir }}/flux-operator'
+    state: absent
+  become: true
+  when: (flux_operator_cli_binary.stat.exists) and (flux_operator_cli_force_update | bool)
+
+- when: (not flux_operator_cli_binary.stat.exists) or (flux_operator_cli_force_update | bool)
+  block:
+    - name: Verifying flux-operator-cli sha256 checksum...
+      ansible.builtin.get_url:
+        url: '{{ flux_operator_cli_download_url }}'
+        dest: '/tmp'
+        mode: '0644'
+        checksum: '{{ flux_operator_cli_checksum }}'
+      become: true
+
+    - name: Installing flux-operator-cli...
+      ansible.builtin.unarchive:
+        src: '/tmp/flux-operator_{{ flux_operator_cli_ver }}_linux_amd64.tar.gz'
+        dest: '{{ flux_operator_cli_install_dir }}'
+        mode: '0755'
+        remote_src: yes
+      become: true
+
+    - name: Adding flux-operator bash completion to .bashrc...
+      ansible.builtin.blockinfile:
+        path: "/home/{{ cloud_user }}/.bashrc"
+        block: |
+          # Flux-Operator bash completion
+          eval "$(flux-operator completion bash)"
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - Flux-Operator bash completion"
+        create: yes
+      become: yes
+
+  always:
+    - name: Removing flux-operator-cli detritus...
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '/tmp/flux-operator_{{ flux_operator_cli_ver }}_linux_amd64.tar.gz'
+      become: true
