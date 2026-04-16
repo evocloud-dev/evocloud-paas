@@ -45,24 +45,11 @@
     name: "{{ certmanager_namespace }}"
     state: present
 
-- name: Reading in IPA ca-bundle certificate...
+- name: Reading in IPA ca-bundle certificate (base64 encoded)...
   ansible.builtin.slurp:
     src: /etc/pki/tls/certs/ca-bundle.crt
   register: ipa_ca_bundle
   delegate_to: '{{ idam_server_ip }}'
-
-- name: Creating IPA ca-bundle ConfigMap...
-  kubernetes.core.k8s:
-    kubeconfig: "{{ kubeconfig }}"
-    state: present
-    definition:
-      apiVersion: v1
-      kind: ConfigMap
-      metadata:
-        name: ca-bundle
-        namespace: "{{ certmanager_namespace }}"
-      data:
-        ca-certificates.crt: "{{ ipa_ca_bundle.content | b64decode }}"
 
 - name: Reading in tsig_secret_value for later use...
   ansible.builtin.shell: |

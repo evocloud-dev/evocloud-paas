@@ -46,12 +46,3 @@ spec:
       apiVersion: "controller.config.cert-manager.io/v1alpha1"
       kind: "ControllerConfiguration"
       enableGatewayAPI: true
-    volumes:
-      - name: ca-bundle
-        configMap:
-          name: ca-bundle
-    volumeMounts:
-      - name: ca-bundle
-        mountPath: /etc/ssl/certs/ca-certificates.crt
-        subPath: ca-certificates.crt
-        readOnly: false
