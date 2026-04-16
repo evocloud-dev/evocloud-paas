@@ -19,6 +19,8 @@
     - app-cilium-cli
     - app-hubble-cli
     - app-flux-cli
+    - app-flux-operator-cli
+    - app-flux-operator-mcp
     - app-talos-cli
     - app-age
     - app-sops
