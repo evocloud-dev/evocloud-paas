@@ -53,7 +53,7 @@ inputs = {
   # DMZ Controller Host
   ###########################################################################
   DEPLOYER_SHORT_HOSTNAME   = "evo-master"
-  BASE_INSTALLER_IMG        = "https://www.googleapis.com/compute/v1/projects/geanttech-evocloud/global/images/evocloud-rocky8-b0-1-0"
+  BASE_INSTALLER_IMG        = "evovm-os-8-10"
   DEPLOYER_PRIVATE_IP       = "10.10.10.5"
   DEPLOYER_INSTANCE_SIZE    = "Standard_D4s_v4"
   DEPLOYER_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
@@ -62,7 +62,7 @@ inputs = {
   # IDAM Identity and Access Management Server (FreeIPA)
   ###########################################################################
   IDAM_SHORT_HOSTNAME   = "evoidp"
-  BASE_IPASERVER_IMG    = "https://www.googleapis.com/compute/v1/projects/geanttech-evocloud/global/images/evocloud-rocky8-b0-1-0"
+  BASE_IPASERVER_IMG    = "evovm-os-8-10"
   IDAM_PRIVATE_IP       = "10.10.20.5"
   IDAM_INSTANCE_SIZE    = "Standard_D4s_v4"
   IDAM_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
