@@ -1,7 +1,7 @@
 #--------------------------------------------------
 # Server DMZ Main
 #--------------------------------------------------
-data "azurerm_shared_image" "rocky-linux" {
+data "azurerm_image" "rocky-linux" {
   name                = var.BASE_INSTALLER_IMG
   resource_group_name = var.AZ_STORAGE_RG
 }
@@ -28,7 +28,7 @@ resource "azurerm_linux_virtual_machine" "evo-master" {
     azurerm_network_interface.evo-master-nic.id,
   ]
 
-  source_image_id = data.azurerm_shared_image.rocky-linux.id
+  source_image_id = data.azurerm_image.rocky-linux.id
   admin_ssh_key {
     username   = var.CLOUD_USER
     public_key = "${file("${var.PUBLIC_KEY_PAIR}")}"
