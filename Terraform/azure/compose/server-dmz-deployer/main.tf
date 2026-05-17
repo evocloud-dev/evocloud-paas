@@ -164,6 +164,7 @@ resource "terraform_data" "deployer_server_configuration" {
   }
 
   provisioner "local-exec" {
+    interpreter = ["bash", "-c"]
     command = <<EOF
       ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 \
       ${var.AUTOMATION_FOLDER}/Ansible/server-dmz-deployer.yml \
