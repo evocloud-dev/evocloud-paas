@@ -1,6 +1,7 @@
 ---
 server_timezone: ''
 domain_tld: ''
+server_ip: ''
 server_short_hostname: ''
 idam_server_ip: ''
 idam_short_hostname: ''

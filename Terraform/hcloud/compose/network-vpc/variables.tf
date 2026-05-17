@@ -7,9 +7,10 @@ variable "HCLOUD_TOKEN" {
 variable "HCLOUD_VPC" {
   description = "Main VPC Name"
   type        = string
+  sensitive   = true
 }
 
 variable "HCLOUD_VPC_CIDR" {
   description = "HCLOUD_VPC CIDR Range"
-  type        = list(string)
+  type        = string
 }

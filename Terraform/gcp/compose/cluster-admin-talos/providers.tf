@@ -7,6 +7,18 @@ provider "google" {
   region  = var.GCP_REGION
 }
 
+provider "talos" {
+  # Configuration options
+}
+
+provider "time" {
+  # Configuration options
+}
+
+provider "http" {
+  # Configuration options
+}
+
 #--------------------------------------------------
 # Tfstate Remote State Storage
 #--------------------------------------------------

@@ -1,0 +1,92 @@
+---
+#Source: https://gateway-api.sigs.k8s.io/guides/http-redirect-rewrite/
+# Rule for accessing headlamp endpoint
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: headlamp-http
+  namespace: kube-system
+spec:
+  parentRefs:
+    - name: shared-gtw
+      namespace: evocloud-ns
+      sectionName: http-listener
+  hostnames:
+    - evoapp.{{ domain_tld }}
+  rules:
+      - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: headlamp-https
+  namespace: kube-system
+spec:
+  parentRefs:
+    - name: shared-gtw
+      namespace: evocloud-ns
+      sectionName: https-listener
+  hostnames:
+    - evoapp.{{ domain_tld }}
+  rules:
+    - backendRefs:
+        - name: headlamp
+          port: 80
+          kind: Service
+      matches:
+        - path:
+            type: PathPrefix
+            value: /ui
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              replacePrefixMatch: /
+              type: ReplacePrefixMatch
+
+---
+# Rule for accessing vela-ui endpoint
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: velaux-http
+  namespace: vela-system
+spec:
+  parentRefs:
+    - name: shared-gtw
+      namespace: evocloud-ns
+      sectionName: http-listener
+  hostnames:
+    - evoapp.{{ domain_tld }}
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: velaux-https
+  namespace: vela-system
+spec:
+  parentRefs:
+    - name: shared-gtw
+      namespace: evocloud-ns
+      sectionName: https-listener
+  hostnames:
+    - evoapp.{{ domain_tld }}
+  rules:
+    - backendRefs:
+        - name: velaux-server
+          port: 8000
+          kind: Service
+      matches:
+        - path:
+            type: PathPrefix
+            value: /velaux

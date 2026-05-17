@@ -1,0 +1,9 @@
+---
+# Base OS Hardening
+- name: Rocky Linux 8 Hardening
+  hosts: all
+  gather_facts: false
+  become: true
+
+  roles:
+    - rocky8-hardening

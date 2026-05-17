@@ -14,10 +14,10 @@ output "deployer_server_name" {
   value = hcloud_server.deployer_server.name
 }
 
-output "deployer_snapshot_used_id" {
-  value = data.hcloud_image.evovm_snapshot.id
+output "hcloud_ssh_key_name" {
+  value = try(hcloud_ssh_key.pub_key.name, null)
 }
 
-output "deployer_snapshot_used_name" {
-  value = data.hcloud_image.evovm_snapshot.name
+output "hcloud_ssh_key_id" {
+  value = try(hcloud_ssh_key.pub_key.id, null)
 }

@@ -10,6 +10,8 @@ includes:
     taskfile: ./Terraform/gcp/Taskfile.yaml
   oci:
     taskfile: ./Terraform/oci/Taskfile.yaml
+  hcloud:
+    taskfile: ./Terraform/hcloud/Taskfile.yaml
 
 tasks:
   list:

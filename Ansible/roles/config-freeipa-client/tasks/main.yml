@@ -10,19 +10,15 @@
   ansible.builtin.set_fact:
     idam_server_fqdn: "{{ idam_short_hostname }}.{{ domain_tld }}"
     server_fqdn: "{{ server_short_hostname }}.{{ domain_tld }}"
+    fetched_ip: "{{ server_ip }}"
 
 - name: Setting up hostname with FQDN...
   ansible.builtin.command: "/usr/bin/hostnamectl set-hostname {{ server_fqdn }}"
   become: true
-  
-- name: Fetching the server IP...
-  ansible.builtin.shell: "/usr/bin/hostname -I | awk '{print $1}'"
-  register: fetched_ip
-  become: true
 
 - name: Get the reverse IP value...
   ansible.builtin.set_fact:
-    reverse_server_ip: "{{ fetched_ip.stdout.split('.') }}"
+    reverse_server_ip: "{{ fetched_ip.split('.') }}"
 
 - name: Adding entries to /etc/hosts...
   ansible.builtin.blockinfile:
@@ -31,7 +27,7 @@
       {{ item.ip }} {{ item.name }}
     marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
   loop:
-    - { name: '{{ server_fqdn }}', ip: '{{ fetched_ip.stdout }}' }
+    - { name: '{{ server_fqdn }}', ip: '{{ fetched_ip }}' }
     - { name: '{{ idam_server_fqdn }}', ip: '{{ idam_server_ip }}' }
   become: true
 
@@ -120,7 +116,7 @@
 
 - name: Printing IP for host to register...
   ansible.builtin.debug:
-    msg: "{{ fetched_ip.stdout | trim }}"
+    msg: "{{ fetched_ip | trim }}"
 
 #Foward DNS Entry
 - name: Creating forward dns entry...
@@ -128,7 +124,7 @@
     name: "{{ server_short_hostname }}"
     record_type: "A"
     zone_name: "{{ domain_tld }}"
-    record_value: "{{ fetched_ip.stdout | trim }}"
+    record_value: "{{ fetched_ip | trim }}"
     state: present
     ipa_host: "{{ idam_server_fqdn }}"
     ipa_user: "admin"

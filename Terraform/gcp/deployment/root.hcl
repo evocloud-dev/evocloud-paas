@@ -100,6 +100,13 @@ inputs = {
   EVOCODE_RUNNER_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
 
   ###########################################################################
+  # EvoRegistry - OCI Repository (Harbor)
+  ###########################################################################
+  EVOHARBOR_SHORT_HOSTNAME   = "evoregistry"
+  EVOHARBOR_INSTANCE_SIZE    = "e2-standard-4"
+  EVOHARBOR_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
+
+  ###########################################################################
   # Talos Kubernetes Cluster (Kubernetes)
   ###########################################################################
   #TALOS GPU IMG: https://factory.talos.dev/image/86a5d7c9beb23b4aea2777e44ca06c8c2ceea8a874ccd2b9a6743c4f734329e0/v1.11.6/oracle-amd64.raw.xz
@@ -162,7 +169,6 @@ inputs = {
     gateway_api_exp       = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/experimental-install.yaml"
     kubelet_serving_cert  = "https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml"
     kube-metric_server    = "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml"
-    local-storage_class   = "https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/local-storageclass.yaml"
     kube-buildpack        = "https://github.com/buildpacks-community/kpack/releases/download/v0.16.1/release-0.16.1.yaml"
   }
 

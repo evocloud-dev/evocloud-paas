@@ -1,0 +1,58 @@
+---
+#This playbook will install Flux-Operator-MCP Binary
+#
+#References:
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-flux-operator-mcp ##################"
+
+- name: Checking if flux-operator-mcp already exist...
+  ansible.builtin.stat:
+    path: '{{ flux_operator_mcp_install_dir }}/flux-operator-mcp'
+  changed_when: false
+  become: true
+  register: flux_operator_mcp_binary
+
+- name: Uninstalling flux-operator-mcp...
+  ansible.builtin.file:
+    path: '{{ flux_operator_mcp_install_dir }}/flux-operator-mcp'
+    state: absent
+  become: true
+  when: (flux_operator_mcp_binary.stat.exists) and (flux_operator_mcp_force_update | bool)
+
+- when: (not flux_operator_mcp_binary.stat.exists) or (flux_operator_mcp_force_update | bool)
+  block:
+    - name: Verifying flux-operator-mcp sha256 checksum...
+      ansible.builtin.get_url:
+        url: '{{ flux_operator_mcp_download_url }}'
+        dest: '/tmp'
+        mode: '0644'
+        checksum: '{{ flux_operator_mcp_checksum }}'
+      become: true
+
+    - name: Installing flux-operator-mcp...
+      ansible.builtin.unarchive:
+        src: '/tmp/flux-operator-mcp_{{ flux_operator_mcp_ver }}_linux_amd64.tar.gz'
+        dest: '{{ flux_operator_mcp_install_dir }}'
+        mode: '0755'
+        remote_src: yes
+      become: true
+
+    - name: Adding flux-operator-mcp bash completion to .bashrc...
+      ansible.builtin.blockinfile:
+        path: "/home/{{ cloud_user }}/.bashrc"
+        block: |
+          # Flux-Operator-MCP bash completion
+          eval "$(flux-operator-mcp completion bash)"
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - Flux-Operator-MCP bash completion"
+        create: yes
+      become: yes
+
+  always:
+    - name: Removing flux-operator-mcp detritus...
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '/tmp/flux-operator-mcp_{{ flux_operator_mcp_ver }}_linux_amd64.tar.gz'
+      become: true

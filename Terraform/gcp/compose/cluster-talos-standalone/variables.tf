@@ -45,6 +45,11 @@ variable "BASE_VOLUME_50" {
   type        = string
 }
 
+variable "BASE_VOLUME_200" {
+  description = "Base Volume Size 200GB"
+  type        = string
+}
+
 variable "TALOS_CTRL_STANDALONE_SIZE" {
   description = "Talos Standalone Controlplane Compute Instance Flavor Size"
   type        = string
@@ -80,7 +85,6 @@ variable "TALOS_EXTRA_MANIFESTS" {
     kubelet_serving_cert  = "https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml"
     kube-metric_server    = "https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml"
     flux-cd-operator      = "https://github.com/controlplaneio-fluxcd/flux-operator/releases/latest/download/install.yaml"
-    local-storage_class   = "https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/local-storageclass.yaml"
   }
 }
 

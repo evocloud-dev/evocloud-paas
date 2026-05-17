@@ -31,10 +31,16 @@ variable "DEPLOYER_PRIVATE_IP" {
 variable "HCLOUD_TOKEN" {
   description = "HCLOUD Auth Token"
   type        = string
+  sensitive   = true
 }
 
 variable "HCLOUD_REGION" {
   description = "Server Deployment Region"
+  type        = string
+}
+
+variable "BASE_AMI_NAME" {
+  description = "Base Rocky Linux Image Name"
   type        = string
 }
 
@@ -48,12 +54,17 @@ variable "PRIVATE_KEY_PAIR" {
   type        = string
 }
 
-variable "dmz_subnet_id" {
-  description = "Subnet ID of DMZ Network"
+variable "deployer_revision" {
+  description = "Semantic Version"
   type        = string
 }
 
-variable "deployer_revision" {
-  description = "Semantic Version"
+#variable "deployer_server_eip" {
+#  description = "Deployer Server Public IP"
+#  type        = string
+#}
+
+variable "dmz_subnet_id" {
+  description = "Subnet ID of DMZ Network"
   type        = string
 }

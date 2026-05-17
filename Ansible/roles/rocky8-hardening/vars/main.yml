@@ -1,0 +1,39 @@
+---
+# gcp|aws -- Changed to the platform where the VM will be created
+cloudplatform: ''
+
+gcloud_cli_packages:
+  - google-cloud-cli
+
+#--------------------------------------------------
+# Ansible Playbook Variables
+#--------------------------------------------------
+required_packages:
+  - epel-release
+  - nvme-cli
+  - policycoreutils-python-utils                #required by SELinux
+  - python3-psycopg2                            #required by postgresql ansible module
+  - python3-netaddr                             #required by ansible network module
+  - python3
+  - python3-pip
+  - python3-dnf-plugin-versionlock              #used to prevent certain packages from upgrading. Source Link: https://www.getpagespeed.com/server-setup/centos-rhel-8-how-to-prevent-a-package-from-upgrading
+  - dnf-utils
+  - git
+  - jq
+  - bash-completion
+  - vim
+  - ccze
+  - tar
+  - zip
+  - unzip
+  - bzip2
+  - wget
+  - curl
+  - rsync
+  - tmux #screen alternative
+  - tzdata
+  - figlet
+  - neofetch
+  - lynis
+  - firewalld
+  - expect                                    #Utility to provide responses to interactive scripts: https://phoenixnap.com/kb/linux-expect

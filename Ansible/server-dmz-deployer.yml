@@ -6,6 +6,7 @@
   gather_facts: false
   strategy: free
   roles:
+    - rocky8-hardening
     - app-clamav
     - app-terraform
     - app-packer
@@ -18,6 +19,8 @@
     - app-cilium-cli
     - app-hubble-cli
     - app-flux-cli
+    - app-flux-operator-cli
+    - app-flux-operator-mcp
     - app-talos-cli
     - app-age
     - app-sops

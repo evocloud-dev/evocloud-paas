@@ -54,6 +54,11 @@ variable "BASE_VOLUME_50" {
   type        = string
 }
 
+variable "BASE_VOLUME_200" {
+  description = "Base Volume Size 200GB"
+  type        = string
+}
+
 variable "BASE_SHAPE_E4_FLEX" {
   description = "Compute Instance Flavor Range"
   type        = string

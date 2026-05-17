@@ -1,4 +1,23 @@
 #--------------------------------------------------
+# Locals
+#--------------------------------------------------
+locals {
+  user_volume_patch = <<-EOF
+    apiVersion: v1alpha1
+    kind: UserVolumeConfig
+    name: local-storage
+    provisioning:
+      diskSelector:
+        match: disk.dev_path == '/dev/sdb'
+      minSize: 150GB
+    encryption:
+      provider: luks2
+      keys:
+        - slot: 0
+          nodeID: {}
+  EOF
+}
+#--------------------------------------------------
 # Data Source to find Custom Talos Image
 #--------------------------------------------------
 data "oci_core_images" "talos_images" {
@@ -70,6 +89,25 @@ resource "oci_core_instance" "talos_ctrlplane" {
   }
 
   freeform_tags               = {"Platform"= "EvoCloud"}
+}
+
+##Talos Worker VMs Extra disk creation and attachment
+resource "oci_core_volume" "extra_disk" {
+  compartment_id          = var.OCI_TENANCY_ID
+  for_each                = var.TALOS_CTRL_STANDALONE
+
+  display_name            = "${oci_core_instance.talos_ctrlplane[each.key].display_name}-extra-volume"
+  availability_domain     = data.oci_identity_availability_domains.az_domains.availability_domains[0].name
+  vpus_per_gb             = var.TALOS_STANDALONE_VOLUME_TYPE
+  size_in_gbs             = var.BASE_VOLUME_200
+  freeform_tags           = {"Platform"= "EvoCloud"}
+}
+
+resource "oci_core_volume_attachment" "disk_attachment" {
+  for_each        = var.TALOS_CTRL_STANDALONE
+  volume_id       = oci_core_volume.extra_disk[each.key].id
+  instance_id     = oci_core_instance.talos_ctrlplane[each.key].id
+  attachment_type = "PARAVIRTUALIZED"
 }
 
 #--------------------------------------------------
@@ -201,8 +239,7 @@ data "talos_machine_configuration" "talos_controlplane" {
           var.TALOS_EXTRA_MANIFESTS["gateway_api_std"],
           var.TALOS_EXTRA_MANIFESTS["gateway_api_exp"],
           var.TALOS_EXTRA_MANIFESTS["kubelet_serving_cert"],
-          var.TALOS_EXTRA_MANIFESTS["kube-metric_server"],
-          var.TALOS_EXTRA_MANIFESTS["local-storage_class"]
+          var.TALOS_EXTRA_MANIFESTS["kube-metric_server"]
         ]
         //Inline Manifests
         inlineManifests = [
@@ -289,13 +326,14 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm repo add cilium https://helm.cilium.io/
                           helm repo update
                           helm upgrade --install cilium cilium/cilium \
-                          --version 1.18.6 \
+                          --version 1.19.1 \
                           --namespace kube-system \
                           --set k8sServiceHost=localhost \
                           --set k8sServicePort=7445 \
+                          --set operator.replicas=1 \
                           --set k8sClientRateLimit.qps=50 \
                           --set k8sClientRateLimit.burst=200 \
-                          --set cluster.name=evo-cluster-mgr \
+                          --set cluster.name=${var.cluster_name} \
                           --set cluster.id=0 \
                           --set rollOutCiliumPods=true \
                           --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
@@ -497,7 +535,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install flux-operator oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator \
                             --namespace flux-system \
                             --create-namespace \
-                            --version 0.40.0 \
+                            --version 0.45.1 \
                             --wait
                     restartPolicy: OnFailure
                     serviceAccount: flux-install
@@ -515,7 +553,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                   fluxcd.controlplane.io/reconcileTimeout: "20m"
               spec:
                 distribution:
-                  version: "2.7.x"
+                  version: "2.8.x"
                   registry: "ghcr.io/fluxcd"
                   artifact: "oci://ghcr.io/controlplaneio-fluxcd/flux-operator-manifests"
                 components:
@@ -570,7 +608,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: tofu-controller-stable
-                    version: ">=0.16.0-rc.7"
+                    version: ">=0.16.0-rc.8"
                 interval: 1h0s
                 releaseName: tofu-controller
                 targetNamespace: flux-system
@@ -603,6 +641,7 @@ data "talos_machine_configuration" "talos_controlplane" {
         ]
       }
     }),
+    local.user_volume_patch,
   ]
 }
 
@@ -682,4 +721,17 @@ resource "local_file" "talos_talosconfig_file" {
   content     = <<-EOF
     ${data.talos_client_configuration.talosconfig.talos_config}
   EOF
+}
+
+## Validate Kubernetes endpoint is up
+data "http" "k8s_health_check" {
+  depends_on     = [ local_file.talos_kubeconfig_file ]
+
+  url            = "https://${oci_core_instance.talos_ctrlplane["node01"].public_ip}:6443/version"
+  insecure       = true
+  retry {
+    attempts     = 60
+    min_delay_ms = 5000
+    max_delay_ms = 5000
+  }
 }

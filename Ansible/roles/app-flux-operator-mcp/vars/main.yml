@@ -1,0 +1,17 @@
+---
+cloud_user: ''
+
+# renovate: datasource=github-releases depName=controlplaneio-fluxcd/flux-operator versioning=semver
+flux_operator_mcp_ver: "0.46.0"
+
+flux_operator_mcp_install_dir: /usr/local/bin
+
+flux_operator_mcp_force_update: false
+
+#https://github.com/controlplaneio-fluxcd/flux-operator/releases/tag/v0.46.0
+#https://github.com/controlplaneio-fluxcd/flux-operator/releases/download/v0.46.0/flux-operator-mcp_0.46.0_linux_amd64.tar.gz
+flux_operator_mcp_download_url: 'https://github.com/controlplaneio-fluxcd/flux-operator/releases/download/v{{ flux_operator_mcp_ver }}/flux-operator-mcp_{{ flux_operator_mcp_ver }}_linux_amd64.tar.gz'
+
+#https://github.com/controlplaneio-fluxcd/flux-operator/releases/download/v0.46.0/flux-operator_0.46.0_checksums.txt
+# renovate: datasource=github-releases depName=controlplaneio-fluxcd/flux-operator packageName=flux-operator-mcp_<semver>_linux_amd64.tar.gz
+flux_operator_mcp_checksum: "sha256:ab7b0cad8edfe2e105b3b7573a97c1e07ecce0a0f506e9fe602bdae8363da2e7" # Actual checksum
