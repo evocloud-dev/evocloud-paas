@@ -30,7 +30,7 @@ resource "azurerm_network_interface" "evo-master-nic" {
 
 resource "azurerm_network_interface_security_group_association" "nsg_assoc" {
   network_interface_id      = azurerm_network_interface.evo-master-nic.id
-  network_security_group_id = var.security_group_rules
+  network_security_group_id = var.ssh_sgr
 }
 
 resource "azurerm_linux_virtual_machine" "evo-master" {

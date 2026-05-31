@@ -73,7 +73,7 @@ variable "rg_name" {
   type        = string
 }
 
-variable "security_group_rules" {
+variable "ssh_sgr" {
   description = "Network Security Group Rules"
   type        = string
 }
