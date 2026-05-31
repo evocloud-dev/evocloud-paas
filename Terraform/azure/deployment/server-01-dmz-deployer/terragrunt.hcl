@@ -5,7 +5,7 @@ inputs = {
   rg_name              = dependency.network-rg.outputs.main_rg_name
   rg_location          = dependency.network-rg.outputs.main_rg_location
   dmz_subnet_id        = dependency.network-subnet.outputs.dmz_subnet_id
-  security_group_rules = dependency.network-sg.outputs.security_group_rules
+  ssh_sgr              = dependency.network-sg.outputs.ssh_sgr
   deployer_revision    = "0.1.0"
 }
 
