@@ -18,6 +18,11 @@ variable "CLOUD_USER" {
   type        = string
 }
 
+variable "PUBLIC_KEY_PAIR" {
+  description = "Public Key Pair"
+  type        = string
+}
+
 variable "TALOS_AMI_NAME" {
   description = "Talos AMI Name"
   type        = string
@@ -25,7 +30,7 @@ variable "TALOS_AMI_NAME" {
 
 variable "TALOS_CTRL_STANDALONE" {
   description = "Talos Single Node"
-  type        = string
+  type        = map(string)
 }
 
 variable "TALOS_CTRL_STANDALONE_SIZE" {

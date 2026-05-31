@@ -24,7 +24,8 @@ data "azurerm_image" "evok8s-image" {
 }
 
 resource "azurerm_public_ip" "evok8s-stdalone-public-ip" {
-  name                = "${var.TALOS_CTRL_STANDALONE}-public-ip"
+  for_each = var.TALOS_CTRL_STANDALONE
+  name                = "${each.key}-public-ip"
   location            = var.rg_location
   resource_group_name = var.rg_name
   allocation_method   = "Static"
@@ -32,37 +33,45 @@ resource "azurerm_public_ip" "evok8s-stdalone-public-ip" {
 }
 
 resource "azurerm_network_interface" "evok8s-stdalone-nic" {
-  name                = "${var.TALOS_CTRL_STANDALONE}-nic"
+  for_each = var.TALOS_CTRL_STANDALONE
+  name                = "${each.key}-nic"
   location            = var.rg_location
   resource_group_name = var.rg_name
 
   ip_configuration {
-    name                          = "internal"
+    name                          = "${each.key}-internal"
     subnet_id                     = var.dmz_subnet_id
-    private_ip_address_allocation = "Static"
-    private_ip_address            = azurerm_network_interface.evok8s-stdalone-nic.private_ip_address
-    public_ip_address_id          = azurerm_public_ip.evok8s-stdalone-public-ip.id
+    private_ip_address_allocation = "Dynamic"
+    #private_ip_address            = azurerm_network_interface.evok8s-stdalone-nic[each.key].private_ip_address
+    public_ip_address_id          = azurerm_public_ip.evok8s-stdalone-public-ip[each.key].id
   }
 }
 
 resource "azurerm_network_interface_security_group_association" "nsg_assoc" {
   for_each = var.TALOS_CTRL_STANDALONE
   network_interface_id      = azurerm_network_interface.evok8s-stdalone-nic[each.key].id
-  network_security_group_id = var.cntrl_plane_sgr.id
+  network_security_group_id = var.cntrl_plane_sgr
 }
 
 resource "azurerm_linux_virtual_machine" "evok8s_stdalone_ctrlplane" {
-  for_each            = var.TALOS_CTRL_STANDALONE
-  name                = format("%s", each.value)
-  resource_group_name = var.rg_name
-  location            = var.rg_location
-  size                = var.TALOS_CTRL_STANDALONE_SIZE
-  admin_username      = var.CLOUD_USER
+  for_each                   = var.TALOS_CTRL_STANDALONE
+  name                       = format("%s", each.value)
+  resource_group_name        = var.rg_name
+  location                   = var.rg_location
+  size                       = var.TALOS_CTRL_STANDALONE_SIZE
+  allow_extension_operations = false
+  provision_vm_agent         = false
+  admin_username             = var.CLOUD_USER
   network_interface_ids = [
     azurerm_network_interface.evok8s-stdalone-nic[each.key].id,
   ]
 
   source_image_id = data.azurerm_image.evok8s-image.id
+
+  admin_ssh_key {
+    username   = var.CLOUD_USER
+    public_key = "${file("${var.PUBLIC_KEY_PAIR}")}"
+  }
 
   os_disk {
     caching              = "ReadWrite"
@@ -70,13 +79,12 @@ resource "azurerm_linux_virtual_machine" "evok8s_stdalone_ctrlplane" {
   }
 
   #source_image_id = "/subscriptions/ad0bf289-b1c8-43d4-b325-997780dc89d9/resourceGroups/STORAGE-RG/providers/Microsoft.Compute/images/evovm-os-8-10"
-
 }
 
 ## Create and Attach an Extra Volume
 resource "azurerm_managed_disk" "evok8s_data_disk" {
   for_each             = var.TALOS_CTRL_STANDALONE
-  name                 = "${azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane[each.key].name}--data-disk"
+  name                 = "${azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane[each.key].name}-data-disk"
   location             = var.rg_location
   resource_group_name  = var.rg_name
   storage_account_type = "Standard_LRS"   # Standard_LRS, StandardSSD_LRS, Premium_LRS, UltraSSD_LRS
@@ -86,8 +94,9 @@ resource "azurerm_managed_disk" "evok8s_data_disk" {
 
 # HCLOUD_VOLUME_ATTACHMENT Resource
 resource "azurerm_virtual_machine_data_disk_attachment" "data_disk_attach" {
-  managed_disk_id    = azurerm_managed_disk.evok8s_data_disk.id
-  virtual_machine_id = azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane.id
+  for_each = azurerm_managed_disk.evok8s_data_disk
+  managed_disk_id    = azurerm_managed_disk.evok8s_data_disk[each.key].id
+  virtual_machine_id = azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane[each.key].id
   lun                = 1       # Logical Unit Number — unique per disk on the VM
   caching            = "ReadWrite"  # None, ReadOnly, ReadWrite
 }
@@ -103,9 +112,21 @@ resource "talos_machine_secrets" "talos_vm" {}
 data "talos_client_configuration" "talosconfig" {
   cluster_name         = var.cluster_name
   client_configuration = talos_machine_secrets.talos_vm.client_configuration
-  endpoints = [for xvalue in azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane : xvalue.private_ip_address]
+  endpoints = [for xvalue in azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane : xvalue.public_ip_address
+
+
+
+public_ip_address
+
+]
   nodes = concat(
-    [for xvalue in azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane : xvalue.private_ip_address]
+    [for xvalue in azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane : xvalue.public_ip_address
+
+
+
+public_ip_address
+
+]
   )
 }
 
@@ -114,7 +135,13 @@ data "talos_machine_configuration" "talos_controlplane" {
   depends_on = [azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane]
 
   cluster_name       = var.cluster_name
-  cluster_endpoint   = "https://${azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].private_ip_address}:6443"
+  cluster_endpoint   = "https://${azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].public_ip_address
+
+
+
+public_ip_address
+
+}:6443"
   machine_type       = "controlplane"
   machine_secrets    = talos_machine_secrets.talos_vm.machine_secrets
   talos_version      = var.talos_version
@@ -134,8 +161,8 @@ data "talos_machine_configuration" "talos_controlplane" {
         network = {}
 
         certSANs = [
-          azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].private_ip_address,
-          one(azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].private_ip_address)
+          azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].public_ip_address,
+          azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].public_ip_address
         ]
         kubelet = {
           extraArgs = {
@@ -190,8 +217,8 @@ data "talos_machine_configuration" "talos_controlplane" {
             feature-gates = "UserNamespacesSupport=true,UserNamespacesPodSecurityStandards=true"
           }
           certSANs = [
-            azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].private_ip_address,
-            one(azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].private_ip_address)
+            azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].public_ip_address,
+            azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].public_ip_address
           ]
         }
         network = {
@@ -751,8 +778,8 @@ resource "talos_machine_configuration_apply" "controlplane" {
   for_each                    = azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane
   client_configuration        = talos_machine_secrets.talos_vm.client_configuration
   machine_configuration_input = data.talos_machine_configuration.talos_controlplane.machine_configuration
-  endpoint                    = each.value.private_ip_address
-  node                        = each.value.private_ip_address
+  endpoint                    = each.value.public_ip_address
+  node                        = each.value.public_ip_address
 }
 
 ## Start the bootstraping of the Talos Kubernetes Cluster
@@ -760,8 +787,8 @@ resource "talos_machine_bootstrap" "bootstrap_cluster" {
   depends_on           = [talos_machine_configuration_apply.controlplane]
 
   client_configuration = talos_machine_secrets.talos_vm.client_configuration
-  endpoint             = azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].private_ip_address
-  node                 = azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].private_ip_address
+  endpoint             = azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].public_ip_address
+  node                 = azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].public_ip_address
 }
 
 ## Collect the Talos Kubeconfig
@@ -771,8 +798,8 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
   ]
 
   client_configuration = talos_machine_secrets.talos_vm.client_configuration
-  endpoint             = azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].private_ip_address
-  node                 = azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].private_ip_address
+  endpoint             = azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].public_ip_address
+  node                 = azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].public_ip_address
 }
 
 #--------------------------------------------------
@@ -804,7 +831,7 @@ resource "local_file" "talos_talosconfig_file" {
 data "http" "k8s_health_check" {
   depends_on     = [ local_file.talos_kubeconfig_file ]
 
-  url            = "https://${one(azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].private_ip_address)}:6443/version"
+  url            = "https://${azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].public_ip_address}:6443/version"
   insecure       = true
   retry {
     attempts     = 60
