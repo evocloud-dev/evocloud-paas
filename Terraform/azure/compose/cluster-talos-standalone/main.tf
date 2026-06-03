@@ -112,22 +112,9 @@ resource "talos_machine_secrets" "talos_vm" {}
 data "talos_client_configuration" "talosconfig" {
   cluster_name         = var.cluster_name
   client_configuration = talos_machine_secrets.talos_vm.client_configuration
-  endpoints = [for xvalue in azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane : xvalue.public_ip_address
-
-
-
-public_ip_address
-
-]
+  endpoints = [for xvalue in azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane : xvalue.public_ip_address]
   nodes = concat(
-    [for xvalue in azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane : xvalue.public_ip_address
-
-
-
-public_ip_address
-
-]
-  )
+    [for xvalue in azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane : xvalue.public_ip_address])
 }
 
 ## Generate the Controlplane configuration and instantiate the Talos Controlplane VMs
@@ -135,13 +122,7 @@ data "talos_machine_configuration" "talos_controlplane" {
   depends_on = [azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane]
 
   cluster_name       = var.cluster_name
-  cluster_endpoint   = "https://${azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].public_ip_address
-
-
-
-public_ip_address
-
-}:6443"
+  cluster_endpoint   = "https://${azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane["node01"].public_ip_address}:6443"
   machine_type       = "controlplane"
   machine_secrets    = talos_machine_secrets.talos_vm.machine_secrets
   talos_version      = var.talos_version
