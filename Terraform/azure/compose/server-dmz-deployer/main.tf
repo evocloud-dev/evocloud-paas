@@ -56,12 +56,6 @@ resource "azurerm_linux_virtual_machine" "evo-master" {
   }
 
   source_image_id = "/subscriptions/ad0bf289-b1c8-43d4-b325-997780dc89d9/resourceGroups/STORAGE-RG/providers/Microsoft.Compute/images/evovm-os-8-10"
-  #source_image_reference {
-  #  publisher = "Canonical"
-  #  offer     = "0001-com-ubuntu-server-jammy"
-  #  sku       = "22_04-lts"
-  #  version   = "latest"
-  #}
 }
 
 #--------------------------------------------------
