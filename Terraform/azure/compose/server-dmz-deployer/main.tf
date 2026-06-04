@@ -1,7 +1,7 @@
 #--------------------------------------------------
 # Server DMZ Main
 #--------------------------------------------------
-data "azurerm_image" "rocky-linux" {
+data "azurerm_image" "evovm-image" {
   name                = var.BASE_INSTALLER_IMG
   resource_group_name = var.AZ_STORAGE_RG
 }
@@ -43,7 +43,7 @@ resource "azurerm_linux_virtual_machine" "evo-master" {
     azurerm_network_interface.evo-master-nic.id,
   ]
 
-  #source_image_id = data.azurerm_image.rocky-linux.id
+  source_image_id = data.azurerm_image.evovm-image.id
 
   admin_ssh_key {
     username   = var.CLOUD_USER
@@ -55,7 +55,7 @@ resource "azurerm_linux_virtual_machine" "evo-master" {
     storage_account_type = "Standard_LRS"
   }
 
-  source_image_id = "/subscriptions/ad0bf289-b1c8-43d4-b325-997780dc89d9/resourceGroups/STORAGE-RG/providers/Microsoft.Compute/images/evovm-os-8-10"
+  #source_image_id = "/subscriptions/ad0bf289-b1c8-43d4-b325-997780dc89d9/resourceGroups/STORAGE-RG/providers/Microsoft.Compute/images/evovm-os-8-10"
 }
 
 #--------------------------------------------------
