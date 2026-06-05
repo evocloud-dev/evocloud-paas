@@ -84,12 +84,12 @@ resource "terraform_data" "staging_automation_code" {
 
   provisioner "file" {
     source        = var.PRIVATE_KEY_PAIR
-    destination   = "/home/${var.CLOUD_USER}/az-evonode.pem"
+    destination   = "/home/${var.CLOUD_USER}/az-evocloud.pem"
   }
 
   provisioner "file" {
     source        = var.PUBLIC_KEY_PAIR
-    destination   = "/home/${var.CLOUD_USER}/az-evonode.pub"
+    destination   = "/home/${var.CLOUD_USER}/az-evocloud.pub"
   }
 
   provisioner "file" {
@@ -120,12 +120,12 @@ resource "terraform_data" "staging_automation_code" {
 
       # Moves Nodes key pairs to /etc/pki/tls folder
       # and gives proper ownership and permissions
-      "sudo mv /home/${var.CLOUD_USER}/az-evonode.pem /etc/pki/tls",
-      "sudo mv /home/${var.CLOUD_USER}/az-evonode.pub /etc/pki/tls",
-      "sudo chmod 0600 /etc/pki/tls/az-evonode.pem",
-      "sudo chmod 0644 /etc/pki/tls/az-evonode.pub",
-      "sudo chown ${var.CLOUD_USER}:${var.CLOUD_USER} /etc/pki/tls/az-evonode.pem",
-      "sudo chown ${var.CLOUD_USER}:${var.CLOUD_USER} /etc/pki/tls/az-evonode.pub",
+      "sudo mv /home/${var.CLOUD_USER}/az-evocloud.pem /etc/pki/tls",
+      "sudo mv /home/${var.CLOUD_USER}/az-evocloud.pub /etc/pki/tls",
+      "sudo chmod 0600 /etc/pki/tls/az-evocloud.pem",
+      "sudo chmod 0644 /etc/pki/tls/az-evocloud.pub",
+      "sudo chown ${var.CLOUD_USER}:${var.CLOUD_USER} /etc/pki/tls/az-evocloud.pem",
+      "sudo chown ${var.CLOUD_USER}:${var.CLOUD_USER} /etc/pki/tls/az-evocloud.pub",
 
       # Moves Ansible secret-store and vault-pass to Ansible/secret-vault folder
       "mv /home/${var.CLOUD_USER}/secret-store.yml /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml",
