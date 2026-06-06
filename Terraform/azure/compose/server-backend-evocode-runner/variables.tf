@@ -33,18 +33,14 @@ variable "DOMAIN_TLD" {
   type        = string
 }
 
-variable "IDAM_REPLICA_INSTANCE_SIZE" {
-  description = "IDAM Replica Instance Size"
+variable "EVOCODE_RUNNER_INSTANCE_SIZE" {
+  description = "EVOCODE Runner Instance Size"
   type        = string
 }
 
-variable "IDAM_REPLICA_PRIVATE_IP" {
-  description = "IDAM Replica Private IP Address"
-  type        =  string
-}
 
-variable "IDAM_REPLICA_SHORT_HOSTNAME" {
-  description = "IDAM Replica Short Name"
+variable "EVOCODE_RUNNER_SHORT_HOSTNAME" {
+  description = "EVOCODE Runner Short Name"
   type        = string
 }
 
@@ -58,23 +54,28 @@ variable "PRIVATE_KEY_PAIR" {
   type        = string
 }
 
-variable "PUBLIC_KEY_PAIR" {
-  description = "Public Key Pair"
+variable "backend_subnet_id" {
+  description = "Backend Subnet Id"
   type        = string
 }
 
-variable "admin_subnet_id" {
-  description = "ADMIN Subnet Id"
+variable "evocode_hostname_fqdn" {
+  description = "Evocode hostname fqdn"
   type        = string
 }
 
-variable "idam_replica_revision" {
-  description = "IDAM Replica Version"
+variable "evocode_runner_revision" {
+  description = "EVOCODE Runner Version"
   type        = string
 }
 
 variable "idam_server_ip" {
-  description = "IDAM Server IP"
+  description = "IDAM Server IP Address"
+  type        = string
+}
+
+variable "idam_replica_ip" {
+  description = "IDAM Server IP Address"
   type        = string
 }
 
