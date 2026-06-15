@@ -155,10 +155,14 @@ inputs = {
   # DO NOT CHANGE THE NAMES IF NOT KEEPALIVED CONFIG WILL BREAK
   TALOS_LB_INSTANCE_SIZE    = "Standard_D4s_v4"
   TALOS_LB_BASE_VOLUME_TYPE = "pd-balanced" #pd-standard | pd-balanced | pd-ssd | pd-extreme
-  TALOS_LB_NODES            = {
-    node01 = "evok8s-lb01"
-    node02 = "evok8s-lb02"
-  }
+
+  # KUBE API LB NODES
+  TALOS_LB_NAME = "evok8s-lb01"
+
+  #TALOS_LB_NODES            = {
+  #  node01 = "evok8s-lb01"
+  #  node02 = "evok8s-lb02"
+  #}
 
   #TALOS EXTRA KUBERNETES MANIFESTS
   TALOS_EXTRA_MANIFESTS     = {
