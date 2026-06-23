@@ -24,6 +24,24 @@ You can contribute to the EvoCloud ecosystem in many ways:
 
 ---
 
+## Bug Reports & Feature Suggestions
+
+Please use the [issue tracker](https://github.com/evocloud-dev/evocloud-paas/issues) to report any bugs or file feature requests.
+
+## Code Improvements
+
+PRs are welcome. In general, we follow the "fork-and-pull" Git workflow.
+
+ 1. **Fork** the repo on GitHub or
+ 2. **Clone** the project to your own machine
+ 3. **Commit** changes to your own branch
+ 4. **Push** your work back up to your fork
+ 5. Submit a **Pull request** so that we can review your changes
+
+NOTE: Be sure to merge the latest from "upstream" before making a pull request!
+
+---
+
 ## 📜 Ground Rules
 
 - Follow our [Code of Conduct](CODE_OF_CONDUCT.md)
