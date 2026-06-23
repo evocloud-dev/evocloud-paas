@@ -63,7 +63,7 @@ tasks:
       - echo "AZURE':' Building EvoCloud IdM Server"
       - task: vm-operation
         vars:
-          SERVER: server-03-admin-idam-helper
+          SERVER: server-02-admin-idam-helper
           ACTION: "{{.BUILD_CMD}}"
 
   build-evo-idpr:
@@ -73,7 +73,7 @@ tasks:
       - echo "AZURE':' Building EvoCloud IdM Replica Server"
       - task: vm-operation
         vars:
-          SERVER: server-04-admin-idam_replica-helper
+          SERVER: server-03-admin-idam_replica-helper
           ACTION: "{{.BUILD_CMD}}"
 
   build-evo-rdp:
@@ -166,7 +166,7 @@ tasks:
       - echo "AZURE':' Destroying EvoCloud IdM Server"
       - task: vm-operation
         vars:
-          SERVER: server-03-admin-idam
+          SERVER: server-02-admin-idam
           ACTION: "{{.DESTROY_CMD}}"
 
   destroy-evo-idpr:
@@ -176,7 +176,7 @@ tasks:
       - echo "AZURE':' Destroying EvoCloud IdM Replica Server"
       - task: vm-operation
         vars:
-          SERVER: server-04-admin-idam_replica
+          SERVER: server-03-admin-idam_replica
           ACTION: "{{.DESTROY_CMD}}"
 
   destroy-evo-rdp:
