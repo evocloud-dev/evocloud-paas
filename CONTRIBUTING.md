@@ -24,11 +24,11 @@ You can contribute to the EvoCloud ecosystem in many ways:
 
 ---
 
-## Bug Reports & Feature Suggestions
+## 🐛 Bug Reports & Feature Suggestions
 
 Please use the [issue tracker](https://github.com/evocloud-dev/evocloud-paas/issues) to report any bugs or file feature requests.
 
-## Code Improvements
+## 💻 Code Improvements
 
 PRs are welcome. In general, we follow the "fork-and-pull" Git workflow.
 
