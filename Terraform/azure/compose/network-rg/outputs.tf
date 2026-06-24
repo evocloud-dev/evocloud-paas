@@ -22,19 +22,5 @@ output "vnet_name" {
   value = azurerm_virtual_network.main.name
 }
 
-output "storage_account_name" {
-  value = azurerm_storage_account.evocloud-storage.name
-}
 
-output "storage_account_id" {
-  value = azurerm_storage_account.evocloud-storage.id
-}
-
-output "storage_container_name" {
-  value = azurerm_storage_container.evocloud-tf-state.name
-}
-
-output "storage_container_id" {
-  value = azurerm_storage_container.evocloud-tf-state.id
-}
 
