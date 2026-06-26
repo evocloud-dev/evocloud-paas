@@ -6,6 +6,8 @@ silent: true
 # task gcp:build-evo-master
 # task oci:build-evo-master
 includes:
+  azure:
+    taskfile: ./Terraform/azure/Taskfile.yaml
   gcp:
     taskfile: ./Terraform/gcp/Taskfile.yaml
   oci:
