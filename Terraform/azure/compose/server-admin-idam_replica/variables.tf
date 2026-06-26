@@ -18,6 +18,11 @@ variable "BASE_INSTALLER_IMG" {
   type        = string
 }
 
+variable "CLOUD_PLATFORM" {
+  description = "IaaS Type"
+  type        = string
+}
+
 variable "CLOUD_USER" {
   description = "Cloud User"
   type        = string
