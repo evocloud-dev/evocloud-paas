@@ -48,6 +48,11 @@ variable "PRIVATE_KEY_PAIR" {
   type        = string
 }
 
+variable "PUBLIC_KEY_PAIR" {
+  description = "Public Key Pair"
+  type        = string
+}
+
 variable "RDP_SHORT_HOSTNAME" {
   description = "Deployer Short Name"
   type        = string
