@@ -45,7 +45,6 @@ resource "azurerm_subnet_nat_gateway_association" "all" {
   for_each = {
     admin_subnet   = var.admin_subnet_id
     backend_subnet = var.backend_subnet_id
-    dmz_subnet     = var.dmz_subnet_id
   }
   subnet_id      = each.value
   nat_gateway_id = azurerm_nat_gateway.nat-gateway.id
