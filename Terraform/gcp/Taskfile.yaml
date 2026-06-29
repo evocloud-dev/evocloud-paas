@@ -8,7 +8,7 @@ vars:
   GCLOUD_AUTH:         "gcloud auth activate-service-account --key-file"
   GCLOUD_EXPORT:       "export GOOGLE_APPLICATION_CREDENTIALS"
   KEYS_DIR:            "/opt/EVOCLOUD/Keys"
-  BUILD_CMD:           "terragrunt run-all apply --non-interactive --queue-include-external -auto-approve"
+  BUILD_CMD:           "terragrunt run --all --non-interactive --queue-include-external apply -- -auto-approve"
   CLUSTER_DESTROY_CMD: "terragrunt apply --non-interactive -auto-approve"
   DESTROY_CMD:         "terragrunt destroy --non-interactive -auto-approve"
 
