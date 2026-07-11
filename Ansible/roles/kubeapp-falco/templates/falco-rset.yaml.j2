@@ -1,0 +1,490 @@
+############################################
+#DEPLOYING Falco Runtime Security
+############################################
+# Reference:
+#            https://github.com/falcosecurity/falco-operator/blob/main/examples/quickstart.yaml
+#
+# TO DO LATER: Support production grade outputs other than stdout: https://github.com/falcosecurity/falcosidekick#outputs
+
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: falco-operator
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    #Requirement for kubeapp-fluent fluent-operator
+    #Soft Requirement for storageclass
+
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: falco-operator
+        labels:
+          pod-security.kubernetes.io/enforce: privileged #Falco must not set securityContext.privileged=true
+
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: falco-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/falcosecurity/charts/falco-operator
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "0.3.*"
+
+    #The Falco Operator is now the recommended way to deploy Falco ecosystem on Kubernetes.
+    #It provides a declarative, Kubernetes-native experience with Custom Resources for managing Falco instances, rules, plugins, and configuration
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: falco-operator
+        namespace: falco-operator
+      spec:
+        #serviceAccountName: flux-operator
+        chartRef:
+          kind: OCIRepository
+          name: falco-operator
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+---
+#############################################
+# ResourceSet for deploying Falco Ecosystem
+#############################################
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: falco-ecosystem
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: falco-operator
+      namespace: falco-operator
+      ready: true
+    #Requirement for fluent-operator
+    #Soft Requirement for storageclass
+
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: falco-system
+        labels:
+          pod-security.kubernetes.io/enforce: privileged #Falco must not set securityContext.privileged=true
+
+    # Falco instance -- DaemonSet on every node with modern_ebpf driver and syscall monitoring
+    - apiVersion: instance.falcosecurity.dev/v1alpha1
+      kind: Falco
+      metadata:
+        name: falco
+        namespace: falco-system
+        labels:
+          app.kubernetes.io/managed-by: falco-operator
+      spec:
+        podTemplateSpec:
+          spec:
+            containers:
+              - name: falco
+                tty: true
+
+    # Falco Container meta plugin -- Required by official rules for container metadata fields (container.id, container.image.repository, etc.)
+    - apiVersion: artifact.falcosecurity.dev/v1alpha1
+      kind: Plugin
+      metadata:
+        name: container
+        namespace: falco-system
+        labels:
+          app.kubernetes.io/managed-by: falco-operator
+      spec:
+        ociArtifact:
+          image:
+            repository: falcosecurity/plugins/plugin/container
+            tag: main #https://github.com/falcosecurity/plugins/pkgs/container/plugins%2Fplugin%2Fcontainer
+          registry:
+            name: ghcr.io
+
+    # Falco Kubernetes meta plugin -- Kubernetes metadata enrichment rules
+    - apiVersion: artifact.falcosecurity.dev/v1alpha1
+      kind: Plugin
+      metadata:
+        name: k8smeta
+        namespace: falco-system
+        labels:
+          app.kubernetes.io/managed-by: falco-operator
+      spec:
+        ociArtifact:
+          image:
+            repository: falcosecurity/plugins/plugin/k8smeta
+            tag: main #https://github.com/falcosecurity/plugins/pkgs/container/plugins%2Fplugin%2Fk8smeta
+          registry:
+            name: ghcr.io
+        config:
+          initConfig:
+            collectorPort: 45000
+            collectorHostname: metacollector.falco-system.svc
+            nodeName: "${FALCO_K8S_NODE_NAME}"
+
+    # Falco Kubernetes Audits plugin -- Kubernetes API activity detection rules
+    - apiVersion: artifact.falcosecurity.dev/v1alpha1
+      kind: Plugin
+      metadata:
+        name: k8saudit
+        namespace: falco-system
+        labels:
+          app.kubernetes.io/managed-by: falco-operator
+      spec:
+        ociArtifact:
+          image:
+            repository: falcosecurity/plugins/plugin/k8saudit
+            tag: main #https://github.com/falcosecurity/plugins/pkgs/container/plugins%2Fplugin%2Fk8saudit
+          registry:
+            name: ghcr.io
+        config:
+          initConfig: ""
+          openParams: "http://:9765/k8s-audit"
+
+    #Falco Json plugin -- Enables JSON field extraction. Recommended for structured output
+    - apiVersion: artifact.falcosecurity.dev/v1alpha1
+      kind: Plugin
+      metadata:
+        name: json
+        namespace: falco-system
+        labels:
+          app.kubernetes.io/managed-by: falco-operator
+      spec:
+        ociArtifact:
+          image:
+            repository: falcosecurity/plugins/plugin/json
+            tag: main #https://github.com/falcosecurity/plugins/pkgs/container/plugins%2Fplugin%2Fjson
+          registry:
+            name: ghcr.io
+
+    # Kubernetes audits detection rules
+    - apiVersion: artifact.falcosecurity.dev/v1alpha1
+      kind: Rulesfile
+      metadata:
+        name: k8s-audit-rules
+        namespace: falco-system
+        labels:
+          app.kubernetes.io/managed-by: falco-operator
+      spec:
+        ociArtifact:
+          image:
+            repository: falcosecurity/plugins/ruleset/k8saudit
+            tag: main #https://github.com/falcosecurity/plugins/pkgs/container/plugins%2Fruleset%2Fk8saudit
+          registry:
+            name: ghcr.io
+        priority: 50 #Lower number = applied earlier
+
+    # Official Falco detection rules (stable)
+    - apiVersion: artifact.falcosecurity.dev/v1alpha1
+      kind: Rulesfile
+      metadata:
+        name: falco-rules
+        namespace: falco-system
+        labels:
+          app.kubernetes.io/managed-by: falco-operator
+      spec:
+        ociArtifact:
+          image:
+            repository: falcosecurity/rules/falco-rules
+            tag: 5.1.0 #https://github.com/falcosecurity/rules/pkgs/container/rules%2Ffalco-rules
+          registry:
+            name: ghcr.io
+        priority: 55 #Lower number = applied earlier
+
+    # Community Falco detection rules (incubating)
+    - apiVersion: artifact.falcosecurity.dev/v1alpha1
+      kind: Rulesfile
+      metadata:
+        name: falco-incubating-rules
+        namespace: falco-system
+        labels:
+          app.kubernetes.io/managed-by: falco-operator
+      spec:
+        ociArtifact:
+          image:
+            repository: falcosecurity/rules/falco-incubating-rules
+            tag: 6.0.1 #https://github.com/falcosecurity/rules/pkgs/container/rules%2Ffalco-incubating-rules
+          registry:
+            name: ghcr.io
+        priority: 60 #Lower number = applied earlier
+
+    # Falco Configuration custom resource
+    #Stdout output is enabled by default and output is wired to Falcosidekick for immediate visibility.
+    #For production, you may want to disable stdout and rely on Falcosidekick to forward events to external systems (Slack, Elasticsearch, Opensearch, S3, etc.),
+    - apiVersion: artifact.falcosecurity.dev/v1alpha1
+      kind: Config
+      metadata:
+        name: falco-output
+        namespace: falco-system
+        labels:
+          app.kubernetes.io/managed-by: falco-operator
+      spec:
+        config:
+          json_output: true
+          json_include_output_property: true
+          stdout_output:
+            enabled: true
+          http_output:
+            enabled: true
+            url: "http://falcosidekick.falco-system.svc:2801" #Falcosidekick component service endpoint
+        priority: 50
+
+    # Falcosidekick custom resource -- fan-out daemon for Falco events
+    #Configured to forward events to Falcosidekick UI.
+    #Add more output integrations via env vars in podTemplateSpec.
+    #See: https://github.com/falcosecurity/falcosidekick#outputs
+    - apiVersion: instance.falcosecurity.dev/v1alpha1
+      kind: Component
+      metadata:
+        name: falcosidekick
+        namespace: falco-system
+        labels:
+          app.kubernetes.io/managed-by: falco-operator
+      spec:
+        component:
+          type: falcosidekick
+        replicas: 2
+        podTemplateSpec:
+          spec:
+            containers:
+              - name: falcosidekick
+                env:
+                  - name: WEBUI_URL
+                    value: "http://falcosidekick-ui.falco-system.svc:2802"
+
+    # Falco Kubernetes Metacollector Component -- centralized Kubernetes metadata for Falco instances
+    #The Falco Kubernetes meta plugin connects to this service on port 45000
+    - apiVersion: instance.falcosecurity.dev/v1alpha1
+      kind: Component
+      metadata:
+        name: metacollector
+        namespace: falco-system
+        labels:
+          app.kubernetes.io/managed-by: falco-operator
+      spec:
+        component:
+          type: metacollector
+        replicas: 1
+
+    # Redis StatefulSet for Falcosidekick UI (persistent event storage)
+    - apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: falcosidekick-ui-redis
+        namespace: falco-system
+        labels:
+          app.kubernetes.io/name: falcosidekick-ui-redis
+          app.kubernetes.io/managed-by: falco-operator
+      spec:
+        serviceName: falcosidekick-ui-redis
+        replicas: 1
+        selector:
+          matchLabels:
+            app.kubernetes.io/name: falcosidekick-ui-redis
+        template:
+          metadata:
+            labels:
+              app.kubernetes.io/name: falcosidekick-ui-redis
+          spec:
+            containers:
+              - name: redis
+                image: docker.io/redis/redis-stack:7.2.0-v20
+                ports:
+                  - containerPort: 6379
+                    name: redis
+                    protocol: TCP
+                livenessProbe:
+                  tcpSocket:
+                    port: 6379
+                  initialDelaySeconds: 5
+                  periodSeconds: 5
+                  timeoutSeconds: 2
+                  failureThreshold: 3
+                readinessProbe:
+                  tcpSocket:
+                    port: 6379
+                  initialDelaySeconds: 5
+                  periodSeconds: 5
+                  timeoutSeconds: 2
+                  failureThreshold: 3
+        volumeClaimTemplates:
+          - metadata:
+              name: redis-data
+            spec:
+              accessModes: [ "ReadWriteOnce" ]
+              resources:
+                requests:
+                  storage: 1Gi
+
+    # Redis Service (default address: falcosidekick-ui-redis:6379)
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        name: falcosidekick-ui-redis
+        namespace: falco-system
+        labels:
+          app.kubernetes.io/name: falcosidekick-ui-redis
+          app.kubernetes.io/managed-by: falco-operator
+      spec:
+        type: ClusterIP
+        ports:
+          - port: 6379
+            targetPort: 6379
+            protocol: TCP
+            name: redis
+        selector:
+          app.kubernetes.io/name: falcosidekick-ui-redis
+
+    # Create Webhook Service used by k8saudit plugin
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        name: k8saudit-webhook
+        namespace: falco-system
+        labels:
+          app.kubernetes.io/name: falcosidekick-ui-redis
+          app.kubernetes.io/managed-by: falco-operator
+      spec:
+        type: ClusterIP
+        ports:
+          - port: 9765
+            targetPort: 9765
+            protocol: TCP
+            name: http
+        selector:
+          app.kubernetes.io/name: falco #Must match your Falco pods label
+
+    # Falcosidekick UI custom resource -- web dashboard for event visualization
+    - apiVersion: instance.falcosecurity.dev/v1alpha1
+      kind: Component
+      metadata:
+        name: falcosidekick-ui
+        namespace: falco-system
+        labels:
+          app.kubernetes.io/managed-by: falco-operator
+      spec:
+        component:
+          type: falcosidekick-ui
+        replicas: 2
+
+    # Talos Specific: FluentBit Custom Resource for forwarding Kubernetes Logs
+    - apiVersion: fluentbit.fluent.io/v1alpha2
+      kind: FluentBit
+      metadata:
+        name: talos-k8s-audit-logs
+        namespace: fluent-operator
+        labels:
+          app.kubernetes.io/name: fluent-bit
+      spec:
+        image: ghcr.io/fluent/fluent-operator/fluent-bit:5.0.8
+        fluentBitConfigName: talos-k8s-audit-logs-config
+        tolerations:
+          - operator: Exists
+            effect: NoSchedule
+        nodeSelector:
+          node-role.kubernetes.io/control-plane: ""
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        volumes:
+          - name: varlog
+            hostPath:
+              path: /var/log
+        volumesMounts:
+          - name: varlog
+            mountPath: /var/log
+    # FluentBit Configuration
+    - apiVersion: fluentbit.fluent.io/v1alpha2
+      kind: ClusterFluentBitConfig
+      metadata:
+        name: talos-k8s-audit-logs-config
+        namespace: fluent-operator
+      spec:
+        inputSelector:
+          matchLabels:
+            input.fluentd.fluent.io/name: "tail-talos-k8s-audit-logs"
+        parserSelector:
+          matchLabels:
+            parser.fluentd.fluent.io/enabled: "true"
+        outputSelector:
+          matchLabels:
+            output.fluentd.fluent.io/enabled: "parser-talos-k8s-audit-logs"
+    # FluentBit Input Configuration
+    - apiVersion: fluentbit.fluent.io/v1alpha2
+      kind: ClusterInput
+      metadata:
+        name: tail-talos-k8s-audit-logs
+        namespace: fluent-operator
+        labels:
+          input.fluentd.fluent.io/name: "tail-talos-k8s-audit-logs"
+      spec:
+        alias: audit
+        tail:
+          path: /var/log/audit/kube/*.log
+          tag: audit.*
+          ignoredOlder: 30d #Supports m,h,d (minutes, hours, days)
+          parser: audit
+    # FluentBit Parser Configuration
+    - apiVersion: fluentbit.fluent.io/v1alpha2
+      kind: ClusterParser
+      metadata:
+        name: parser-talos-k8s-audit-logs
+        namespace: fluent-operator
+        labels:
+          parser.fluentd.fluent.io/name: "parser-talos-k8s-audit-logs"
+      spec:
+        json:
+          timeKey: requestReceivedTimestamp
+          timeFormat: "%Y-%m-%dT%H:%M:%S.%L%z"
+    # FluentBit Output Configuration
+    - apiVersion: fluentbit.fluent.io/v1alpha2
+      kind: ClusterOutput
+      metadata:
+        name: falco-k8saudit-http
+        namespace: fluent-operator
+        labels:
+          input.fluentd.fluent.io/name: "tail-talos-k8s-audit-logs"
+      spec:
+        alias: http
+        match: "*"
+        http:
+          host: k8saudit-webhook.falco-system.svc # Must match the Webhook Service used by k8saudit plugin
+          port: 9765
+          uri: /k8s-audit
+          format: json
+

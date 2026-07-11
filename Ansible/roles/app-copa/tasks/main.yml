@@ -1,0 +1,48 @@
+---
+#This playbook will install COPA Binary
+#
+#References:
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-copa ##################"
+
+- name: Checking if COPA already exist...
+  ansible.builtin.stat:
+    path: '{{ copa_install_dir }}/copa'
+  changed_when: false
+  become: true
+  register: copa_cli_binary
+
+- name: Uninstalling COPA...
+  ansible.builtin.file:
+    path: '{{ copa_install_dir }}/copa'
+    state: absent
+  become: true
+  when: (copa_cli_binary.stat.exists) and (copa_cli_force_update | bool)
+
+- when: (not copa_cli_binary.stat.exists) or (copa_cli_force_update | bool)
+  block:
+    - name: Verifying COPA sha256 checksum...
+      ansible.builtin.get_url:
+        url: '{{ copa_download_url }}'
+        dest: '/tmp'
+        mode: '0644'
+        checksum: '{{ copa_checksum }}'
+      become: true
+
+    - name: Installing COPA...
+      ansible.builtin.unarchive:
+        src: '/tmp/copa_{{ copa_version }}_linux_amd64.tar.gz'
+        dest: '{{ copa_install_dir }}'
+        mode: '0755'
+        remote_src: yes
+      become: true
+
+  always:
+    - name: Removing COPA detritus...
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '/tmp/copa_{{ copa_version }}_linux_amd64.tar.gz'
+      become: true

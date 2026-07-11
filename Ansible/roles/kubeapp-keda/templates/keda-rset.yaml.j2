@@ -1,0 +1,70 @@
+############################################
+#DEPLOYING KEDA SOLUTION
+############################################
+#https://github.com/kedacore/charts
+
+---
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: keda
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: keda
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: HelmRepository
+      metadata:
+        name: keda-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: https://kedacore.github.io/charts
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: keda-operator
+        namespace: flux-system
+      spec:
+        #serviceAccountName: flux-operator
+        chart:
+          spec:
+            chart: keda
+            sourceRef:
+              kind: HelmRepository
+              name: keda-operator
+              namespace: flux-system
+            version: "2.20.*"
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          clusterName: evo-cluster-mgr
+          clusterDomain: cluster.local
+          priorityClassName: system-node-critical
+          nodeSelector:
+            node-role.kubernetes.io/control-plane: ""
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              effect: NoSchedule

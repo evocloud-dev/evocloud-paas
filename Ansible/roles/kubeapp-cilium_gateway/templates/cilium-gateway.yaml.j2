@@ -1,0 +1,176 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: shared-gtw
+  namespace: evocloud-ns
+  annotations:
+    cert-manager.io/cluster-issuer: evoidp-issuer #needed for automatic certs generation by cert-manager
+spec:
+  gatewayClassName: cilium
+  addresses:
+    - type: IPAddress
+      value: {{ gtw_lb_ip }}
+  listeners:
+    ###############################################
+    #EvoCloud UI Endpoint
+    ###############################################
+    - name: http-headlamp
+      hostname: paas.{{ domain_tld }}
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https-headlamp
+      hostname: paas.{{ domain_tld }}
+      port: 443
+      protocol: HTTPS
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate #Passthrough mode is not supported yet.
+        certificateRefs:
+          - name: https-headlamp-tls
+            kind: Secret            #https://github.com/cert-manager/cert-manager/issues/5610
+            namespace: evocloud-ns  #Automatic cert provisioning will fail if the requested cert is in a different namespace than the Gateway.
+    ###############################################
+    #EvoCloud Observability Endpoint - Grafana
+    ###############################################
+    - name: http-grafana
+      hostname: grafana.{{ domain_tld }}
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https-grafana
+      hostname: grafana.{{ domain_tld }}
+      port: 443
+      protocol: HTTPS
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate #Passthrough mode is not supported yet.
+        certificateRefs:
+          - name: https-grafana-tls
+            kind: Secret            #https://github.com/cert-manager/cert-manager/issues/5610
+            namespace: evocloud-ns
+    ###############################################
+    #EvoCloud Observability Endpoint - Prometheus
+    ###############################################
+    - name: http-prometheus
+      hostname: prometheus.{{ domain_tld }}
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https-prometheus
+      hostname: prometheus.{{ domain_tld }}
+      port: 443
+      protocol: HTTPS
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate #Passthrough mode is not supported yet.
+        certificateRefs:
+          - name: https-prometheus-tls
+            kind: Secret            #https://github.com/cert-manager/cert-manager/issues/5610
+            namespace: evocloud-ns
+    ###############################################
+    #EvoCloud Observability Endpoint - AlertManager
+    ###############################################
+    - name: http-alertmanager
+      hostname: altertmanager.{{ domain_tld }}
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https-altertmanager
+      hostname: altertmanager.{{ domain_tld }}
+      port: 443
+      protocol: HTTPS
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate #Passthrough mode is not supported yet.
+        certificateRefs:
+          - name: https-altertmanager-tls
+            kind: Secret            #https://github.com/cert-manager/cert-manager/issues/5610
+            namespace: evocloud-ns
+    ###############################################
+    #EvoCloud GitOps Endpoint - Flux
+    ###############################################
+    - name: http-flux
+      hostname: flux.{{ domain_tld }}
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https-flux
+      hostname: flux.{{ domain_tld }}
+      port: 443
+      protocol: HTTPS
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate #Passthrough mode is not supported yet.
+        certificateRefs:
+          - name: https-flux-tls
+            kind: Secret            #https://github.com/cert-manager/cert-manager/issues/5610
+            namespace: evocloud-ns
+    ###############################################
+    #EvoCloud Storage Endpoint - Rook
+    ###############################################
+    - name: http-storage
+      hostname: storage.{{ domain_tld }}
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https-storage
+      hostname: storage.{{ domain_tld }}
+      port: 443
+      protocol: HTTPS
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate #Passthrough mode is not supported yet.
+        certificateRefs:
+          - name: https-flux-tls
+            kind: Secret            #https://github.com/cert-manager/cert-manager/issues/5610
+            namespace: evocloud-ns
+
+    ###############################################
+    #EvoCloud SCHEMA_PUBLISHER Endpoint
+    ###############################################
+    - name: http-crd-schema-publisher
+      hostname: api.{{ domain_tld }}
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https-crd-schema-publisher
+      hostname: api.{{ domain_tld }}
+      port: 443
+      protocol: HTTPS
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate #Passthrough mode is not supported yet.
+        certificateRefs:
+          - name: https-crd-schema-tls
+            kind: Secret            #https://github.com/cert-manager/cert-manager/issues/5610
+            namespace: evocloud-ns

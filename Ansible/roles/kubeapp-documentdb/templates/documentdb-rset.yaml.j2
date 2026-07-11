@@ -1,0 +1,107 @@
+---
+############################################
+#DEPLOYING DocumentDB (MongoDB Alternative)
+############################################
+#Reference: https://documentdb.io/documentdb-kubernetes-operator/latest/preview/
+#           https://github.com/documentdb/documentdb-kubernetes-operator/tree/main/operator/documentdb-helm-chart
+#           https://documentdb.io/documentdb-kubernetes-operator/latest/preview/architecture/overview/
+
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: documentdb-operator
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    # Add dependsOn storageClass
+    #Add requirement for cert-manager
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: cert-manager-stack
+      namespace: cert-manager
+      ready: true
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: documentdb-operator
+    # OCI Repository
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: documentdb-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/documentdb/documentdb-operator
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "0.2.*"
+    # Helm Release
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: documentdb-operator
+        namespace: documentdb-operator
+      spec:
+        #serviceAccountName: documentdb-sa
+        chartRef:
+          kind: OCIRepository
+          name: documentdb-operator
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          walReplica: false
+          cloudnative-pg:
+            namespaceOverride: cnpg-system
+            additionalEnv:
+              - name: ENABLE_INSTANCE_MANAGER_INPLACE_UPDATES
+                value: "true"
+
+# DocumentDB Cluster Instantiation with CRD
+# Follow the CRD approach below to create DocumentDB Clusters if needed. Use a resourceset
+#- apiVersion: documentdb.io/preview
+#  kind: DocumentDB
+#  metadata:
+#    name: documentdb-cluster
+#    namespace: evocloud-ns
+#  spec:
+#    nodeCount: 1
+#    instancesPerNode: 3
+#    resource:
+#      storage:
+#        pvcSize: 100Gi
+#        persistentVolumeReclaimPolicy: Retain
+#    exposeViaService:
+#      serviceType: ClusterIP
+#    tls:
+#      gateway:
+#        mode: CertManager
+#        certManager:
+#          issuerRef:
+#            name: evoidp-issuer
+#            kind: ClusterIssuer
+#          dnsNames:
+#            - documentdb.evocloud.gov
+#          secretName: documentdb-cluster-tls

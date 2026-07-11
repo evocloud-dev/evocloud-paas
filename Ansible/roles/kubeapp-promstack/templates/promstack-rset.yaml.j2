@@ -1,0 +1,82 @@
+###################################################
+#DEPLOYING KUBE-PROMETHEUS-STACK SOLUTION
+###################################################
+
+---
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: kube-promstack
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: ResourceSet
+      name: rook-ceph
+      namespace: flux-system
+      ready: true
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: monitoring
+        labels:
+          pod-security.kubernetes.io/enforce: privileged #Talos default PodSecurity configuration prevents execution of priviledged pods.
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: kube-promstack-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/prometheus-community/charts/kube-prometheus-stack
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "87.x"
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: kube-promstack-operator
+        namespace: monitoring
+      spec:
+        #serviceAccountName: flux-operator
+        chartRef:
+          kind: OCIRepository
+          name: kube-promstack-operator
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          grafana:
+            enabled: false
+            forceDeployDashboards: true
+            adminPassword: prom-operator
+          nodeExporter:
+            enabled: true
+            operatingSystems:
+              linux:
+                enabled: true
+              aix:
+                enabled: false
+              darwin:
+                enabled: false

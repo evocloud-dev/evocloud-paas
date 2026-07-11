@@ -1,0 +1,35 @@
+---
+#This playbook will deploy Vault-Banks Operator
+#References:
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-vault_banks ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ vault_kubeapp_dir }}"
+
+######################################################
+#Deploying Vault Banks Operator Resources
+######################################################
+- name: Staging Kubernetes manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ vault_kubeapp_dir }}/{{ item }}"
+  loop:
+    - vault-banks-operator.yaml
+
+- name: Deploying Kubernetes manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ vault_kubeapp_dir }}/vault-banks-operator.yaml"
+  register: vault_deploy_result
+  until: vault_deploy_result is succeeded
+  retries: 10
+  delay: 30

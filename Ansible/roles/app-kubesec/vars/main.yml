@@ -1,0 +1,20 @@
+---
+#--------------------------------------------------------------
+# KUBESECVARS
+#--------------------------------------------------------------
+# Kubesec Version
+# renovate: datasource=github-releases depName=controlplane/kubesec versioning=semver
+kubesec_version: "v2.14.2"
+
+# Directory
+kubesec_install_dir: "/usr/local/bin"
+
+# Update flag
+kubesec_force_update: false
+
+# URLS: https://github.com/controlplaneio/kubesec/releases/download/v2.14.2/kubesec_linux_amd64.tar.gz
+kubesec_download_url: "https://github.com/controlplaneio/kubesec/releases/download/{{ kubesec_version }}/kubesec_linux_amd64.tar.gz"
+
+#https://github.com/controlplaneio/kubesec/releases/
+# renovate: datasource=github-releases depName=controlplaneio/kubesec packageName=kubesec_linux_amd64.tar.gz
+kubesec_checksum: sha256:bc252e35f01bc4f133a49404315da3ccfed0209cc9baba33883eaeca0656f35c
