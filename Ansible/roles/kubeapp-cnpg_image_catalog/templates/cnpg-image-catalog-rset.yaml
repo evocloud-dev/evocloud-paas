@@ -1,0 +1,45 @@
+---
+############################################
+#DEPLOYING Cloudnative-PG Images Catalog
+############################################
+#Reference: https://github.com/cloudnative-pg/artifacts/tree/main/image-catalogs
+#           https://cloudnative-pg.io/docs/1.28/image_catalog/
+
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: cnpg-image-catalogs-base
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: cloudnative-pg-operator
+      namespace: cnpg-system
+      ready: true
+  resources:
+    # Cloudnative-pg ImageCatalog:
+    # https://cloudnative-pg.io/docs/1.28/image_catalog/
+    - apiVersion: postgresql.cnpg.io/v1
+      kind: ClusterImageCatalog
+      metadata:
+        name: postgresql-minimal-trixie-base
+        labels:
+          images.cnpg.io/date: "20260624"
+          images.cnpg.io/family: postgresql
+          images.cnpg.io/os: trixie
+          images.cnpg.io/publisher: cnpg.io
+          images.cnpg.io/type: minimal-base
+      spec:
+        images:
+          - major: 18
+            image: ghcr.io/cloudnative-pg/postgresql:18.4-202606221003-minimal-trixie@sha256:538f1b327b8dc7621a94aac79c9c3e5c50dfa29115a6c291e19372a5b876f415
+          - major: 17
+            image: ghcr.io/cloudnative-pg/postgresql:17.10-202606221003-minimal-trixie@sha256:ed9e490fef3cc3d6bda0ad29028e90c9b0c6eeb978fa3f21f8b0e82690f797e2
+          - major: 16
+            image: ghcr.io/cloudnative-pg/postgresql:16.14-202606221003-minimal-trixie@sha256:322ac0b84afe6b7894285d48258e749c4a38e60cacac5ae7e9740623cd0263a2

@@ -1,0 +1,10 @@
+---
+cloud_user: ""
+
+kube_cluster_name: ""
+
+kubeapp_name: 'promstack'
+
+kubeapp_dir: '/home/{{ cloud_user }}/kubeapps/{{ kube_cluster_name }}'
+
+kubeconfig: '/home/{{ cloud_user }}/kubeconfig/kubeconfig-{{ kube_cluster_name }}.yaml'

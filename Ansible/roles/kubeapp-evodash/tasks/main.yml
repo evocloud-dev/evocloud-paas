@@ -1,0 +1,35 @@
+---
+#This playbook will deploy EvoCloud Kubeapps Dashboard powered by Forecastle
+#References:
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-evodash ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ evodash_kubeapp_dir }}"
+
+######################################################
+#Deploying EvoDash Resources
+######################################################
+- name: Staging Kubernetes manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ evodash_kubeapp_dir }}/{{ item }}"
+  loop:
+    - evodash-rset.yaml
+
+- name: Deploying Kubernetes manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ evodash_kubeapp_dir }}/evodash-rset.yaml"
+  register: evodash_deploy_result
+  until: evodash_deploy_result is succeeded
+  retries: 10
+  delay: 30

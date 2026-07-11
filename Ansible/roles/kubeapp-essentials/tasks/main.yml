@@ -34,8 +34,6 @@
   loop:
     - "{{ kubeapp_dir }}/cert-manager"
     - "{{ kubeapp_dir }}/external-dns"
-    - "{{ kubeapp_dir }}/cilium-ippool"
-    - "{{ kubeapp_dir }}/cilium-gateway"
 
 - name: Creating cert-manager namespace...
   kubernetes.core.k8s:
@@ -73,7 +71,7 @@
         secret: "{{ tsig_secret_value.stdout }}"
 
 ##############################################
-#Deploying cert-manager via flux controller
+#Deploying cert-manager
 ##############################################
 - name: Staging cert-manager manifests...
   ansible.builtin.template:
@@ -93,12 +91,11 @@
     - "{{ kubeapp_dir }}/cert-manager/cert-manager-issuer.yaml"
   register: certmanager_deploy_result
   until: certmanager_deploy_result is succeeded
-  retries: 10
+  retries: 4
   delay: 30
 
-
 ##############################################
-#Deploying external-dns via flux controller
+#Deploying external-dns
 ##############################################
 - name: Staging external-dns manifests...
   ansible.builtin.template:
@@ -114,43 +111,3 @@
     src: "{{ item }}"
   loop:
     - "{{ kubeapp_dir }}/external-dns/flux-external-dns.yaml"
-
-##############################################
-#Deploying cilium ippool and l2announcement
-##############################################
-- name: Staging cilium manifests...
-  ansible.builtin.template:
-    src: "{{ item }}.j2"
-    dest: "{{ kubeapp_dir }}/cilium-ippool/{{ item }}"
-  loop:
-    - cilium-ip-pool.yaml
-    - cilium-l2announcement-policy.yaml
-
-- name: Deploying cilium manifests...
-  kubernetes.core.k8s:
-    kubeconfig: "{{ kubeconfig }}"
-    state: present
-    src: "{{ item }}"
-  loop:
-    - "{{ kubeapp_dir }}/cilium-ippool/cilium-ip-pool.yaml"
-    - "{{ kubeapp_dir }}/cilium-ippool/cilium-l2announcement-policy.yaml"
-
-##############################################
-#Deploying cilium-gateway endpoint
-##############################################
-- name: Staging cilium-gateway manifests...
-  ansible.builtin.template:
-    src: "{{ item }}.j2"
-    dest: "{{ kubeapp_dir }}/cilium-gateway/{{ item }}"
-  loop:
-    - gateway.yaml
-    - httproute.yaml
-
-- name: Deploying cilium-gateway manifests...
-  kubernetes.core.k8s:
-    kubeconfig: "{{ kubeconfig }}"
-    state: present
-    src: "{{ item }}"
-  loop:
-    - "{{ kubeapp_dir }}/cilium-gateway/gateway.yaml"
-    - "{{ kubeapp_dir }}/cilium-gateway/httproute.yaml"

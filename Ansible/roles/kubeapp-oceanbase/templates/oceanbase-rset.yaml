@@ -1,0 +1,451 @@
+---
+#############################################
+#DEPLOYING OCEANBASE DISTRIBUTED DBMS CLUSTER
+#############################################
+#Reference: https://github.com/oceanbase/ob-operator
+#           https://github.com/oceanbase/ob-operator/tree/master/charts
+#           https://github.com/oceanbase/ob-operator/tree/master/example/argocd/resources
+
+
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: oceanbase-operator
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        labels:
+          app.kubernetes.io/component: manager
+          app.kubernetes.io/instance: system
+          control-plane: controller-manager
+        name: oceanbase-system
+    #Create Helm Repository
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: HelmRepository
+      metadata:
+        name: oceanbase-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: https://oceanbase.github.io/ob-operator
+    #Deploy Helm Release
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: oceanbase-operator
+        namespace: oceanbase-system
+      spec:
+        #serviceAccountName: oceanbase-operator
+        chart:
+          spec:
+            chart: ob-operator
+            sourceRef:
+              kind: HelmRepository
+              name: oceanbase-operator
+              namespace: flux-system
+            version: "2.3.*"
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          reporter: "" #disables TELEMETRY_REPORTER
+    #Namespace and Secrets needed by the OceanBase Cluster
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: oceanbase
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: root-password
+        namespace: oceanbase
+      type: Opaque
+      stringData:
+        password: "secret_p@ssword!" #generate password: head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: proxyro-password
+        namespace: oceanbase
+      type: Opaque
+      stringData:
+        password: "proxyro_p@ssword!" #generate password: head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: monitor-password
+        namespace: oceanbase
+      type: Opaque
+      stringData:
+        password: "monitor_p@ssword!" ##generate password: head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: operator-password
+        namespace: oceanbase
+      type: Opaque
+      stringData:
+        password: "operator_p@ssword!" #generate password: head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: standbyro-password
+        namespace: oceanbase
+      type: Opaque
+      stringData:
+        password: "standbyro_p@ssword!" #generate password: head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: tenant-root-password
+        namespace: oceanbase
+      type: Opaque
+      stringData:
+        password: "tenantroot_p@ssword!" #generate password: head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16
+
+---
+########################################
+# Create OceanBase Cluster Definition
+########################################
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: oceanbase-cluster
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: oceanbase-controller-manager
+      namespace: oceanbase-system
+      ready: true
+    # Add dependsOn storageClass
+    # Add dependsOn Monitoring Stack
+    # Add dependsOn Cert-Manager
+  resources:
+    #OceanBase Cluster Definition
+    - apiVersion: oceanbase.oceanbase.com/v1alpha1
+      kind: OBCluster
+      metadata:
+        name: obcluster
+        namespace: oceanbase
+        annotations:
+          "oceanbase.oceanbase.com/mode": "service"
+          #"oceanbase.oceanbase.com/independent-pvc-lifecycle": "true"
+      spec:
+        clusterName: obcluster
+        clusterId: 1
+        userSecrets:
+          root: root-password
+          proxyro: proxyro-password
+          monitor: monitor-password
+          operator: operator-password
+        topology:
+          - zone: zone1
+            replica: 1
+          - zone: zone2
+            replica: 1
+          - zone: zone3
+            replica: 1
+        observer:
+          image: oceanbase/oceanbase-cloud-native:4.4.2.0-100000032026021017
+          resource:
+            memory: 8Gi #The minimum required is 8Gi
+          storage:
+            dataStorage:
+              #storageClass: local-path
+              size: 30Gi
+            redoLogStorage:
+              #storageClass: local-path
+              size: 30Gi
+            logStorage:
+              #storageClass: local-path
+              size: 10Gi
+        parameters:
+          - name: __min_full_resource_pool_memory
+            value: "2147483648"
+          - name: system_memory
+            value: 1G
+          # add obconfig_url='http://{svc_address}:{svc_port}/services?Action=ObRootServiceInfo&ObCluster={ob_cluster_name}'
+          - name: obconfig_url
+            value: 'http://ob-configserver.oceanbase.svc:8080/services?Action=ObRootServiceInfo&ObCluster=obcluster'
+    #OceanBase Config Server Setup
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        name: ob-configserver
+        namespace: oceanbase
+      spec:
+        selector:
+          app: ob-configserver
+        ports:
+          - name: "http"
+            port: 8080
+            targetPort: 8080
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: ob-configserver
+        namespace: oceanbase
+      spec:
+        selector:
+          matchLabels:
+            app: ob-configserver
+        replicas: 1
+        template:
+          metadata:
+            labels:
+              app: ob-configserver
+          spec:
+            containers:
+              - name: ob-configserver
+                image: oceanbase/ob-configserver:1.0.0-2
+                ports:
+                  - containerPort: 8080
+                    name: "http"
+                env:
+                  - name: DATABASE_TYPE
+                    value: sqlite3 #sqlite3 or mysql
+                  - name: SVC_ADDRESS
+                    value: $(OB_CONFIGSERVER_SERVICE_HOST)
+                  - name: SVC_PORT
+                    value: $(OB_CONFIGSERVER_SERVICE_PORT)
+                resources:
+                  limits:
+                    memory: 2Gi
+                    cpu: "1"
+                  requests:
+                    memory: 200Mi
+                    cpu: 100m
+
+---
+########################################
+# Create OceanBase Proxy Definition
+########################################
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: oceanbase-proxy-config
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: oceanbase.oceanbase.com/v1alpha1
+      kind: OBCluster
+      name: obcluster
+      namespace: oceanbase
+      ready: true
+  resources:
+  #OceanBase Proxy Configuration
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        name: obproxy
+        namespace: oceanbase
+      spec:
+        type: ClusterIP
+        selector:
+          app: obproxy
+        ports:
+          - name: "sql"
+            port: 2883
+            targetPort: 2883
+          - name: "prometheus"
+            port: 2884
+            targetPort: 2884
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: obproxy
+        namespace: oceanbase
+      spec:
+        selector:
+          matchLabels:
+            app: obproxy
+        replicas: 2
+        template:
+          metadata:
+            labels:
+              app: obproxy
+          spec:
+            containers:
+              - name: obproxy
+                image: oceanbase/obproxy-ce:4.3.5.0-3
+                ports:
+                  - containerPort: 2883
+                    name: "sql"
+                  - containerPort: 2884
+                    name: "prometheus"
+                env:
+                  - name: APP_NAME
+                    value: obcluster
+                  - name: OB_CLUSTER
+                    value: obcluster
+                  - name: CONFIG_URL
+                    value: 'http://ob-configserver.oceanbase.svc:8080/services?Action=GetObProxyConfig'
+                  - name: PROXYRO_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: proxyro-password
+                        key: password
+                resources:
+                  limits:
+                    memory: 2Gi
+                    cpu: "1"
+                  requests:
+                    memory: 200Mi
+                    cpu: 200m
+
+---
+########################################
+# Create OceanBase Tenant Definition
+########################################
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: oceanbase-tenant-config
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: oceanbase.oceanbase.com/v1alpha1
+      kind: OBCluster
+      name: obcluster
+      namespace: oceanbase
+      ready: true
+  resources:
+    #OceanBase Tenant Configuration
+    - apiVersion: oceanbase.oceanbase.com/v1alpha1
+      kind: OBTenant
+      metadata:
+        name: obtenant
+        namespace: oceanbase
+      spec:
+        obcluster: obcluster
+        tenantName: obtenant
+        unitNum: 1
+        charset: utf8mb4
+        connectWhiteList: '%'
+        forceDelete: true
+        credentials:
+          root: tenant-root-password
+          standbyRo: standbyro-password
+        pools:
+          - zone: zone1
+            type:
+              name: Full
+              replica: 1
+              isActive: true
+            resource:
+              maxCPU: 4
+              memorySize: 3Gi
+              logDiskSize: 15Gi
+          - zone: zone2
+            type:
+              name: Full
+              replica: 1
+              isActive: true
+            resource:
+              maxCPU: 4
+              memorySize: 3Gi
+              logDiskSize: 15Gi
+          - zone: zone3
+            type:
+              name: Full
+              replica: 1
+              isActive: true
+            resource:
+              maxCPU: 4
+              memorySize: 3Gi
+              logDiskSize: 15Gi
+
+---
+########################################
+# OceanBase UI Server
+########################################
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: oceanbase-dashboard
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: oceanbase.oceanbase.com/v1alpha1
+      kind: OBCluster
+      name: obcluster
+      namespace: oceanbase
+      ready: true
+  resources:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: oceanbase-dashboard
+        namespace: oceanbase
+      spec:
+        #serviceAccountName: oceanbase-dashboard
+        chart:
+          spec:
+            chart: oceanbase-dashboard
+            sourceRef:
+              kind: HelmRepository
+              name: oceanbase-operator
+              namespace: flux-system
+            version: "0.6.*"
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          adminPassword: admin
+          service:
+            type: ClusterIP
+            port: 80
+          inspection:
+            obdiag:
+              image: "oceanbase/obdiag:v5.0.0"
+            oceanbaseHelper:
+              image: "oceanbase/oceanbase-helper:2.3.4"

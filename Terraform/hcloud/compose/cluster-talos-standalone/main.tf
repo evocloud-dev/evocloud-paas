@@ -151,23 +151,28 @@ data "talos_machine_configuration" "talos_controlplane" {
     yamlencode({
       machine = {
         sysctls = {
-          "user.max_user_namespaces" = "11255"
+          "fs.inotify.max_user_watches"   = "1048576"   # Watchdog
+          "fs.inotify.max_user_instances" = "8192"      # Watchdog
+          "net.core.somaxconn"            = "65535"
+          "net.ipv4.neigh.default.gc_thresh1"  = "4096"
+          "net.ipv4.neigh.default.gc_thresh2"  = "8192"
+          "net.ipv4.neigh.default.gc_thresh3"  = "16384"
+          "net.ipv4.tcp_slow_start_after_idle" = "0"
+          "user.max_user_namespaces"      = "11255"     # User Namespaces
         }
         network = {}
-
         certSANs = [
           hcloud_server.talos_ctrlplane["node01"].ipv4_address,
           one(hcloud_server.talos_ctrlplane["node01"].network[*].ip)
         ]
         kubelet = {
           extraArgs = {
+            cloud-provider             = "external"
             rotate-server-certificates = true
           }
           extraConfig = {
-            featureGates = {
-              UserNamespacesSupport = true
-              UserNamespacesPodSecurityStandards = true
-            }
+            serializeImagePulls = false
+            maxParallelImagePulls = 5
           }
           extraMounts = [
             {
@@ -184,6 +189,18 @@ data "talos_machine_configuration" "talos_controlplane" {
             allowedRoles = ["os:reader"]
             allowedKubernetesNamespaces = ["kube-system"]
           }
+          hostDNS = {
+            enabled              = true
+            forwardKubeDNSToHost = true
+            resolveMemberNames   = true
+          }
+        }
+        time = {
+          servers = [
+            "ntp1.hetzner.de",
+            "ntp2.hetzner.com",
+            "ntp3.hetzner.net"
+          ]
         }
         systemDiskEncryption = {
           ephemeral = {
@@ -205,16 +222,45 @@ data "talos_machine_configuration" "talos_controlplane" {
             ]
           }
         }
+        files = [
+          {
+            path    = "/etc/cri/conf.d/20-customization.part"
+            op      = "create"
+            content = <<EOT
+[plugins."io.containerd.cri.v1.images"]
+  discard_unpacked_layers = false
+[plugins."io.containerd.cri.v1.runtime"]
+  device_ownership_from_security_context = true
+EOT
+          }
+        ]
       }
       cluster = {
         apiServer = {
           extraArgs = {
-            feature-gates = "UserNamespacesSupport=true,UserNamespacesPodSecurityStandards=true"
+            # https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/
+            enable-aggregator-routing = true
           }
           certSANs = [
             hcloud_server.talos_ctrlplane["node01"].ipv4_address,
             one(hcloud_server.talos_ctrlplane["node01"].network[*].ip)
           ]
+        }
+        controllerManager = {
+          extraArgs = {
+            "bind-address" = "0.0.0.0"
+            "cloud-provider" = "external"
+          }
+        }
+        etcd = {
+          extraArgs = {
+            "listen-metrics-urls" = "http://0.0.0.0:2381"
+          }
+        }
+        scheduler = {
+          extraArgs = {
+            "bind-address" = "0.0.0.0"
+          }
         }
         network = {
           cni = {
@@ -314,7 +360,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                                   operator: Exists
                     containers:
                     - name: cilium-install
-                      image: alpine/helm:3
+                      image: alpine/helm:4
                       env:
                       - name: KUBERNETES_SERVICE_HOST
                         valueFrom:
@@ -331,7 +377,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm repo add cilium https://helm.cilium.io/
                           helm repo update
                           helm upgrade --install cilium cilium/cilium \
-                          --version 1.19.2 \
+                          --version 1.19.3 \
                           --namespace kube-system \
                           --set operator.replicas=1 \
                           --set k8sServiceHost=localhost \
@@ -354,7 +400,10 @@ data "talos_machine_configuration" "talos_controlplane" {
                           --set operator.rollOutPods=true \
                           --set cgroup.autoMount.enabled=false \
                           --set cgroup.hostRoot=/sys/fs/cgroup \
-                          --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
+                          --set dashboards.enabled=true \
+                          --set operator.dashboards.enabled=true \
+                          --set operator.prometheus.enabled=true \
+                          --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,PERFMON,BPF,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
                           --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}"
                     serviceAccount: cilium-install-sa
                     serviceAccountName: cilium-install-sa
@@ -413,7 +462,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                   spec:
                     containers:
                     - name: helm
-                      image: alpine/helm:3
+                      image: alpine/helm:4
                       command:
                         - sh
                         - -c
@@ -422,7 +471,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install flux-operator oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator \
                             --namespace flux-system \
                             --create-namespace \
-                            --version 0.45.1 \
+                            --version 0.52.0 \
                             --wait
                     restartPolicy: OnFailure
                     serviceAccount: flux-install
@@ -468,6 +517,60 @@ data "talos_machine_configuration" "talos_controlplane" {
                         - op: add
                           path: /spec/template/spec/containers/0/args/-
                           value: --requeue-dependency=15s
+              ---
+              ############################################
+              # DEPLOYING FLUX-MCP-Server
+              ############################################
+              apiVersion: fluxcd.controlplane.io/v1
+              kind: ResourceSet
+              metadata:
+                name: flux-operator-mcp
+                namespace: flux-system
+                annotations:
+                  fluxcd.controlplane.io/reconcile: "enabled"
+                  fluxcd.controlplane.io/reconcileEvery: "1h"
+                  fluxcd.controlplane.io/reconcileTimeout: "20m"
+              spec:
+                inputs:
+                  - readonly: true
+                    accessFrom: flux-system
+                dependsOn:
+                  - apiVersion: fluxcd.controlplane.io/v1
+                    kind: FluxInstance
+                    name: flux
+                    namespace: flux-system
+                    ready: true
+                resources:
+                  - apiVersion: source.toolkit.fluxcd.io/v1
+                    kind: OCIRepository
+                    metadata:
+                      name: flux-mcp-repo
+                      namespace: flux-system
+                    spec:
+                      interval: 12h
+                      url: oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator-mcp
+                      layerSelector:
+                        mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+                        operation: copy
+                      ref:
+                        semver: "0.52.x"
+                  - apiVersion: helm.toolkit.fluxcd.io/v2
+                    kind: HelmRelease
+                    metadata:
+                      name: flux-mcp-deploy
+                      namespace: flux-system
+                    spec:
+                      serviceAccountName: flux-operator
+                      chartRef:
+                        kind: OCIRepository
+                        name: flux-mcp-repo
+                      interval: 30m
+                      values:
+                        transport: http # defaults to the legacy 'sse' transport
+                        readonly: << inputs.readonly >>
+                        networkPolicy:
+                          ingress:
+                            namespaces: [<< inputs.accessFrom >>]
               ---
               ############################################
               #DEPLOYING LOCAL PATH STORAGE
@@ -572,8 +675,9 @@ data "talos_machine_configuration" "talos_controlplane" {
                     sourceRef:
                       kind: HelmRepository
                       name: tofu-controller-stable
-                    version: ">=0.16.0-rc.8"
-                interval: 1h0s
+                    version: "0.16.*"
+                interval: 30m
+                timeout: 15m0s
                 releaseName: tofu-controller
                 targetNamespace: flux-system
                 install:
@@ -638,9 +742,6 @@ data "talos_machine_configuration" "talos_controlplane" {
                 name: headlamp
                 namespace: kube-system
               spec:
-                dependsOn:
-                  - name: rook-ceph-cluster
-                    namespace: rook-ceph
                 chart:
                   spec:
                     chart: headlamp

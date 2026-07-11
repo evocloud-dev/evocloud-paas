@@ -1,0 +1,262 @@
+###################################################
+#DEPLOYING VICTORIA METRICS SOLUTION
+###################################################
+#Reference: https://github.com/VictoriaMetrics/helm-charts/blob/master/charts/victoria-metrics-k8s-stack/values.yaml
+
+---
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: victoria-metrics
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+  resources:
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: victoria-metrics
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/victoriametrics/helm-charts/victoria-metrics-k8s-stack
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "0.74.x"
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: victoria-metrics
+        labels:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: victoria-metrics
+        namespace: victoria-metrics
+      spec:
+        #serviceAccountName: flux-operator
+        chartRef:
+          kind: OCIRepository
+          name: victoria-metrics
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          fullnameOverride: victoria-metrics
+          alertmanager:
+            config:
+              route:
+                receiver: pushover
+                repeat_interval: 12h
+                routes:
+                  - receiver: blackhole
+                    matchers:
+                      - alertname = InfoInhibitor
+                  - receiver: buddy-heartbeat
+                    matchers:
+                      - alertname = "Watchdog"
+                    group_interval: 2m
+                    group_wait: 0s
+                    repeat_interval: 2m30s
+                group_by:
+                  - alertname
+                  - cluster
+                  - job
+              inhibit_rules:
+                - equal:
+                    - alertname
+                    - namespace
+                  source_matchers:
+                    - severity = "critical"
+                  target_matchers:
+                    - severity = "warning"
+              receivers:
+                - name: blackhole
+                - name: buddy-heartbeat
+                  webhook_configs:
+                    - http_config:
+                        bearer_token_secret:
+                          name: vmalertmanager-secret
+                          key: BUDDY_HEARTBEAT_TOKEN
+                      url_secret:
+                        name: vmalertmanager-secret
+                        key: BUDDY_HEARTBEAT_URL
+                - name: pushover
+                  pushover_configs:
+                    - html: true
+                      message: |-
+                        {{- range .Alerts }}
+                          {{- if ne .Annotations.description "" }}
+                            {{ .Annotations.description }}
+                          {{- else if ne .Annotations.summary "" }}
+                            {{ .Annotations.summary }}
+                          {{- else if ne .Annotations.message "" }}
+                            {{ .Annotations.message }}
+                          {{- else }}
+                            Alert description not available
+                          {{- end }}
+                          {{- if gt (len .Labels.SortedPairs) 0 }}
+                            <small>
+                              {{- range .Labels.SortedPairs }}
+                                <b>{{ .Name }}:</b> {{ .Value }}
+                              {{- end }}
+                            </small>
+                          {{- end }}
+                        {{- end }}
+                      priority: |-
+                        {{ if eq .Status "firing" }}1{{ else }}0{{ end }}
+                      send_resolved: true
+                      sound: gamelan
+                      title: >-
+                        [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}
+                      token:
+                        name: vmalertmanager-secret
+                        key: ALERTMANAGER_PUSHOVER_TOKEN
+                      url_title: View in Alertmanager
+                      user_key:
+                        name: vmalertmanager-secret
+                        key: PUSHOVER_USER_KEY
+            route:
+              enabled: true
+              hostnames:
+                - vmmetrics.evocloud.gov
+              parentRefs:
+                - name: shared-gtw
+                  namespace: evocloud-ns
+            spec:
+              externalURL: https://vmmetrics.evocloud.gov
+              storage:
+                volumeClaimTemplate:
+                  spec:
+                    #storageClassName: ceph-block
+                    resources:
+                      requests:
+                        storage: 1Gi
+            useManagedConfig: true
+          defaultDashboards:
+            grafanaOperator:
+              enabled: true
+              spec:
+                allowCrossNamespaceImport: true
+          defaultDatasources:
+            grafanaOperator:
+              enabled: true
+              spec:
+                allowCrossNamespaceImport: true
+          grafana:
+            enabled: false
+            forceDeployDatasource: true
+          kube-state-metrics:
+            fullnameOverride: kube-state-metrics
+          kubeControllerManager:
+            vmScrape:
+              spec:
+                endpoints:
+                  - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+                    port: http-metrics
+                    scheme: https
+                    tlsConfig:
+                      insecureSkipVerify: true
+          kubeEtcd:
+            service:
+              selector:
+                component: kube-apiserver
+              port: 2381
+              targetPort: 2381
+            vmScrape:
+              spec:
+                endpoints:
+                  - scheme: http
+          kubeScheduler:
+            vmScrape:
+              spec:
+                endpoints:
+                  - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+                    port: http-metrics
+                    scheme: https
+                    tlsConfig:
+                      insecureSkipVerify: true
+          prometheus-node-exporter:
+            fullnameOverride: node-exporter
+          victoria-metrics-operator:
+            fullnameOverride: victoria-metrics-operator
+            crds:
+              cleanup:
+                enabled: false
+          vmagent:
+            spec:
+              extraArgs:
+                promscrape.dropOriginalLabels: "true"
+                promscrape.maxScrapeSize: 50MiB
+                promscrape.streamParse: "true"
+          vmalert:
+            spec:
+              extraArgs:
+                external.url: https://vmalert.evocloud.gov
+            route:
+              enabled: true
+              hostnames:
+                - vmalert.evocloud.gov
+              parentRefs:
+                - name: shared-gtw
+                  namespace: evocloud-ns
+          vmsingle:
+            route:
+              enabled: true
+              hostnames:
+                - vmsingle.evocloud.gov
+              parentRefs:
+                - name: shared-gtw
+                  namespace: evocloud-ns
+            spec:
+              retentionPeriod: 90d
+              storage:
+                accessModes:
+                  - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: 50Gi
+                #storageClassName: ceph-block
+          additionalVictoriaMetricsMap:
+            dockerhub-rules:
+              create: true
+              groups:
+                - name: dockerhub
+                  rules:
+                    - alert: DockerhubRateLimitRisk
+                      annotations:
+                        summary: There are {{ $value }} containers pulling from Dockerhub. This may lead to rate limiting.
+                      expr: count(time() - container_last_seen{image=~"(docker.io).*",container!=""} < 30) > 100
+                      labels:
+                        severity: critical
+            oom-rules:
+              create: true
+              groups:
+                - name: oom
+                  rules:
+                    - alert: OomKilled
+                      annotations:
+                        summary: Container {{ $labels.container }} in pod {{ $labels.namespace }}/{{ $labels.pod }} has been OOMKilled {{ $value }} times in the last 10 minutes.
+                      expr: (kube_pod_container_status_restarts_total - kube_pod_container_status_restarts_total offset 10m >= 1) and ignoring (reason) min_over_time(kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}[10m]) == 1
+                      labels:
+                        severity: critical

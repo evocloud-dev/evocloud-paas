@@ -1,0 +1,35 @@
+---
+#This playbook will deploy Longhorn
+#References:
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-longhorn ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ longhorn_kubeapp_dir }}"
+
+######################################################
+#Deploying Longhorn Resources
+######################################################
+- name: Staging Kubernetes manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ longhorn_kubeapp_dir }}/{{ item }}"
+  loop:
+    - longhorn-rset.yaml
+
+- name: Deploying Kubernetes manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ longhorn_kubeapp_dir }}/longhorn-rset.yaml"
+  register: longhorn_deploy_result
+  until: longhorn_deploy_result is succeeded
+  retries: 10
+  delay: 30

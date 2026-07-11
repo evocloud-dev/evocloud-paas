@@ -1,0 +1,88 @@
+############################################
+#DEPLOYING DAPR RUNTIME SOLUTION
+############################################
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: dapr
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    # Add dependsOn storageClass
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: dapr-system
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: HelmRepository
+      metadata:
+        name: dapr-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: https://dapr.github.io/helm-charts
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: dapr-operator
+        namespace: dapr-system
+      spec:
+        #serviceAccountName: flux-operator
+        chart:
+          spec:
+            chart: dapr
+            sourceRef:
+              kind: HelmRepository
+              name: dapr-operator
+              namespace: flux-system
+            version: "1.18.*"
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          global:
+            ha:
+              enabled: true
+    #Dapr Dashboard was archived may-19-2026: https://github.com/dapr/dashboard
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: dapr-dashboard
+        namespace: dapr-system
+      spec:
+        #serviceAccountName: flux-operator
+        chart:
+          spec:
+            chart: dapr-dashboard
+            sourceRef:
+              kind: HelmRepository
+              name: dapr-operator
+              namespace: flux-system
+            version: "0.15.*"
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled

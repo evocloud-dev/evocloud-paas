@@ -1,0 +1,299 @@
+---
+############################################
+#DEPLOYING Vault-Banks Operator
+############################################
+#Reference: https://github.com/bank-vaults/vault-operator
+#           https://github.com/bank-vaults/vault-operator/tree/main/deploy/charts/vault-operator
+
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: vault-banks-operator
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    # Add dependsOn storageClass
+    # Add dependsOn Kube-prometheus-stack
+    # Add dependsOn velero for backup
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: vault-operator
+    #https://github.com/fluxcd-community/flux2-schemas/blob/main/ocirepository-source-v1.json
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: vault-banks-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/bank-vaults/helm-charts/vault-operator
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "1.23.*"
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: vault-banks-operator
+        namespace: vault-operator
+      spec:
+        #serviceAccountName: vault-sa
+        chartRef:
+          kind: OCIRepository
+          name: vault-banks-operator
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          crds:
+            install: true
+            upgradeJob:
+              enabled: true
+    ############################################
+    # Vault Cluster Setup
+    ############################################
+    #Create vault-cluster namespace
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: vault-cluster
+        labels:
+          pod-security.kubernetes.io/enforce: privileged
+    #Install required RBAC Needed
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: GitRepository
+      metadata:
+        name: vault-banks-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: https://github.com/bank-vaults/vault-operator.git
+        ref:
+          branch: main
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      metadata:
+        name: vault-banks-rbac
+        namespace: vault-cluster
+      spec:
+        #serviceAccountName: vault-cluster-sa
+        sourceRef:
+          kind: GitRepository
+          name: vault-banks-operator
+          namespace: flux-system
+        path: ./deploy/rbac
+        targetNamespace: vault-cluster
+        interval: 30m
+        timeout: 15m0s
+        prune: true
+    #Instantiating a Vault Cluster resource
+    - apiVersion: "vault.banzaicloud.com/v1alpha1"
+      kind: "Vault"
+      metadata:
+        name: "vault"
+        namespace: vault-cluster
+        labels:
+          app.kubernetes.io/name: vault
+          vault_cr: vault
+      spec:
+        size: 3
+        image: hashicorp/vault:2.0.0
+        bankVaultsImage: ghcr.io/bank-vaults/bank-vaults:latest
+        # Common annotations for all created resources
+        annotations:
+          common/annotation: "true"
+        # Vault Pods , Services and TLS Secret annotations
+        vaultAnnotations:
+          type/instance: "vault"
+        # Vault Configurer Pods and Services annotations
+        vaultConfigurerAnnotations:
+          type/instance: "vaultconfigurer"
+        # Vault Pods , Services and TLS Secret labels
+        vaultLabels:
+          example.com/log-format: "json"
+        # Vault Configurer Pods and Services labels
+        vaultConfigurerLabels:
+          example.com/log-format: "string"
+        # Support for affinity Rules - Prevents pods for being scheduled on same node
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                podAffinityTerm:
+                  labelSelector:
+                    matchLabels:
+                      app.kubernetes.io/name: vault
+                      component: server
+                  topologyKey: kubernetes.io/hostname
+        # Specify the ServiceAccount where the Vault Pod and the Bank-Vaults configurer/unsealer is running
+        serviceAccount: vault
+        # Specify the Service's type where the Vault Service is exposed
+        serviceType: ClusterIP
+        # Request an Ingress controller with the default configuration
+        ingress:
+          # Specify Ingress object annotations here, if TLS is enabled (which is by default)
+          # the operator will add NGINX, Traefik and HAProxy Ingress compatible annotations
+          # to support TLS backends
+          annotations: { }
+          # Override the default Ingress specification here
+          # This follows the same format as the standard Kubernetes Ingress
+          # See: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#ingressspec-v1beta1-extensions
+          spec: { }
+        # Use local disk to store Vault raft data, see config section.
+        volumeClaimTemplates:
+          - metadata:
+              name: vault-raft
+            spec:
+              # https://kubernetes.io/docs/concepts/storage/persistent-volumes/#class-1
+              # storageClassName: ""
+              accessModes:
+                - ReadWriteOnce
+              volumeMode: Filesystem
+              resources:
+                requests:
+                  storage: 5Gi
+        volumeMounts:
+          - name: vault-raft
+            mountPath: /vault/file
+        # Add Velero fsfreeze sidecar container and supporting hook annotations to Vault Pods:
+        # https://velero.io/docs/v1.2.0/hooks/
+        veleroEnabled: false
+        # Support for distributing the generated CA certificate Secret to other namespaces.
+        # Define a list of namespaces or use ["*"] for all namespaces.
+        caNamespaces:
+          - "*"
+        # Describe where you would like to store the Vault unseal keys and root token.
+        unsealConfig:
+          kubernetes:
+            secretNamespace: vault-cluster
+          options:
+            # The preFlightChecks flag enables unseal and root token storage tests.This is true by default
+            preFlightChecks: true
+            # The storeRootToken flag enables storing of root token in chosen storage. This is true by default
+            storeRootToken: true
+            # The secretShares represents the total number of unseal key shares. This is 5 by default
+            secretShares: 5
+            # The secretThreshold represents the minimum number of shares required to reconstruct the unseal key. This is 3 by default
+            secretThreshold: 3
+        # A YAML representation of a final vault config file.
+        # See https://www.vaultproject.io/docs/configuration/ for more information.
+        config:
+          disable_mlock: true
+          storage:
+            raft:
+              path: "/vault/file"
+          listener:
+            tcp:
+              address: "0.0.0.0:8200"
+              tls_cert_file: /vault/tls/server.crt
+              tls_key_file: /vault/tls/server.key
+          api_addr: https://vault.vault-cluster:8200
+          cluster_addr: "https://${.Env.POD_NAME}:8201"
+          ui: true
+        statsdDisabled: true
+        serviceRegistrationEnabled: true
+        resources:
+          # A YAML representation of resource ResourceRequirements for vault container
+          # Detail can reference: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container
+          vault:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+        securityContext:
+          runAsUser: 100
+          runAsGroup: 1000
+          fsGroup: 1000
+        vaultContainerSpec:
+          name: vault
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              add:
+                - IPC_LOCK
+        # See: https://banzaicloud.com/docs/bank-vaults/cli-tool/#example-external-vault-configuration
+        # The repository also contains lots of examples in the test/deploy and operator/deploy directories.
+        externalConfig:
+          policies:
+            - name: allow_secrets
+              rules: path "secret/*" {
+                capabilities = ["create", "read", "update", "delete", "list"]
+                }
+            - name: allow_pki
+              rules: path "pki/*" {
+                capabilities = ["create", "read", "update", "delete", "list"]
+                }
+          auth:
+            - type: kubernetes
+              roles:
+                # Allow every pod in the default namespace to use the secret kv store
+                - name: default
+                  bound_service_account_names: [ "default", "secrets-webhook", "vault" ]
+                  bound_service_account_namespaces: [ "default", "vault-cluster" ]
+                  policies: [ "allow_secrets", "allow_pki" ]
+                  ttl: 1h
+          secrets:
+            - type: kv
+              description: Vault key value secrets.
+              path: secret
+              options:
+                version: 2
+            - type: pki
+              description: Vault PKI Backend.
+              config:
+                default_lease_ttl: 168h
+                max_lease_ttl: 720h
+              configuration:
+                config:
+                  - name: urls
+                    issuing_certificates: https://vault.vault-cluster:8200/v1/pki/ca
+                    crl_distribution_points: https://vault.vault-cluster:8200/v1/pki/crl
+                root/generate:
+                  - name: internal
+                    common_name: vault.vault-cluster
+                roles:
+                  - name: default
+                    allowed_domains: localhost,pod,svc,default
+                    allow_subdomains: true
+                    generate_lease: true
+                    ttl: 1m
+          # Allows writing some secrets to Vault (useful for development purposes).
+          # See https://www.vaultproject.io/docs/secrets/kv/index.html for more information.
+          startupSecrets:
+            #load test secrets
+            - type: kv
+              path: secret/data/dockerrepo
+              data:
+                data:
+                  DOCKER_REPO_USER: dockerrepouser
+                  DOCKER_REPO_PASSWORD: dockerrepopassword
+        secretInitsConfig:
+          - name: VAULT_LOG_LEVEL
+            value: error
+          - name: SKIP_CHOWN
+            value: "1"
+          - name: SKIP_SETCAP
+            value: "1"

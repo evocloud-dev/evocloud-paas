@@ -1,0 +1,35 @@
+---
+#This playbook will deploy Headlamp UI
+#References:
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-headlamp ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ kubeapp_dir }}/{{ kubeapp_name }}"
+
+######################################################
+#Deploying Headlamp
+######################################################
+- name: Staging Kubernetes manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ kubeapp_dir }}/{{ kubeapp_name }}/{{ item }}"
+  loop:
+    - '{{ kubeapp_name }}-rset.yaml'
+
+- name: Deploying Kubernetes manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ kubeapp_dir }}/{{ kubeapp_name }}/{{ kubeapp_name }}-rset.yaml"
+  register: headlamp_deploy_result
+  until: headlamp_deploy_result is succeeded
+  retries: 4
+  delay: 30

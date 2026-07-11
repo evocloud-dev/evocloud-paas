@@ -1,0 +1,35 @@
+---
+#This playbook will deploy Vertical Pod Autoscaler
+#References:
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-vpa ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ vpa_kubeapp_dir }}"
+
+######################################################
+#Deploying Vertical Pod Autoscaler Resources
+######################################################
+- name: Staging Kubernetes manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ vpa_kubeapp_dir }}/{{ item }}"
+  loop:
+    - vertical-pod-autoscaler-rset.yaml
+
+- name: Deploying Kubernetes manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ vpa_kubeapp_dir }}/vertical-pod-autoscaler-rset.yaml"
+  register: vpa_deploy_result
+  until: vpa_deploy_result is succeeded
+  retries: 10
+  delay: 30

@@ -16,4 +16,8 @@
     - server-tigervnc
     - app-vscode
     - app-brave
+    - app-kubectl
+    - app-kubelogin
+    - app-flux-operator-cli
+    - app-flux-operator-mcp
     - app-fail2ban

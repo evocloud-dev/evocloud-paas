@@ -1,0 +1,69 @@
+---
+############################################
+#DEPLOYING CRD-SCHEMA-PUBLISHER
+############################################
+#Reference: https://github.com/sholdee/crd-schema-publisher
+#           https://github.com/sholdee/crd-schema-publisher/tree/main/charts/crd-schema-publisher
+#           Update the default theme: https://github.com/sholdee/crd-schema-publisher/blob/bcf5036da92744393566961dac6017a6d9fc1935/theme/theme.go#L152
+
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: crd-publisher-operator
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    # Add dependsOn storageClass
+  resources:
+    #https://github.com/fluxcd-community/flux2-schemas/blob/main/ocirepository-source-v1.json
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: crd-publisher-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/sholdee/charts/crd-schema-publisher
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "2026.*"
+    #Helm Release
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: crd-publisher-operator
+        namespace: evocloud-ns
+      spec:
+        #serviceAccountName: crd-publisher-sa
+        chartRef:
+          kind: OCIRepository
+          name: crd-publisher-operator
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          mode: controller
+          persistence:
+            enabled: true
+          serve:
+            enabled: true

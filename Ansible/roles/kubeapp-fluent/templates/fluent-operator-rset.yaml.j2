@@ -1,0 +1,82 @@
+############################################
+#DEPLOYING Fluent Operator for managing FluentBit and Fluentd
+############################################
+# Reference: https://github.com/fluent/fluent-operator
+#            https://github.com/fluent/helm-charts/blob/main/charts/fluent-operator/values.yaml
+#            https://github.com/fluent/fluent-operator/tree/master/manifests/fluentd
+
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: fluent-operator
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: fluent-operator
+        labels:
+          pod-security.kubernetes.io/enforce: privileged #Falco must not set securityContext.privileged=true
+
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: fluent-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/fluent/helm-charts/fluent-operator
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "4.2.*"
+        #cosign verify --certificate-oidc-issuer https://token.actions.githubusercontent.com --certificate-identity-regexp 'https://github\.com/action-stars/helm-workflows/\.github/workflows/release\.yaml@.+' --certificate-github-workflow-repository fluent/helm-charts --certificate-github-workflow-name Release ghcr.io/fluent/helm-charts/fluent-operator:4.2.0
+        verify:
+          provider: cosign
+          matchOIDCIdentity:
+            - issuer: ^https://token\.actions\.githubusercontent\.com$
+              subject: ^https://github\.com/action-stars/helm-workflows/\.github/workflows/release\.yaml@.+$
+
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: fluent-operator
+        namespace: fluent-operator
+      spec:
+        #serviceAccountName: fluent-operator
+        chartRef:
+          kind: OCIRepository
+          name: fluent-operator
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        #https://github.com/fluent/helm-charts/blob/main/charts/fluent-operator/values.yaml
+        values:
+          fluentbit:
+            image:
+              registry: ghcr.io
+              repository: fluent/fluent-operator/fluent-bit
+              tag: "5.0.8"
+            nodeSelector:
+              kubernetes.io/os: linux

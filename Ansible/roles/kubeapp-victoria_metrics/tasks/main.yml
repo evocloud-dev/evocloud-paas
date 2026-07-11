@@ -1,0 +1,35 @@
+---
+#This playbook will deploy Victoria-Metrics Operator
+#References:
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-victoria_metrics ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ victoria_kubeapp_dir }}"
+
+######################################################
+#Deploying Victoria Metrics Operator Resources
+######################################################
+- name: Staging Kubernetes manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ victoria_kubeapp_dir }}/{{ item }}"
+  loop:
+    - victoria-metrics-stack-rset.yaml
+
+- name: Deploying Kubernetes manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ victoria_kubeapp_dir }}/victoria-metrics-stack-rset.yaml"
+  register: victoria_deploy_result
+  until: victoria_deploy_result is succeeded
+  retries: 10
+  delay: 30

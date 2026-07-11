@@ -1,0 +1,72 @@
+---
+######################################################
+#DEPLOYING Goldilock Resource Limits Recommendations
+######################################################
+#Reference: https://goldilocks.docs.fairwinds.com/installation/#installation
+#           https://github.com/FairwindsOps/charts/blob/master/stable/goldilocks/values.yaml
+#           https://github.com/FairwindsOps/charts/tree/master/stable/goldilocks
+#           https://github.com/FairwindsOps/charts/blob/master/stable/goldilocks/README.md
+#           https://github.com/FairwindsOps/goldilocks
+
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: vpa-goldilocks
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    # Add dependsOn kubeapp-vpa
+
+  resources:
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: vpa-goldilocks
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/evocloud-dev/charts/goldilocks
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "10.4.*"
+
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: vpa-goldilocks
+        namespace: kube-system
+      spec:
+        #serviceAccountName: flux-operator
+        chartRef:
+          kind: OCIRepository
+          name: vpa-goldilocks
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          controller:
+            enabled: true
+
+## Notes:
+### Namespaces must be labelled for goldilocks to monitor resources limits recommendations:
+#### kubectl label ns rook-ceph goldilocks.fairwinds.com/enabled=true

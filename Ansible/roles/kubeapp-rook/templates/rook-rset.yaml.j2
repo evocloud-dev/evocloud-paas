@@ -1,0 +1,112 @@
+############################################
+#DEPLOYING ROOK STORAGE SOLUTION
+############################################
+
+---
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: rook-ceph
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: rook-ceph
+        labels:
+          pod-security.kubernetes.io/enforce: privileged
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: rook-ceph-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://registry-1.docker.io/rook/rook-ceph
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "v1.19.x"
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: rook-ceph-operator
+        namespace: rook-ceph
+      spec:
+        #serviceAccountName: flux-operator
+        chartRef:
+          kind: OCIRepository
+          name: rook-ceph-operator
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          enableDiscoveryDaemon: true
+          discoveryDaemonInterval: 15m
+          monitoring:
+            enabled: true
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: rook-ceph-cluster
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://registry-1.docker.io/rook/rook-ceph-cluster
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "v1.19.x"
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: rook-ceph-cluster
+        namespace: rook-ceph
+      spec:
+        #serviceAccountName: flux-operator
+        chartRef:
+          kind: OCIRepository
+          name: rook-ceph-cluster
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          toolbox:
+            enabled: true
+          mgr:
+            modules:
+              - name: rook
+                enabled: true
+          monitoring:
+            enabled: true
+            createPrometheusRules: true

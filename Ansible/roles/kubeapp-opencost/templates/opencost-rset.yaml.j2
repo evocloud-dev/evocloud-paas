@@ -1,0 +1,75 @@
+###################################################
+#DEPLOYING OpenCost SOLUTION
+###################################################
+#https://opencost.io/docs/configuration/gcp
+
+---
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: opencost
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    #Requirement for promstack
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: opencost
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: HelmRepository
+      metadata:
+        name: opencost-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: https://opencost.github.io/opencost-helm-chart
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: opencost-operator
+        namespace: opencost
+      spec:
+        #serviceAccountName: flux-operator
+        chart:
+          spec:
+            chart: opencost
+            sourceRef:
+              kind: HelmRepository
+              name: opencost-operator
+              namespace: flux-system
+            version: "2.5.*"
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          networkPolicies:
+            prometheus:
+              namespace: monitoring
+          opencost:
+            exporter:
+              cloudProviderApiKey: "op3nco57op3Nco57OP3Nco57op3nco57op3Nco57"
+            prometheus:
+              internal:
+                enabled: true
+                namespaceName: monitoring
+                port: 9090
+                serviceName: kube-promstack-operator-ku-prometheus

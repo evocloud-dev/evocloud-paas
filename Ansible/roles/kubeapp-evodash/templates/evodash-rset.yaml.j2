@@ -1,0 +1,82 @@
+############################################
+#DEPLOYING EvoDash powered by ForeCastle
+############################################
+# Reference: https://github.com/stakater/Forecastle
+#            https://github.com/stakater/Forecastle/blob/master/deployments/kubernetes/chart/forecastle/values.yaml
+#            https://github.com/stakater/Forecastle/blob/master/deployments/samples/forecastleapp.yaml
+
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: kubeapp-evodash
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+
+  resources:
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: kubeapp-evodash
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/evocloud-dev/charts/forecastle
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "2.0.*"
+
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: kubeapp-evodash
+        namespace: evocloud-ns
+      spec:
+        #serviceAccountName: flux-operator
+        chartRef:
+          kind: OCIRepository
+          name: kubeapp-evodash
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          forecastle:
+            config:
+              crdEnabled: true
+              headerBackground: "#F7B500"
+              headerForeground: "#ffffff"
+              namespaceSelector:
+                any: true
+              title: "EvoCloud Platform Apps"
+              instanceName: "Evodashboard" #Can be tied to the cluster name
+            deployment:
+              replicas: 1
+              revisionHistoryLimit: 2
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+            service:
+              expose: true

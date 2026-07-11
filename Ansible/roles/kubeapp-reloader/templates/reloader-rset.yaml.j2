@@ -1,0 +1,66 @@
+############################################
+#DEPLOYING RELOADER OPERATOR
+############################################
+# Reference: https://github.com/stakater/Reloader
+#            https://docs.stakater.com/reloader/latest/
+#            https://docs.stakater.com/reloader/latest/how-to-guides/use-reloader-with-flux.html#the-solution
+#            https://docs.stakater.com/reloader/latest/integrations/vault/index.html#reloader-annotations
+
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: reloader-operator
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: reloader
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: reloader-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/stakater/charts/reloader
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "2.2.*"
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: reloader-operator
+        namespace: reloader
+      spec:
+        #serviceAccountName: flux-operator
+        chartRef:
+          kind: OCIRepository
+          name: reloader-operator
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          reloader:
+            reloadStrategy: annotations

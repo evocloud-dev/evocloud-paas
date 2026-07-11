@@ -1,0 +1,65 @@
+############################################
+#DEPLOYING KYVERNO ADMISSION CONTROLLER
+############################################
+
+#Reference: https://github.com/kyverno/kyverno/tree/main/charts/kyverno-policies
+#           https://github.com/kyverno/kyverno/blob/main/charts/kyverno-policies/values.yaml
+
+---
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: kyverno-policies
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    #Requirement for kyverno
+  resources:
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: kyverno-policies
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/kyverno/charts/kyverno-policies
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "3.8.*"
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: kyverno-policies
+        namespace: kyverno
+      spec:
+        #serviceAccountName: flux-policies
+        chartRef:
+          kind: OCIRepository
+          name: kyverno-policies
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          #Pod Security Standard profile (`baseline`, `restricted`, `privileged`, or `custom`)
+          podSecurityStandard: "baseline"
+          podSecuritySeverity: "medium" #low, medium, or high

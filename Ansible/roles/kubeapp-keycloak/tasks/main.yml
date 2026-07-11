@@ -1,0 +1,35 @@
+---
+#This playbook will deploy Keycloak
+#References:
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-keycloak ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ keycloak_kubeapp_dir }}"
+
+######################################################
+#Deploying Keycloak Resources
+######################################################
+- name: Staging Kubernetes manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ keycloak_kubeapp_dir }}/{{ item }}"
+  loop:
+    - keycloak-rset.yaml
+
+- name: Deploying Kubernetes manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ keycloak_kubeapp_dir }}/keycloak-rset.yaml"
+  register: keycloak_deploy_result
+  until: keycloak_deploy_result is succeeded
+  retries: 10
+  delay: 30

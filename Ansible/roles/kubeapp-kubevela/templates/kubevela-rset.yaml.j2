@@ -1,0 +1,60 @@
+############################################
+#DEPLOYING KUBEVELA SOLUTION
+############################################
+
+---
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: kubevela
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: vela-system
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: HelmRepository
+      metadata:
+        name: kubevela-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: https://kubevela.github.io/charts
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: kubevela-operator
+        namespace: vela-system
+      spec:
+        #serviceAccountName: flux-operator
+        chart:
+          spec:
+            chart: vela-core
+            sourceRef:
+              kind: HelmRepository
+              name: kubevela-operator
+              namespace: flux-system
+            version: "1.10.*"
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
