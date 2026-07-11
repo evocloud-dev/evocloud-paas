@@ -12,3 +12,13 @@ variable "GCP_VPC" {
   description = "Main VPC Name"
   type        = string
 }
+
+variable "GCP_JSON_CREDS" {
+  description = "GCP Secret Json Key File"
+  type        = string
+}
+
+variable "AUTOMATION_FOLDER" {
+  description = "Automation Folder"
+  type        = string
+}
