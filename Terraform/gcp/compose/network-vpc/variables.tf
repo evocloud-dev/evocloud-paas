@@ -47,3 +47,13 @@ variable "IDAM_PRIVATE_IP" {
   description = "IDAM Private IPv4"
   type        = string
 }
+
+variable "GCP_JSON_CREDS" {
+  description = "GCP Secret Json Key File"
+  type        = string
+}
+
+variable "AUTOMATION_FOLDER" {
+  description = "Automation Folder"
+  type        = string
+}

@@ -32,3 +32,13 @@ variable "ADMIN_SUBNET_CIDR_LBIPAM" {
   description = "ADMIN Subnet CIDR for Cilium Loadbalancer LB-IPAM"
   type        = string
 }
+
+variable "GCP_JSON_CREDS" {
+  description = "GCP Secret Json Key File"
+  type        = string
+}
+
+variable "AUTOMATION_FOLDER" {
+  description = "Automation Folder"
+  type        = string
+}

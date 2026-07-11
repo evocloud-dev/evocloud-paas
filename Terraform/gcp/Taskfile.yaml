@@ -5,7 +5,6 @@ silent: true
 vars:
   # Common across tasks
   DEPLOY_DIR:          "/opt/EVOCLOUD/Terraform/gcp/deployment"
-  GCLOUD_AUTH:         "gcloud auth activate-service-account --key-file"
   GCLOUD_EXPORT:       "export GOOGLE_APPLICATION_CREDENTIALS"
   KEYS_DIR:            "/opt/EVOCLOUD/Keys"
   BUILD_CMD:           "terragrunt run --all --non-interactive --queue-include-external apply -- -auto-approve"
@@ -22,7 +21,6 @@ tasks:
     internal: true
     cmds:
       - |
-        {{.GCLOUD_AUTH}} {{.KEYS_DIR}}/{{.KEYFILE}} && \
         {{.GCLOUD_EXPORT}}={{.KEYS_DIR}}/{{.KEYFILE}} && \
         cd {{.DEPLOY_DIR}}/{{.SERVER}}/ && \
         {{.ACTION}}  

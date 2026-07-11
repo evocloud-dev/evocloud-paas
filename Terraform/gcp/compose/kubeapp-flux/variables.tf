@@ -23,6 +23,16 @@ variable "ANSIBLE_DEBUG_FLAG" {
   type        = bool
 }
 
+variable "GCP_JSON_CREDS" {
+  description = "GCP Secret Json Key File"
+  type        = string
+}
+
+variable "AUTOMATION_FOLDER" {
+  description = "Automation Folder"
+  type        = string
+}
+
 variable "deployer_server_eip" {
   description = "Deployer Server Public IP"
   type        = string
