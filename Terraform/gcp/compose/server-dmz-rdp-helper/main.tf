@@ -21,7 +21,6 @@ resource "terraform_data" "rdp_deployment" {
   provisioner "remote-exec" {
     inline = [
       "export GOOGLE_APPLICATION_CREDENTIALS='/home/${var.CLOUD_USER}/EVOCLOUD/Keys/${var.GCP_JSON_CREDS}'",
-      "gcloud auth activate-service-account --key-file /home/${var.CLOUD_USER}/EVOCLOUD/Keys/${var.GCP_JSON_CREDS}",
       "cd /home/${var.CLOUD_USER}/EVOCLOUD/Terraform/gcp/deployment/server-dmz-rdp",
       "terragrunt run --all apply --non-interactive --queue-include-external",
     ]
