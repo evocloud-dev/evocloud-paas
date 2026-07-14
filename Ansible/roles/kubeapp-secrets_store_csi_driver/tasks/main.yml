@@ -1,0 +1,35 @@
+---
+#This playbook will deploy Secrets Store CSI Driver
+#References:
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-secrets_store_csi_driver ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ secrets_csi_driver_kubeapp_dir }}"
+
+######################################################
+#Deploying Secrets Store CSI Driver Resources
+######################################################
+- name: Staging Kubernetes manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ secrets_csi_driver_kubeapp_dir }}/{{ item }}"
+  loop:
+    - secrets-store-csi-driver-rset.yaml
+
+- name: Deploying Kubernetes manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ secrets_csi_driver_kubeapp_dir }}/secrets-store-csi-driver-rset.yaml"
+  register: secrets_csi_driver_deploy_result
+  until: secrets_csi_driver_deploy_result is succeeded
+  retries: 10
+  delay: 30
