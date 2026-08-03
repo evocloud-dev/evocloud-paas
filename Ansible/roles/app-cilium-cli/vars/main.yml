@@ -1,15 +1,15 @@
 ---
 # renovate: datasource=github-releases depName=cilium/cilium-cli versioning=semver
-cilium_cli_ver: 'v0.19.2'
+cilium_cli_ver: 'v0.19.7'
 
 cilium_cli_install_dir: /usr/local/bin
 
 cilium_cli_force_update: false
 
-#https://github.com/cilium/cilium-cli/releases/tag/v0.19.2
-#https://github.com/cilium/cilium-cli/releases/download/v0.19.2/cilium-linux-amd64.tar.gz
+#https://github.com/cilium/cilium-cli/releases/tag/v0.19.7
+#https://github.com/cilium/cilium-cli/releases/download/v0.19.7/cilium-linux-amd64.tar.gz
 cilium_cli_download_url: 'https://github.com/cilium/cilium-cli/releases/download/{{ cilium_cli_ver }}/cilium-linux-amd64.tar.gz'
 
-#https://github.com/cilium/cilium-cli/releases/download/v0.19.2/cilium-linux-amd64.tar.gz.sha256sum
+#https://github.com/cilium/cilium-cli/releases/download/v0.19.7/cilium-linux-amd64.tar.gz.sha256sum
 # renovate: datasource=github-releases depName=cilium/cilium-cli packageName=cilium-linux-amd64.tar.gz
-cilium_cli_checksum: sha256:aa25cd2542614051573008ed18adb7d697fd78e4b0345db83d1650cdaf4492de
+cilium_cli_checksum: sha256:cd15e0983bf0acc7946cd05d453d1e58376ea92dec2642e745212df2b07d8852
