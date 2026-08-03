@@ -29,7 +29,7 @@
     src: "{{ item }}"
   loop:
     - "{{ talos_upgrade_kubeapp_dir }}/tuppr-rset.yaml"
-  register: talos_upgrade_deploy_result
-  until: talos_upgrade_deploy_result is succeeded
+  register: talos_upgrade_operator_result
+  until: talos_upgrade_operator_result is succeeded
   retries: 10
   delay: 30
