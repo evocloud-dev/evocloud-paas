@@ -12,25 +12,12 @@ locals {
     certificates = data.local_file.evoidp_ca.content
   })
 
-  talos_api_access_patch = yamlencode({
-    machine = {
-      features = {
-        kubernetesTalosAPIAccess = {
-          enabled                     = true
-          allowedRoles                = ["os:admin", "os:reader"]
-          allowedKubernetesNamespaces = ["talos-system-upgrade", "kube-system"]
-        }
-      }
-    }
-  })
-
   talos_containerd_config = yamlencode({
     machine = {
       files = [
         {
           op          = "create"
           path        = "/etc/cri/conf.d/20-customization.part"
-          permissions = 0o644
           content     = <<-EOT
             [plugins."io.containerd.cri.v1.images"]
               discard_unpacked_layers = false
@@ -208,13 +195,6 @@ resource "hcloud_server" "controlplane" {
     managed-by  = "EvoCloud"
     role        = "controlplane"
   }
-
-  #In case of a node failure, Terraform can be used to recreate the failed node.
-  lifecycle {
-    replace_triggered_by = [
-      hcloud_server.controlplane.id
-    ]
-  }
 }
 
 #-----------------------------------------------------
@@ -247,13 +227,6 @@ resource "hcloud_server" "worker" {
   labels = {
     managed-by  = "EvoCloud"
     role        = "worker"
-  }
-
-  #In case of a node failure, Terraform can be used to recreate the failed node.
-  lifecycle {
-    replace_triggered_by = [
-      hcloud_server.worker.id
-    ]
   }
 }
 
@@ -344,12 +317,9 @@ data "talos_machine_configuration" "talos_controlplane" {
           "localhost",
           hcloud_load_balancer.this.ipv4,
           hcloud_load_balancer_network.this.ip,
-        ],
+        ]
         kubelet = {
-          disableManifestsDirectory = true
           extraArgs = {
-            #https://docs.siderolabs.com/kubernetes-guides/advanced-guides/dynamic-resource-allocation
-            feature-gates = "DynamicResourceAllocation=true"
             cloud-provider = "external"
             rotate-server-certificates = true
           }
@@ -358,14 +328,12 @@ data "talos_machine_configuration" "talos_controlplane" {
             maxParallelImagePulls = 5
           }
         }
-        time = {
-          servers = [
-            var.idam_server_ip,
-            var.idam_replica_ip,
-            "ntp1.hetzner.de",
-            "ntp2.hetzner.com",
-            "ntp3.hetzner.net"
-          ]
+        features = {
+          kubernetesTalosAPIAccess = {
+            enabled = true
+            allowedRoles = ["os:reader", "os:admin"]
+            allowedKubernetesNamespaces = ["kube-system"]
+          }
         }
         systemDiskEncryption = {
           ephemeral = {
@@ -399,74 +367,25 @@ data "talos_machine_configuration" "talos_controlplane" {
               }
             ]
           }
-          certSANs = concat(
-            ["127.0.0.1", "localhost"],
-            [hcloud_load_balancer.this.ipv4],
-            [hcloud_load_balancer_network.this.ip]
-          )
+          certSANs = [
+            "127.0.0.1",
+            "localhost",
+            hcloud_load_balancer.this.ipv4,
+            hcloud_load_balancer_network.this.ip,
+          ]
           extraArgs = {
             # https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/
-            enable-aggregator-routing = true
+            #enable-aggregator-routing = true
             # https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/#feature-stages
             # https://aws.plainenglish.io/the-kubernetes-feature-youve-been-waiting-7-years-for-hpa-finally-scales-to-zero-in-v1-36-8cde1277c310
             # https://docs.siderolabs.com/kubernetes-guides/advanced-guides/dynamic-resource-allocation
-            feature-gates = "HPAScaleToZero=true,DynamicResourceAllocation=true"
+            #feature-gates = "HPAScaleToZero=true,DynamicResourceAllocation=true"
           }
         }
-        controllerManager = {
-          extraArgs = {
-            bind-address    = "0.0.0.0"
-            cloud-provider  = "external"
-            # https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/#feature-stages
-            # https://aws.plainenglish.io/the-kubernetes-feature-youve-been-waiting-7-years-for-hpa-finally-scales-to-zero-in-v1-36-8cde1277c310
-            # https://docs.siderolabs.com/kubernetes-guides/advanced-guides/dynamic-resource-allocation
-            feature-gates = "HPAScaleToZero=true,DynamicResourceAllocation=true"
-          }
-        }
+        #https://docs.siderolabs.com/kubernetes-guides/monitoring-and-observability/etcd-metrics
         etcd = {
           extraArgs = {
             "listen-metrics-urls" = "http://0.0.0.0:2381"
-          }
-        }
-        scheduler = {
-          config = {
-            apiVersion = "kubescheduler.config.k8s.io/v1"
-            kind = "KubeSchedulerConfiguration"
-            profiles = [
-              {
-                schedulerName = "default-scheduler"
-                plugins = {
-                  score = {
-                    disabled = [
-                      {
-                        name = "ImageLocality"
-                      }
-                    ]
-                  }
-                }
-                pluginConfig = [
-                  {
-                    name = "PodTopologySpread"
-                    args = {
-                      defaultingType = "List"
-                      defaultConstraints = [
-                        {
-                          maxSkew = "1"
-                          topologyKey = "kubernetes.io/hostname"
-                          whenUnsatisfiable = "ScheduleAnyway"
-
-                        }
-                      ]
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-          extraArgs = {
-            bind-address = "0.0.0.0"
-            # https://docs.siderolabs.com/kubernetes-guides/advanced-guides/dynamic-resource-allocation
-            feature-gates = "DynamicResourceAllocation=true"
           }
         }
         network = {
@@ -582,7 +501,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                         - |
                           helm upgrade --install --namespace kube-system talos-cloud-controller-manager oci://ghcr.io/siderolabs/charts/talos-cloud-controller-manager -f https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/talos-ccm-gcp.yaml
                           helm upgrade --install cilium oci://quay.io/cilium/charts/cilium \
-                          --version 1.19.3 \
+                          --version 1.20.0 \
                           --namespace kube-system \
                           --set operator.replicas=2 \
                           --set k8sServiceHost=localhost \
@@ -676,7 +595,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install flux-operator oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator \
                             --namespace flux-system \
                             --create-namespace \
-                            --version 0.53.0 \
+                            --version 0.57.0 \
                             --wait
                     restartPolicy: OnFailure
                     serviceAccount: flux-install
@@ -758,7 +677,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                         mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
                         operation: copy
                       ref:
-                        semver: "0.52.x"
+                        semver: "0.57.x"
                   - apiVersion: helm.toolkit.fluxcd.io/v2
                     kind: HelmRelease
                     metadata:
@@ -848,9 +767,8 @@ data "talos_machine_configuration" "talos_controlplane" {
         ]
       }
     }),
-    local.talos_api_access_patch,
     local.talos_containerd_config,
-    #local.trusted_roots_patch,
+    local.trusted_roots_patch,
   ]
 }
 
@@ -916,10 +834,7 @@ data "talos_machine_configuration" "talos_worker" {
           ]
         }
         kubelet = {
-          disableManifestsDirectory = true
           extraArgs = {
-            #https://docs.siderolabs.com/kubernetes-guides/advanced-guides/dynamic-resource-allocation
-            feature-gates = "DynamicResourceAllocation=true"
             cloud-provider = "external"
             rotate-server-certificates = true
           }
@@ -955,21 +870,6 @@ data "talos_machine_configuration" "talos_worker" {
         }
       }
       cluster = {
-        apiServer = {
-          extraArgs = {
-            feature-gates = "DynamicResourceAllocation=true"
-          }
-        }
-        controllerManager = {
-          extraArgs = {
-            feature-gates = "DynamicResourceAllocation=true"
-          }
-        }
-        scheduler = {
-          extraArgs = {
-            feature-gates = "DynamicResourceAllocation=true"
-          }
-        }
         network = {
           cni = {
             name = "none"
@@ -981,7 +881,7 @@ data "talos_machine_configuration" "talos_worker" {
       }
     }),
     local.talos_containerd_config,
-    #local.trusted_roots_patch,
+    local.trusted_roots_patch,
   ]
 }
 

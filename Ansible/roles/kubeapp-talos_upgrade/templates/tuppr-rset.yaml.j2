@@ -26,11 +26,6 @@ spec:
     # Add dependsOn Monitoring Stack
 
   resources:
-    - apiVersion: v1
-      kind: Namespace
-      metadata:
-        name: talos-system-upgrade
-
     #https://github.com/fluxcd-community/flux2-schemas/blob/main/ocirepository-source-v1.json
     - apiVersion: source.toolkit.fluxcd.io/v1
       kind: OCIRepository
@@ -50,9 +45,9 @@ spec:
       kind: HelmRelease
       metadata:
         name: talos-upgrade-operator
-        namespace: talos-system-upgrade
+        namespace: kube-system
       spec:
-        #serviceAccountName: kafka-sa
+        #serviceAccountName: talos-upgrade-operator-sa
         chartRef:
           kind: OCIRepository
           name: talos-upgrade-operator
@@ -74,12 +69,12 @@ spec:
           #Set below to true if kube prometheus stack is deployed
           monitoring:
             serviceMonitor:
-              enabled: true
+              enabled: false
             prometheusRule:
-              enabled: true
+              enabled: false
             dashboards:
-              enabled: true
+              enabled: false
               grafanaOperator:
-                enabled: true
+                enabled: false
                 matchLabels:
                   dashboards: grafana

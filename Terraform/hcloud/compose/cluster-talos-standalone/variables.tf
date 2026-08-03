@@ -34,9 +34,24 @@ variable "BASE_VOLUME_200" {
   type        = string
 }
 
+variable "HCLOUD_METADATA_NS" {
+  description = "HCLOUD Metadata Nameserver IP"
+  type        = string
+}
+
 variable "TALOS_EXTRA_MANIFESTS" {
   description = "Extra Kubernetes Manifest for Talos Machine Configuration"
   type = map(string)
+}
+
+variable "IDAM_PRIVATE_IP" {
+  description = "IDAM Private IPv4"
+  type        = string
+}
+
+variable "IDAM_REPLICA_PRIVATE_IP" {
+  description = "IDAM Replica Private IPv4"
+  type        = string
 }
 
 variable "dmz_subnet_id" {
