@@ -1,0 +1,74 @@
+############################################
+#DEPLOYING CSI EXTERNAL-SNAPSHOT-CONTROLLER
+############################################
+# Reference: https://github.com/home-operations/helm-charts/tree/main/charts/snapshot-controller
+
+
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: snapshot-controller
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    # Add dependsOn Monitoring Stack
+
+  resources:
+    #https://github.com/fluxcd-community/flux2-schemas/blob/main/ocirepository-source-v1.json
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: snapshot-controller
+        namespace: flux-system
+      spec:
+        interval: 12h
+        #https://github.com/home-operations/helm-charts/tree/main/charts/snapshot-controller
+        url: oci://ghcr.io/home-operations/charts/snapshot-controller
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "0.1.*"
+        #verify:
+        #  provider: cosign
+        #  matchOIDCIdentity:
+        #    - issuer: ^https://token\.actions\.githubusercontent\.com$
+        #      subject: ^https://github\.com/spegel-org/spegel.*$
+
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: snapshot-controller
+        namespace: kube-system
+      spec:
+        #serviceAccountName: csi-snapshot-sa
+        chartRef:
+          kind: OCIRepository
+          name: snapshot-controller
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        #https://github.com/home-operations/helm-charts/blob/main/charts/snapshot-controller/values.yaml
+        values:
+          replicaCount: 1
+          monitoring:
+            serviceMonitor:
+              enabled: false
