@@ -26,10 +26,10 @@ spec:
     # Add dependsOn Monitoring Stack
 
   resources:
-    - apiVersion: v1
-      kind: Namespace
-      metadata:
-        name: talos-system-upgrade
+    #- apiVersion: v1
+    #  kind: Namespace
+    #  metadata:
+    #    name: talos-system-upgrade
 
     #https://github.com/fluxcd-community/flux2-schemas/blob/main/ocirepository-source-v1.json
     - apiVersion: source.toolkit.fluxcd.io/v1
@@ -50,9 +50,9 @@ spec:
       kind: HelmRelease
       metadata:
         name: talos-upgrade-operator
-        namespace: talos-system-upgrade
+        namespace: kube-system
       spec:
-        #serviceAccountName: kafka-sa
+        #serviceAccountName: talos-upgrade-operator-sa
         chartRef:
           kind: OCIRepository
           name: talos-upgrade-operator
@@ -76,10 +76,10 @@ spec:
             serviceMonitor:
               enabled: true
             prometheusRule:
-              enabled: true
+              enabled: false
             dashboards:
               enabled: true
               grafanaOperator:
-                enabled: true
+                enabled: false
                 matchLabels:
                   dashboards: grafana

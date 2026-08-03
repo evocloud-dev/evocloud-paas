@@ -5,6 +5,12 @@
 #Reference: https://github.com/spegel-org/spegel
 #           https://spegel.dev/docs/getting-started/
 #           https://spegel.dev/docs/getting-started/#talos
+#           https://docs.siderolabs.com/kubernetes-guides/advanced-guides/spegel
+
+# INFO: With Spegel installed, containerd pulls images using this order:
+#1) Spegel registry on the local node
+#2) Spegel registry on peer nodes
+#3) Upstream container registry (for example, Docker Hub)
 
 # https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
 apiVersion: fluxcd.controlplane.io/v1

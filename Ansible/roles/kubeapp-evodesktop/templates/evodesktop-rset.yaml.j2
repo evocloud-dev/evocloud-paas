@@ -1,0 +1,119 @@
+############################################
+#DEPLOYING EVODESKTOP
+############################################
+# Reference: https://github.com/abcdesktopio/helm/tree/dev/charts/abcdesktop
+
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: kubeapp-evodesktop
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: evodesktop
+        labels:
+          pod-security.kubernetes.io/enforce: privileged #Evodesktop must not set securityContext.privileged=true
+
+    #Create OCI Repository
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: kubeapp-evodesktop
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/evocloud-dev/charts/abcdesktop
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "4.4.*"
+
+    #Deploy Helm Release
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: kubeapp-evodesktop
+        namespace: evodesktop
+      spec:
+        #serviceAccountName: evodesktop-operator
+        chartRef:
+          kind: OCIRepository
+          name: kubeapp-evodesktop
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          console:
+            image: ghcr.io/abcdesktopio/console
+            tag: 4.4
+            replicaCount: 1
+          memcached:
+            image: ghcr.io/abcdesktopio/oc.memcached
+            tag: 4.4
+            replicaCount: 1
+          mongo:
+            enabled: true
+            keysgenerator:
+              image: ghcr.io/abcdesktopio/keysgenerator
+              tag: 4.4
+              mongodkeylength: 756
+            image:
+              repository: ghcr.io/abcdesktopio/mongo
+              tag: "safe8.0"
+              pullPolicy: Always
+              replicaCount: 1
+              persistence:
+                enabled: true
+          website:
+            image: ghcr.io/abcdesktopio/oc.nginx
+            tag: 4.4
+            replicaCount: 1
+          openldap:
+            enabled: true
+            image: ghcr.io/abcdesktopio/docker-test-openldap
+            tag: 4.4
+            replicaCount: 1
+          pyos:
+            image: ghcr.io/abcdesktopio/pyos
+            tag: 4.4.alpine_latest
+            replicaCount: 1
+          router:
+            image: ghcr.io/abcdesktopio/route
+            tag: 4.4
+            # nodePort: 30443  # or leave empty/null to disable
+            replicaCount: 1
+          speedtest:
+            image: ghcr.io/abcdesktopio/oc.speedtest
+            tag: 4.4
+            replicaCount: 1
+          keysgenerator:
+            image: ghcr.io/abcdesktopio/keysgenerator
+            tag: 4.4
+          versionConfigJson: |
+            {
+                "ABCDESKTOP_VERSION": "4.4",
+                "ABCDESKTOP_APPLICATIONS_LIST_URL": "https://raw.githubusercontent.com/abcdesktopio/images/refs/heads/main/appLists/appList.4.4.json"
+            }

@@ -160,7 +160,9 @@ data "talos_machine_configuration" "talos_controlplane" {
           "net.ipv4.tcp_slow_start_after_idle" = "0"
           "user.max_user_namespaces"      = "11255"     # User Namespaces
         }
-        network = {}
+        network = {
+          nameservers = [var.IDAM_PRIVATE_IP, var.IDAM_REPLICA_PRIVATE_IP, var.HCLOUD_METADATA_NS]
+        }
         certSANs = [
           hcloud_server.talos_ctrlplane["node01"].ipv4_address,
           one(hcloud_server.talos_ctrlplane["node01"].network[*].ip)
