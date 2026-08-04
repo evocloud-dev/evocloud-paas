@@ -1,0 +1,130 @@
+##############################################
+#DEPLOYING descheduler is a Kubernetes add-on
+##############################################
+# Reference: https://github.com/kubernetes-sigs/descheduler
+#
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: descheduler
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    # Add dependsOn Monitoring Stack
+
+  resources:
+    #https://github.com/fluxcd-community/flux2-schemas/blob/main/ocirepository-source-v1.json
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: descheduler
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/home-operations/charts-mirror/descheduler
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "0.36.*"
+        #verify:
+        #  provider: cosign
+        #  matchOIDCIdentity:
+        #    - issuer: ^https://token\.actions\.githubusercontent\.com$
+        #      subject: ^https://github\.com/spegel-org/spegel.*$
+
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: descheduler
+        namespace: kube-system
+      spec:
+        #serviceAccountName: descheduler-sa
+        chartRef:
+          kind: OCIRepository
+          name: descheduler
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          kind: Deployment
+          deschedulerPolicyAPIVersion: descheduler/v1alpha2
+          deschedulerPolicy:
+            metricsProviders:
+              - source: KubernetesMetrics
+            profiles:
+              - name: Default
+                pluginConfig:
+                  - name: DefaultEvictor
+                    args:
+                      podProtections:
+                        defaultDisabled:
+                          - FailedBarePods
+                          - PodsWithLocalStorage
+                          - SystemCriticalPods
+                  - name: LowNodeUtilization
+                    args:
+                      metricsUtilization:
+                        source: KubernetesMetrics
+                      thresholds:
+                        cpu: 20
+                        memory: 20
+                        pods: 20
+                      targetThresholds:
+                        cpu: 50
+                        memory: 50
+                        pods: 50
+                  - name: RemoveFailedPods
+                    args:
+                      reasons:
+                        - ContainerStatusUnknown
+                        - NodeAffinity
+                        - NodeShutdown
+                        - Terminated
+                        - UnexpectedAdmissionError
+                      includingInitContainers: true
+                      excludeOwnerKinds:
+                        - Job
+                      minPodLifetimeSeconds: 1800
+                  - name: RemovePodsViolatingInterPodAntiAffinity
+                  - name: RemovePodsViolatingNodeAffinity
+                    args:
+                      nodeAffinityType:
+                        - requiredDuringSchedulingIgnoredDuringExecution
+                  - name: RemovePodsViolatingNodeTaints
+                  - name: RemovePodsViolatingTopologySpreadConstraint
+                plugins:
+                  balance:
+                    enabled:
+                      - LowNodeUtilization
+                      - RemovePodsViolatingTopologySpreadConstraint
+                  deschedule:
+                    enabled:
+                      - RemoveFailedPods
+                      - RemovePodsViolatingInterPodAntiAffinity
+                      - RemovePodsViolatingNodeAffinity
+                      - RemovePodsViolatingNodeTaints
+          service:
+            enabled: true
+          serviceMonitor:
+            enabled: false
+          leaderElection:
+            enabled: true
