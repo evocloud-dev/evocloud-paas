@@ -1,0 +1,36 @@
+---
+#This playbook will deploy Descheduler Kubernetes Addon
+#References: https://github.com/kubernetes-sigs/descheduler
+#            https://artifacthub.io/packages/helm/descheduler/descheduler
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-descheduler ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ descheduler_kubeapp_dir }}"
+
+######################################################
+#Deploying Descheduler Resources
+######################################################
+- name: Staging Kubernetes manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ descheduler_kubeapp_dir }}/{{ item }}"
+  loop:
+    - descheduler-rset.yaml
+
+- name: Deploying Kubernetes manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ descheduler_kubeapp_dir }}/descheduler-rset.yaml"
+  register: descheduler_deploy_result
+  until: descheduler_deploy_result is succeeded
+  retries: 10
+  delay: 30
