@@ -20,11 +20,7 @@ spec:
       name: flux
       namespace: flux-system
       ready: true
-    - apiVersion: fluxcd.controlplane.io/v1
-      kind: ResourceSet
-      name: rook-ceph
-      namespace: flux-system
-      ready: true
+    # dependsOn StorageClass
   resources:
     - apiVersion: v1
       kind: Namespace
@@ -51,7 +47,7 @@ spec:
         name: kube-promstack-operator
         namespace: monitoring
       spec:
-        #serviceAccountName: flux-operator
+        #serviceAccountName: promstack-operator
         chartRef:
           kind: OCIRepository
           name: kube-promstack-operator
