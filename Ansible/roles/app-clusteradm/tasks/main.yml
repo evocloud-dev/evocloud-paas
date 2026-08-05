@@ -1,0 +1,48 @@
+---
+#This playbook will install Clusteradm Binary
+#
+#References: https://github.com/open-cluster-management-io/clusteradm
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-clusteradm ##################"
+
+- name: Checking if clusteradm already exist...
+  ansible.builtin.stat:
+    path: '{{ clusteradm_install_dir }}/clusteradm'
+  changed_when: false
+  become: true
+  register: clusteradm_cli_binary
+
+- name: Uninstalling clusteradm...
+  ansible.builtin.file:
+    path: '{{ clusteradm_install_dir }}/clusteradm'
+    state: absent
+  become: true
+  when: (clusteradm_cli_binary.stat.exists) and (clusteradm_cli_force_update | bool)
+
+- when: (not clusteradm_cli_binary.stat.exists) or (clusteradm_cli_force_update | bool)
+  block:
+    - name: Verifying clusteradm sha256 checksum...
+      ansible.builtin.get_url:
+        url: '{{ clusteradm_download_url }}'
+        dest: '/tmp'
+        mode: '0644'
+        checksum: '{{ clusteradm_checksum }}'
+      become: true
+
+    - name: Installing clusteradm...
+      ansible.builtin.unarchive:
+        src: '/tmp/clusteradm_linux_amd64.tar.gz'
+        dest: '{{ clusteradm_install_dir }}'
+        mode: '0755'
+        remote_src: yes
+      become: true
+
+  always:
+    - name: Removing clusteradm detritus...
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '/tmp/clusteradm_linux_amd64.tar.gz'
+      become: true
