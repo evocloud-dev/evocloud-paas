@@ -1,0 +1,35 @@
+---
+#This playbook will deploy Silence-Operator
+#References: https://github.com/giantswarm/silence-operator
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-silence_operator ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ silence_operator_kubeapp_dir }}"
+
+######################################################
+#Deploying Silence-Operator Resources
+######################################################
+- name: Staging Kubernetes manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ silence_operator_kubeapp_dir }}/{{ item }}"
+  loop:
+    - silence-operator-rset.yaml
+
+- name: Deploying Kubernetes manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ silence_operator_kubeapp_dir }}/silence-operator-rset.yaml"
+  register: silence_operator_result
+  until: silence_operator_result is succeeded
+  retries: 10
+  delay: 30

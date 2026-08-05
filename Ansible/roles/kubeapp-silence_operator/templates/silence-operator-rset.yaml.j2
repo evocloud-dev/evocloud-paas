@@ -1,0 +1,77 @@
+############################################
+#DEPLOYING SILENCE OPERATOR
+############################################
+# Reference: https://github.com/giantswarm/silence-operator
+#            https://github.com/giantswarm/silence-operator/blob/main/helm/silence-operator/values.yaml
+
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: silence-operator
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    # dependsOn kube-promstack-operator
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: kube-promstack-operator
+      namespace: monitoring
+      ready: true
+
+  resources:
+    #https://github.com/fluxcd-community/flux2-schemas/blob/main/ocirepository-source-v1.json
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: silence-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://gsoci.azurecr.io/charts/giantswarm/silence-operator
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "0.20.*"
+        #verify:
+        #  provider: cosign
+        #  matchOIDCIdentity:
+        #    - issuer: ^https://token\.actions\.githubusercontent\.com$
+        #      subject: ^https://github\.com/spegel-org/spegel.*$
+
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: silence-operator
+        namespace: monitoring
+      spec:
+        #serviceAccountName: silence-operator-sa
+        chartRef:
+          kind: OCIRepository
+          name: silence-operator
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          #https://github.com/giantswarm/silence-operator/blob/main/helm/silence-operator/values.yaml
+          alertmanagerAddress: http://kube-promstack-operator-ku-alertmanager.monitoring:9093
+          networkPolicy:
+            enabled: false
