@@ -1,0 +1,35 @@
+---
+#This playbook will deploy Open Cluster Management CRDs and Controllers
+#References: https://github.com/open-cluster-management-io
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-open_cluster_management ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ ocm_operator_kubeapp_dir }}"
+
+######################################################
+#Deploying OCM Resources
+######################################################
+- name: Staging Kubernetes manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ ocm_operator_kubeapp_dir }}/{{ item }}"
+  loop:
+    - fleetconfig-controller-rset.yaml
+
+- name: Deploying Kubernetes manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ ocm_operator_kubeapp_dir }}/fleetconfig-controller-rset.yaml"
+  register: ocm_operator_result
+  until: ocm_operator_result is succeeded
+  retries: 10
+  delay: 30

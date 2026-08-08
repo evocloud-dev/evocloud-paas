@@ -1,4 +1,4 @@
-COPA CLI
+CLUSTERADM CLI
 =========
 
 Installs [clusteradm](https://github.com/open-cluster-management-io/clusteradm/)

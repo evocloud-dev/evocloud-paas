@@ -1,0 +1,238 @@
+############################################
+#DEPLOYING OCM FLEETCONFIG CONTROLLER
+############################################
+# Reference: https://github.com/open-cluster-management-io/lab/tree/main/fleetconfig-controller
+#            https://github.com/open-cluster-management-io/lab/tree/main/fleetconfig-controller/charts/fleetconfig-controller
+#            https://github.com/open-cluster-management-io/lab/blob/main/fleetconfig-controller/charts/fleetconfig-controller/values.yaml
+#            https://www.spectrocloud.com/blog/simple-declarative-orchestration-for-ocm-multi-clusters
+
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: ocm-fleetconfig-controller
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    # dependsOn cert-manager
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: cert-manager-stack
+      namespace: cert-manager
+      ready: true
+    # dependsOn kube-promstack-operator
+
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: fleetconfig-system
+
+    #Create Helm Repository
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: HelmRepository
+      metadata:
+        name: ocm-fleetconfig-controller
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: https://open-cluster-management.io/helm-charts
+
+    #Deploy Helm Release
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: ocm-fleetconfig-controller
+        namespace: fleetconfig-system
+      spec:
+        #serviceAccountName: flux-operator
+        chart:
+          spec:
+            chart: fleetconfig-controller
+            sourceRef:
+              kind: HelmRepository
+              name: ocm-fleetconfig-controller
+              namespace: flux-system
+            version: "0.3.*"
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: disabled # when enabled the HelmRelease is in constant drift reconciliation loop
+        values:
+          fleetConfig:
+            spokeFeatureGates:
+              #Enabled by default: Do not disable the feature gates that are enabled by default
+              ClusterClaim: true
+              RawFeedbackJsonString: true
+              #Enabled Optionally
+              AddonManagement: true
+            hub:
+              hubAddOns:
+                - name: "governance-policy-framework"
+                  installNamespace: "open-cluster-management"
+              clusterManager:
+                featureGates:
+                  #Enabled by default: Do not disable the feature gates that are enabled by default
+                  DefaultClusterSet: true
+                  ManifestWorkReplicaSet: true
+                  ResourceCleanup: true
+                  CleanUpCompletedManifestWork: true
+                  #Enabled Optionally
+                  AddonManagement: true
+                  ManagedClusterAutoApproval: true
+            spokes:
+              - name: "hub-as-spoke"
+                hubRef:
+                  name: "hub"
+                  namespace: ""
+                createNamespace: true
+                syncLabels: false
+                clusterARN: ""
+                cleanupConfig:
+                  purgeKlusterletOperator: true
+                  purgeKubeconfigSecret: true
+                  purgeAgentNamespace: true
+                  forceClusterDrain: false
+                kubeconfig:
+                  context: ""
+                  inCluster: true
+                  secretReference:
+                    name: ""
+                    kubeconfigKey: "kubeconfig"
+                proxyCa: ""
+                proxyUrl: ""
+                klusterlet:
+                  mode: "Default"
+                  forceInternalEndpointLookup: true
+                  managedClusterKubeconfig:
+                    context: ""
+                    inCluster: false
+                    secretReference:
+                      name: ""
+                      kubeconfigKey: "kubeconfig"
+                  forceInternalEndpointLookupManaged: false
+                  resources:
+                    limits:
+                      cpu: ""
+                      memory: ""
+                    requests:
+                      cpu: ""
+                      memory: ""
+                    qosClass: "Default"
+                  singleton: false
+                addOns:
+                  - configName: "governance-policy-framework"
+                    annotations:
+                      addon.open-cluster-management.io/on-multicluster-hub: "true"
+                  - configName: "config-policy-controller"
+                    annotations:
+                      operator-policy-disabled: "false"
+          spokeConcurrentReconciles: 5
+          kubernetesClusterDomain: "cluster.local"
+
+---
+############################################
+#DEPLOYING OCM CLUSTER PROXY ADDON
+############################################
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: ocm-cluster-proxy-addon
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    # dependsOn ocm-fleetconfig-controller
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: ocm-fleetconfig-controller
+      namespace: fleetconfig-system
+      ready: true
+
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: open-cluster-management-addon
+
+    #Deploy Helm Release for ocm-cluster-proxy Addon
+    ## https://open-cluster-management.io/docs/getting-started/integration/cluster-proxy/
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: ocm-cluster-proxy-addon
+        namespace: open-cluster-management-addon
+      spec:
+        #serviceAccountName: flux-operator
+        chart:
+          spec:
+            chart: cluster-proxy
+            sourceRef:
+              kind: HelmRepository
+              name: ocm-fleetconfig-controller
+              namespace: flux-system
+            version: "0.11.*"
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: disabled # when enabled the HelmRelease is in constant drift reconciliation loop
+        #values:
+
+    #Deploy Helm Release for ocm-cluster-proxy Addon
+    ## https://open-cluster-management.io/docs/getting-started/integration/cluster-proxy/
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: ocm-managed-serviceaccount
+        namespace: open-cluster-management-addon
+      spec:
+        #serviceAccountName: flux-operator
+        chart:
+          spec:
+            chart: managed-serviceaccount
+            sourceRef:
+              kind: HelmRepository
+              name: ocm-fleetconfig-controller
+              namespace: flux-system
+            version: "*"
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: disabled # when enabled the HelmRelease is in constant drift reconciliation loop
+        #values:
