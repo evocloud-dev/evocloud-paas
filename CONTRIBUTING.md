@@ -40,6 +40,15 @@ PRs are welcome. In general, we follow the "fork-and-pull" Git workflow.
 
 NOTE: Be sure to merge the latest from "upstream" before making a pull request!
 
+## 🧪 Branching Suggestions
+
+PRs are welcome. And here are suggestions on how to name your branch depending on the issue you are working on:
+- Features: **feat/my-cool-feature**
+- Bug Fixes: **fix/my-cool-code-improvement**
+- Performance Improvements or Enhancements: **enhancement/my-cool-tuning**
+- Documentation: **doc/my-cool-doc**
+- General chores: **chore/my-annoying-cleanup**
+
 ---
 
 ## 📜 Ground Rules
