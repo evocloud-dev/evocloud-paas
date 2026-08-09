@@ -1,15 +1,15 @@
 ---
 # renovate: datasource=github-releases depName=cilium/hubble versioning=semver
-hubble_cli_ver: 'v1.18.6'
+hubble_cli_ver: 'v1.19.4'
 
 hubble_cli_install_dir: /usr/local/bin
 
 hubble_cli_force_update: false
 
-#https://github.com/cilium/hubble/releases/tag/v1.18.6
-#https://github.com/cilium/hubble/releases/download/v1.18.6/hubble-linux-amd64.tar.gz
+#https://github.com/cilium/hubble/releases/tag/v1.19.4
+#https://github.com/cilium/hubble/releases/download/v1.19.4/hubble-linux-amd64.tar.gz
 hubble_cli_download_url: 'https://github.com/cilium/hubble/releases/download/{{ hubble_cli_ver }}/hubble-linux-amd64.tar.gz'
 
-#https://github.com/cilium/hubble/releases/download/v1.18.6/hubble-linux-amd64.tar.gz.sha256sum
+#https://github.com/cilium/hubble/releases/download/v1.19.4/hubble-linux-amd64.tar.gz.sha256sum
 # renovate: datasource=github-releases depName=cilium/hubble packageName=hubble-linux-amd64.tar.gz
-hubble_cli_checksum: sha256:93080f029b96ddf9c3513dc74b15b578190e206410f8f596ae404474f2ff2168
+hubble_cli_checksum: 'sha256:c7c37a5f27ed2ae2d5495c6ddbecc61cebbb841508e77af3c131e96f005ed247'

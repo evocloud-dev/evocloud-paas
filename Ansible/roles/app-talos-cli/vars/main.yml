@@ -1,6 +1,6 @@
 ---
 # renovate: datasource=github-releases depName=siderolabs/talos versioning=semver
-talosctl_version: 'v1.13.7'
+talosctl_version: 'v1.13.8'
 
 os_arch: 'linux-amd64'
 
@@ -8,9 +8,9 @@ talosctl_install_dir: /usr/local/bin
 
 talosctl_force_update: false
 
-#https://github.com/siderolabs/talos/releases/download/v1.13.7/talosctl-linux-amd64
+#https://github.com/siderolabs/talos/releases/download/v1.13.8/talosctl-linux-amd64
 talosctl_download_url: 'https://github.com/siderolabs/talos/releases/download/{{ talosctl_version }}/talosctl-{{ os_arch }}'
 
-# https://github.com/siderolabs/talos/releases/download/v1.13.7/sha256sum.txt
+# https://github.com/siderolabs/talos/releases/download/v1.13.8/sha256sum.txt
 # renovate: datasource=github-releases depName=siderolabs/talos packageName=talosctl-linux-amd64
-talosctl_checksum: sha256:97d08e5584e56114659f131e95e227910d1f3b427d26360dca2af3ed821b71f8
+talosctl_checksum: 'sha256:406b56f9e4ff03b1557cc941b1f163aec8a6ebb36e28f0bbbe6d083589529261'
