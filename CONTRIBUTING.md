@@ -45,7 +45,7 @@ NOTE: Be sure to merge the latest from "upstream" before making a pull request!
 PRs are welcome. And here are suggestions on how to name your branch depending on the issue you are working on:
 - Features: **feat/my-cool-feature**
 - Bug Fixes: **fix/my-cool-code-improvement**
-- Performance Improvements or Enhancements: **enhancement/my-cool-tuning**
+- Performance Improvements or Enhancements: **enhance/my-cool-tuning**
 - Documentation: **doc/my-cool-doc**
 - General chores: **chore/my-annoying-cleanup**
 
