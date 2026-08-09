@@ -1,0 +1,12 @@
+---
+cloud_user: ""
+
+domain_tld: ""
+
+kube_cluster_name: ""
+
+kubeapp_dir: '/home/{{ cloud_user }}/kubeapps/{{ kube_cluster_name }}'
+
+kubeconfig: '/home/{{ cloud_user }}/kubeconfig/kubeconfig-{{ kube_cluster_name }}.yaml'
+
+ocm_operator_kubeapp_dir: '{{ kubeapp_dir }}/open-cluster-management'

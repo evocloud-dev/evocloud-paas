@@ -1,0 +1,35 @@
+---
+#This playbook will deploy Local-path storage provisionner
+#References:
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-localpath ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ localpath_kubeapp_dir }}"
+
+######################################################
+#Deploying Local-path Resources
+######################################################
+- name: Staging Kubernetes manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ localpath_kubeapp_dir }}/{{ item }}"
+  loop:
+    - localpath-storage-rset.yaml
+
+- name: Deploying Kubernetes manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ localpath_kubeapp_dir }}/localpath-storage-rset.yaml"
+  register: localpath_deploy_result
+  until: localpath_deploy_result is succeeded
+  retries: 10
+  delay: 30

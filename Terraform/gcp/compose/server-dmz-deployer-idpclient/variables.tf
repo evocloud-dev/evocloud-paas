@@ -53,6 +53,11 @@ variable "GCP_METADATA_NS" {
   type        = string
 }
 
+variable "GCP_JSON_CREDS" {
+  description = "GCP Secret Json Key File"
+  type        = string
+}
+
 variable "deployer_server_eip" {
   description = "Deployer Server Public IP"
   type        = string

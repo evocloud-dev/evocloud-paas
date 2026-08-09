@@ -1,0 +1,97 @@
+---
+#############################################
+#DEPLOYING SPEGEL OPERATOR
+#############################################
+#Reference: https://github.com/spegel-org/spegel
+#           https://spegel.dev/docs/getting-started/
+#           https://spegel.dev/docs/getting-started/#talos
+#           https://docs.siderolabs.com/kubernetes-guides/advanced-guides/spegel
+
+# INFO: With Spegel installed, containerd pulls images using this order:
+#1) Spegel registry on the local node
+#2) Spegel registry on peer nodes
+#3) Upstream container registry (for example, Docker Hub)
+
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: spegel-operator
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    # Add dependsOn Monitoring Stack
+
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: spegel
+        labels:
+          pod-security.kubernetes.io/enforce: privileged
+
+    #https://github.com/fluxcd-community/flux2-schemas/blob/main/ocirepository-source-v1.json
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: spegel-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/spegel-org/helm-charts/spegel
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "0.7.*"
+        verify:
+          provider: cosign
+          matchOIDCIdentity:
+            - issuer: ^https://token\.actions\.githubusercontent\.com$
+              subject: ^https://github\.com/spegel-org/spegel.*$
+
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: spegel-operator
+        namespace: spegel
+      spec:
+        #serviceAccountName: kafka-sa
+        chartRef:
+          kind: OCIRepository
+          name: spegel-operator
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          #grafanaDashboard:
+          #  enabled: true
+          #  mode: GrafanaOperator
+          #  grafanaOperator:
+          #    matchLabels:
+          #      grafana.internal/instance: grafana
+          service:
+            registry:
+              hostPort: 29999
+          serviceMonitor:
+            enabled: true
+          spegel:
+            containerdSock: /run/containerd/containerd.sock
+            containerdRegistryConfigPath: /etc/cri/conf.d/hosts

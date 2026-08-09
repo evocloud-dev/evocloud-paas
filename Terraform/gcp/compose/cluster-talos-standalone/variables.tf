@@ -1,3 +1,14 @@
+
+variable "GCP_JSON_CREDS" {
+  description = "GCP Secret Json Key File"
+  type        = string
+}
+
+variable "AUTOMATION_FOLDER" {
+  description = "Automation Folder"
+  type        = string
+}
+
 variable "GCP_REGION" {
   description = "GCP Region"
   type        = string

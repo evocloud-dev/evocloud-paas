@@ -38,6 +38,11 @@ variable "ANSIBLE_DEBUG_FLAG" {
   type        = bool
 }
 
+variable "GCP_JSON_CREDS" {
+  description = "GCP Secret Json Key File"
+  type        = string
+}
+
 variable "idam_server_ip" {
   description = "IDAM Server Private IPv4"
   type        = string

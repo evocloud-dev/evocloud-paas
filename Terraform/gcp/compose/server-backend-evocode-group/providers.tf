@@ -2,7 +2,7 @@
 # Supported Cloud Provider
 #--------------------------------------------------
 provider "google" {
-  #credentials = file("path/to/credentials.json")
+  credentials = file("/home/${var.CLOUD_USER}/EVOCLOUD/Keys/${var.GCP_JSON_CREDS}")
   project = var.GCP_PROJECT_ID
   region  = var.GCP_REGION
 }

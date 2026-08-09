@@ -1,0 +1,35 @@
+---
+#This playbook will deploy Talos Upgrade Operator
+#References:
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-talos_upgrade ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ talos_upgrade_kubeapp_dir }}"
+
+######################################################
+#Deploying Talos Upgrade Operator Resources
+######################################################
+- name: Staging Kubernetes manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ talos_upgrade_kubeapp_dir }}/{{ item }}"
+  loop:
+    - tuppr-rset.yaml
+
+- name: Deploying Kubernetes manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ talos_upgrade_kubeapp_dir }}/tuppr-rset.yaml"
+  register: talos_upgrade_operator_result
+  until: talos_upgrade_operator_result is succeeded
+  retries: 10
+  delay: 30

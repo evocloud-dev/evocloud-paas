@@ -1,0 +1,75 @@
+---
+#Source: https://gateway-api.sigs.k8s.io/guides/http-redirect-rewrite/
+###############################################
+# Headlamp HTTPROUTE
+###############################################
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: headlamp-http
+  namespace: kube-system
+spec:
+  parentRefs:
+    - name: shared-gtw
+      group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: evocloud-ns
+      sectionName: http-headlamp
+  hostnames:
+    - paas.{{ domain_tld }}
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: headlamp-https
+  namespace: kube-system
+  annotations:
+    forecastle.stakater.com/expose: "true"
+    forecastle.stakater.com/icon: "https://github.com/stakater/ForecastleIcons/raw/master/grafana.png"
+    forecastle.stakater.com/appName: "EvoCloud UI"
+    forecastle.stakater.com/group: "APIs & Interfaces"
+    forecastle.stakater.com/instance: "Evodashboard"
+    forecastle.stakater.com/properties: "Platform:EvoCloud, Version:1.0.0"
+    forecastle.stakater.com/network-restricted: "true"
+spec:
+  parentRefs:
+    - name: shared-gtw
+      group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: evocloud-ns
+      sectionName: https-headlamp
+  hostnames:
+    - paas.{{ domain_tld }}
+  rules:
+    - backendRefs:
+        - name: headlamp
+          port: 80
+          kind: Service
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
+
+### NOTES:
+#ForecastleApp can also be created with a custom resource:
+#---
+#apiVersion: forecastle.stakater.com/v1alpha1
+#kind: ForecastleApp
+#metadata:
+#  name: google
+#spec:
+#  instance: Evodashboard
+#  name: Google
+#  group: Cstom Apps
+#  icon: https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png
+#  url: https://www.google.com/
+#  networkRestricted: false
+#  properties:
+#    Platform: "EvoCloud"
+#    Version: "1.0.0"

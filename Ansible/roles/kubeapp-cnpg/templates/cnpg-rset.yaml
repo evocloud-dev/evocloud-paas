@@ -1,0 +1,95 @@
+---
+############################################
+#DEPLOYING Cloudnative-PG
+############################################
+#Reference:
+#           https://cloudnative-pg.io/docs/1.28/image_catalog/
+
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: cloudnative-postgresql
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    #Requirement for storageclass
+    #Requirement for cert-manager
+    #Requirement for external-secrets
+    #Requirement for promstack
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: cnpg-system
+        labels:
+          pod-security.kubernetes.io/enforce: privileged
+    # OCI Repository
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: cloudnative-pg-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/cloudnative-pg/charts/cloudnative-pg
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "0.28.*"
+        verify:
+          provider: cosign
+          matchOIDCIdentity:
+            - issuer: ^https://token\.actions\.githubusercontent\.com$
+              subject: ^https://github\.com/cloudnative-pg/charts.*$
+    # Helm Release
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: cloudnative-pg-operator
+        namespace: cnpg-system
+      spec:
+        #serviceAccountName: cloudnative-pg-sa
+        chartRef:
+          kind: OCIRepository
+          name: cloudnative-pg-operator
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          crds:
+            create: true
+          replicaCount: 2
+    # Secret generator
+    - apiVersion: generators.external-secrets.io/v1alpha1
+      kind: ClusterGenerator
+      metadata:
+        name: cnpg-pass-generator
+      spec:
+        kind: Password
+        generator:
+          passwordSpec:
+            length: 42
+            digits: 5
+            symbols: 5
+            symbolCharacters: "-_$"
+            noUpper: false
+            allowRepeat: true

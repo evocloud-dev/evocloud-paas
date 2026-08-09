@@ -1,0 +1,20 @@
+---
+#--------------------------------------------------------------
+# Clusteradm SPECIFIC VARS
+#--------------------------------------------------------------
+# Clusteradm Version
+# renovate: datasource=github-releases depName=open-cluster-management-io/clusteradm versioning=semver
+clusteradm_version: "1.3.1"
+
+# Directory
+clusteradm_install_dir: "/usr/local/bin"
+
+# Update flag
+clusteradm_force_update: false
+
+# URLS: https://github.com/open-cluster-management-io/clusteradm/releases/download/v1.3.1/clusteradm_linux_amd64.tar.gz
+clusteradm_download_url: "https://github.com/open-cluster-management-io/clusteradm/releases/download/v{{ clusteradm_version }}/clusteradm_linux_amd64.tar.gz"
+
+#https://github.com/open-cluster-management-io/clusteradm/releases/
+# renovate: datasource=github-releases depName=open-cluster-management-io/clusteradm packageName=clusteradm_linux_amd64.tar.gz
+clusteradm_checksum: sha256:20f5b0f57af27619d8337ee7255d95a76b6ce101f782b30284abebdab0255aef

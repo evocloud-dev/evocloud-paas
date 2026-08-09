@@ -28,6 +28,8 @@
     - app-trivy
     - app-kubelint
     - app-nerdctl
+    - app-clusteradm
+    - app-copa
     - app-cosign
     - app-task
     - app-kubevela

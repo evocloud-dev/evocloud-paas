@@ -1,0 +1,20 @@
+---
+#--------------------------------------------------------------
+# COPA SPECIFIC VARS
+#--------------------------------------------------------------
+# Copa Version
+# renovate: datasource=github-releases depName=project-copacetic/copacetic versioning=semver
+copa_version: "0.14.1"
+
+# Directory
+copa_install_dir: "/usr/local/bin"
+
+# Update flag
+copa_force_update: false
+
+# URLS: https://github.com/project-copacetic/copacetic/releases/download/v0.14.1/copa_0.14.1_linux_amd64.tar.gz
+copa_download_url: "https://github.com/project-copacetic/copacetic/releases/download/v{{ copa_version }}/copa_{{ copa_version }}_linux_amd64.tar.gz"
+
+#https://github.com/project-copacetic/copacetic/releases/
+# renovate: datasource=github-releases depName=project-copacetic/copacetic packageName=copa-linux-amd64
+copa_checksum: sha256:a780f62c054f60cd1aecbbf4a4b2665a816aa852534e6b0b9592cf96a327fdc9

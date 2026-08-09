@@ -1,0 +1,35 @@
+---
+#This playbook will deploy ClickHouse
+#References:
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-clickhouse ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ clickhouse_kubeapp_dir }}"
+
+######################################################
+#Deploying ClickHouse Resources
+######################################################
+- name: Staging Kubernetes manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ clickhouse_kubeapp_dir }}/{{ item }}"
+  loop:
+    - clickhouse-rset.yaml
+
+- name: Deploying Kubernetes manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ clickhouse_kubeapp_dir }}/clickhouse-rset.yaml"
+  register: clickhouse_deploy_result
+  until: clickhouse_deploy_result is succeeded
+  retries: 10
+  delay: 30

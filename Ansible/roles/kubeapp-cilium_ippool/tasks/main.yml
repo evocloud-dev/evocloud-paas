@@ -1,0 +1,35 @@
+---
+#This playbook will deploy Cilium IP Pool and L2AnnouncementPolicy
+#References:
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-cilium-ippool ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ kubeapp_dir }}/cilium-ippool"
+
+######################################################
+#Deploying Cilium IPPool and L2AnnouncementPolicy
+######################################################
+- name: Staging Kubernetes manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ kubeapp_dir }}/cilium-ippool/{{ item }}"
+  loop:
+    - cilium-ippool.yaml
+
+- name: Deploying Kubernetes manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ kubeapp_dir }}/cilium-ippool/cilium-ippool.yaml"
+  register: ippool_deploy_result
+  until: ippool_deploy_result is succeeded
+  retries: 4
+  delay: 30

@@ -1,0 +1,327 @@
+---
+#############################################
+#DEPLOYING KAFKA OPERATOR powered by STRIMZI
+#############################################
+#Reference: https://github.com/strimzi/strimzi-kafka-operator/tree/main/helm-charts/helm3/strimzi-kafka-operator
+#           https://medium.com/@abdelrahmanelshahat00/deploying-production-ready-apache-kafka-on-kubernetes-with-strimzi-kraft-mode-644db3427332
+#           https://medium.com/@abdelrahmanelshahat00/monitoring-your-kafka-cluster-metrics-dashboards-and-kafka-ui-75128b418bc6
+#           https://oneuptime.com/blog/post/2026-01-21-kafka-kubernetes-strimzi/view
+#           Strimzi CRDs: https://doc.crds.dev/github.com/strimzi/strimzi-kafka-operator
+#           https://github.com/strimzi/strimzi-kafka-operator/tree/main/examples
+#           https://strimzi.io/docs/operators/latest/overview#overview-concepts-drain-cleaner-str
+#
+# TLS Route Tutorial: https://strimzi.io/blog/2026/07/09/gateway-api-tlsroute-support-in-strimzi/
+
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: strimzi-kafka
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    # Add dependsOn storageClass
+    # Add dependsOn Monitoring Stack
+    # Add dependsOn Cert-Manager if Strimzi-Drain-Cleaner is deployed
+
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: strimzi-kafka-cluster
+
+    #https://github.com/fluxcd-community/flux2-schemas/blob/main/ocirepository-source-v1.json
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: strimzi-kafka-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://quay.io/strimzi-helm/strimzi-kafka-operator
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "1.0.*"
+
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: strimzi-kafka-operator
+        namespace: strimzi-kafka-cluster
+      spec:
+        #serviceAccountName: kafka-sa
+        chartRef:
+          kind: OCIRepository
+          name: strimzi-kafka-operator
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          replicas: 1
+          podDisruptionBudget:
+            enabled: true
+
+    # https://doc.crds.dev/github.com/strimzi/strimzi-kafka-operator/kafka.strimzi.io/KafkaNodePool/v1@1.0.0
+    # Controllers_node_pool
+    - apiVersion: kafka.strimzi.io/v1
+      kind: KafkaNodePool
+      metadata:
+        name: controllers
+        namespace: strimzi-kafka-cluster
+        labels:
+          strimzi.io/cluster: kafka-cluster
+      spec:
+        replicas: 3
+        roles:
+          - controller
+        storage:
+          type: jbod
+          volumes:
+            - id: 0
+              type: persistent-claim
+              size: 10Gi
+              deleteClaim: false
+              kraftMetadata: shared
+              #class: ""  # Adjust to match your StorageClass or leave empty to take on the default StorageClass
+        resources:
+          requests:
+            memory: 512Mi
+            cpu: "250m"
+          limits:
+            memory: 1Gi
+            cpu: "500m"
+        jvmOptions:
+          -Xms: 256m
+          -Xmx: 512m
+          gcLoggingEnabled: true
+
+    # Brokers_node_pool Configuration
+    - apiVersion: kafka.strimzi.io/v1
+      kind: KafkaNodePool
+      metadata:
+        name: brokers
+        namespace: strimzi-kafka-cluster
+        labels:
+          strimzi.io/cluster: kafka-cluster
+      spec:
+        replicas: 3
+        roles:
+          - broker
+        storage:
+          type: jbod
+          volumes:
+            - id: 0
+              type: persistent-claim
+              size: 10Gi  # Adjust based on your data retention needs
+              deleteClaim: false
+              #class: ""  # Adjust to match your StorageClass or leave empty to take on the default StorageClass
+        resources:
+          requests:
+            memory: 2Gi
+            cpu: "500m"
+          limits:
+            memory: 4Gi
+            cpu: "1500m"
+        jvmOptions:
+          -Xms: 1g
+          -Xmx: 2g
+          gcLoggingEnabled: true
+
+    # https://doc.crds.dev/github.com/strimzi/strimzi-kafka-operator/kafka.strimzi.io/Kafka/v1@1.0.0
+    # Kafka_cluster Configuration
+    - apiVersion: kafka.strimzi.io/v1
+      kind: Kafka
+      metadata:
+        name: kafka-cluster
+        namespace: strimzi-kafka-cluster
+        annotations:
+          strimzi.io/node-pools: enabled
+          strimzi.io/kraft: enabled  # Enable KRaft mode (no ZooKeeper)
+      spec:
+        #Kafka section
+        kafka:
+          version: 4.2.0
+          metadataVersion: 4.2-IV1
+          listeners:
+            - name: plain
+              port: 9092
+              type: internal
+              tls: false
+            - name: tls
+              port: 9093
+              type: internal
+              tls: true
+          config:
+            # ========================================
+            # Replication Settings (Fault Tolerance)
+            # ========================================
+            offsets.topic.replication.factor: 3
+            transaction.state.log.replication.factor: 3
+            transaction.state.log.min.isr: 2
+            default.replication.factor: 3
+            min.insync.replicas: 2
+            # ========================================
+            # Network Optimization
+            # ========================================
+            num.network.threads: 8
+            num.io.threads: 8
+            socket.send.buffer.bytes: 102400
+            socket.receive.buffer.bytes: 102400
+            socket.request.max.bytes: 104857600
+            # ========================================
+            # Log Retention (3 days)
+            # ========================================
+            log.retention.hours: 72 # 3 days, tune per use case
+            log.segment.bytes: 1073741824  # 1GB segments
+            log.retention.check.interval.ms: 300000
+            log.cleaner.enable: true
+            # ========================================
+            # Performance Tuning
+            # ========================================
+            compression.type: lz4
+            auto.create.topics.enable: false
+            auto.leader.rebalance.enable: true
+            leader.imbalance.check.interval.seconds: 300
+            # ========================================
+            # Replica Fetcher Configuration
+            # ========================================
+            replica.fetch.max.bytes: 10485760
+            replica.fetch.min.bytes: 1
+            replica.fetch.wait.max.ms: 500
+
+          #metricsConfig is needed if you have Kube Prometheus Stack installed
+          #metricsConfig:
+          #  type: jmxPrometheusExporter
+          #  valueFrom:
+          #    configMapKeyRef:
+          #      name: kafka-metrics
+          #      key: kafka-metrics-config.yml
+
+        #EntityOperator section
+        entityOperator:
+          topicOperator:
+            resources:
+              requests:
+                memory: 256Mi
+                cpu: "100m"
+              limits:
+                memory: 512Mi
+                cpu: "500m"
+          userOperator:
+            resources:
+              requests:
+                memory: 256Mi
+                cpu: "100m"
+              limits:
+                memory: 512Mi
+                cpu: "500m"
+        #Cruise_control section
+        #cruiseControl: {}   # Highly recommended for rebalancing
+        #Kafka_exporter section
+        #kafkaExporter: {}
+
+    # https://doc.crds.dev/github.com/strimzi/strimzi-kafka-operator/kafka.strimzi.io/KafkaTopic/v1@1.0.0
+    # Kafka_topic Creation
+    - apiVersion: kafka.strimzi.io/v1
+      kind: KafkaTopic
+      metadata:
+        name: evocloud-topic
+        namespace: strimzi-kafka-cluster
+        labels:
+          strimzi.io/cluster: kafka-cluster
+      spec:
+        partitions: 3
+        replicas: 3
+        config:
+          retention.ms: 259200000  # 3 days retention
+          segment.bytes: 1073741824
+
+    # Kafka UI - 3rd Party Addition
+    # https://github.com/provectus/kafka-ui
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: kafka-ui
+        namespace: strimzi-kafka-cluster
+        labels:
+          app: kafka-ui
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: kafka-ui
+        template:
+          metadata:
+            labels:
+              app: kafka-ui
+          spec:
+            containers:
+              - name: kafka-ui
+                image: provectuslabs/kafka-ui:v0.7.2
+                ports:
+                  - containerPort: 8080
+                    name: http
+                env:
+                  - name: KAFKA_CLUSTERS_0_NAME
+                    value: "kafka-cluster"
+                  - name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS
+                    value: "kafka-cluster-kafka-bootstrap:9092"
+                  - name: DYNAMIC_CONFIG_ENABLED
+                    value: "true"
+                  - name: AUTH_TYPE
+                    value: "DISABLED"  # Enable auth in production!
+                resources:
+                  requests:
+                    memory: 256Mi
+                    cpu: 100m
+                  limits:
+                    memory: 512Mi
+                    cpu: 500m
+                livenessProbe:
+                  httpGet:
+                    path: /actuator/health
+                    port: 8080
+                  initialDelaySeconds: 30
+                  periodSeconds: 30
+                readinessProbe:
+                  httpGet:
+                    path: /actuator/health
+                    port: 8080
+                  initialDelaySeconds: 10
+                  periodSeconds: 10
+    # Kafka-UI SVC
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        name: kafka-ui
+        namespace: strimzi-kafka-cluster
+        labels:
+          app: kafka-ui
+      spec:
+        type: ClusterIP
+        ports:
+          - port: 8080
+            targetPort: 8080
+            protocol: TCP
+            name: http
+        selector:
+          app: kafka-ui

@@ -4,7 +4,7 @@
 #--------------------------------------------------------------
 # Cosign Version
 # renovate: datasource=github-releases depName=sigstore/cosign versioning=semver
-cosign_version: "v3.0.3"
+cosign_version: "v3.1.3"
 
 # Directory
 cosign_dir: "/opt/cosign"
@@ -12,9 +12,9 @@ cosign_dir: "/opt/cosign"
 # Packages
 cosign_binary: "cosign-linux-amd64"
 
-# URLS
+# URLS: https://github.com/sigstore/cosign/releases/download/v3.1.3/cosign-linux-amd64
 cosign_github_url: "https://github.com/sigstore/cosign/releases/download/{{ cosign_version }}"
 
 #https://github.com/sigstore/cosign/releases/
 # renovate: datasource=github-releases depName=sigstore/cosign packageName=cosign-linux-amd64
-cosign_checksum: sha256:052363a0e23e2e7ed53641351b8b420918e7e08f9c1d8a42a3dd3877a78a2e10
+cosign_checksum: 'sha256:4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71'

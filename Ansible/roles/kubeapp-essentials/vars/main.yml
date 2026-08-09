@@ -9,9 +9,7 @@ idam_short_hostname: ""
 
 kube_cluster_name: ""
 
-gtw_lb_ip: ""
-
-kubeapp_dir: '/home/{{ cloud_user }}/kubeapps'
+kubeapp_dir: '/home/{{ cloud_user }}/kubeapps/{{ kube_cluster_name }}'
 
 kubeconfig: '/home/{{ cloud_user }}/kubeconfig/kubeconfig-{{ kube_cluster_name }}.yaml'
 
@@ -21,4 +19,4 @@ certmanager_namespace: cert-manager
 
 tsig_secret_name: ipa-tsig
 
-external_dns_min_ver: 1.17
+external_dns_min_ver: 1.21

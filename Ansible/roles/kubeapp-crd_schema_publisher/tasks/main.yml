@@ -1,0 +1,35 @@
+---
+#This playbook will deploy CRD_SCHEMA_PUBLISHER
+#References:
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-crd_schema_publisher ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ crdpublisher_kubeapp_dir }}"
+
+######################################################
+#Deploying CRD_SCHEMA_PUBLISHER Resources
+######################################################
+- name: Staging Kubernetes manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ crdpublisher_kubeapp_dir }}/{{ item }}"
+  loop:
+    - crdSchemaPublisher-rset.yaml
+
+- name: Deploying Kubernetes manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ crdpublisher_kubeapp_dir }}/crdSchemaPublisher-rset.yaml"
+  register: crdpublisher_deploy_result
+  until: crdpublisher_deploy_result is succeeded
+  retries: 10
+  delay: 30

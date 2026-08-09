@@ -1,0 +1,131 @@
+############################################
+#DEPLOYING TRIVY SCANNER
+############################################
+# Reference: https://github.com/aquasecurity/trivy-operator
+#            https://aquasecurity.github.io/trivy-operator/v0.30.1/
+#            https://oneuptime.com/blog/post/2026-03-03-configure-trivy-for-vulnerability-scanning-on-talos/view
+
+
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: trivy-operator
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    #Requirement for storageclass
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: trivy-system
+        labels:
+          pod-security.kubernetes.io/enforce: privileged
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: trivy-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/aquasecurity/helm-charts/trivy-operator
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "0.33.*"
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: trivy-operator
+        namespace: trivy-system
+      spec:
+        #serviceAccountName: flux-operator
+        chartRef:
+          kind: OCIRepository
+          name: trivy-operator
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          operator:
+            scanJobTTL: "1h"
+            scanJobTimeout: "20m"
+          trivy:
+            # Only report vulnerabilities that have fixes available
+            ignoreUnfixed: true
+          # Node collector for Talos-specific checks
+          nodeCollector:
+            # Tolerations (add/adjust if your Talos nodes are tainted)
+            tolerations:
+              - key: "node-role.kubernetes.io/control-plane"
+                operator: "Exists"
+                effect: "NoSchedule"
+            volumeMounts:
+              - name: var-lib-etcd
+                mountPath: /var/lib/etcd
+                readOnly: true
+              - name: var-lib-kubelet
+                mountPath: /var/lib/kubelet
+                readOnly: true
+              - name: var-lib-kube-scheduler
+                mountPath: /var/lib/kube-scheduler
+                readOnly: true
+              - name: var-lib-kube-controller-manager
+                mountPath: /var/lib/kube-controller-manager
+                readOnly: true
+              - name: etc-kubernetes
+                mountPath: /etc/kubernetes
+                readOnly: true
+              - name: etc-cni-netd
+                mountPath: /etc/cni/net.d/
+                readOnly: true
+              # Added for reliable OS detection on Talos
+              - name: etc-os-release
+                mountPath: /host/etc/os-release
+                readOnly: true
+              # systemd paths deliberately omitted to avoid "mkdir ... read-only file system" errors
+            volumes:
+              - name: var-lib-etcd
+                hostPath:
+                  path: /var/lib/etcd
+              - name: var-lib-kubelet
+                hostPath:
+                  path: /var/lib/kubelet
+              - name: var-lib-kube-scheduler
+                hostPath:
+                  path: /var/lib/kube-scheduler
+              - name: var-lib-kube-controller-manager
+                hostPath:
+                  path: /var/lib/kube-controller-manager
+              - name: etc-kubernetes
+                hostPath:
+                  path: /etc/kubernetes
+              - name: etc-cni-netd
+                hostPath:
+                  path: /etc/cni/net.d/
+              - name: etc-os-release
+                hostPath:
+                  path: /etc/os-release
+          alternateReportStorage:
+            enabled: false
+            mountPath: "/mnt/data/trivy-operator"
+            volumeName: "trivy-operator-pvc"
+            storage: "20Gi"

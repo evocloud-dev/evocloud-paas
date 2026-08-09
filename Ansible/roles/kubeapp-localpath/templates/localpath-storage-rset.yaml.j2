@@ -1,0 +1,91 @@
+###################################################
+#DEPLOYING LOCAL PATH STORAGE CLASS
+###################################################
+
+---
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: localpath-storage
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: localpath-storage
+        labels:
+          pod-security.kubernetes.io/enforce: privileged #Talos default PodSecurity configuration prevents execution of priviledged pods.
+    #- apiVersion: rbac.authorization.k8s.io/v1
+    #  kind: ClusterRoleBinding
+    #  metadata:
+    #    name: localpath-storage
+    #  roleRef:
+    #    apiGroup: rbac.authorization.k8s.io
+    #    kind: ClusterRole
+    #    name: cluster-admin
+    #  subjects:
+    #    - kind: ServiceAccount
+    #      name: localpath-storage-sa
+    #      namespace: localpath-storage
+    #- apiVersion: v1
+    #  kind: ServiceAccount
+    #  metadata:
+    #    name: localpath-storage-sa
+    #    namespace: localpath-storage
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: GitRepository
+      metadata:
+        name: localpath-storage
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: https://github.com/rancher/local-path-provisioner.git
+        ref:
+          commit: 91d1b0432e19e88687574e3ca0f6777d18cf9310
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: localpath-storage
+        namespace: localpath-storage
+      spec:
+        #serviceAccountName: localpath-storage-sa
+        chart:
+          spec:
+            chart: deploy/chart/local-path-provisioner
+            sourceRef:
+              kind: GitRepository
+              name: localpath-storage
+              namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          storageClass:
+            create: true
+            defaultClass: true
+            defaultVolumeType: hostPath
+            name: localpath-storage
+            reclaimPolicy: Delete
+          nodePathMap:
+            - node: DEFAULT_PATH_FOR_NON_LISTED_NODES
+              paths:
+                - /var/mnt/local-storage

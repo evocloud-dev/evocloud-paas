@@ -1,0 +1,102 @@
+############################################
+#DEPLOYING LONGHORN STORAGE
+############################################
+#Bug: https://github.com/longhorn/charts/tree/v1.12.x/charts/longhorn
+
+---
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: longhorn-storage
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+  resources:
+    #Create Namespace
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: longhorn-system
+        labels:
+          pod-security.kubernetes.io/enforce: privileged
+          pod-security.kubernetes.io/audit: privileged
+          pod-security.kubernetes.io/warn: privileged
+    #Create Helm Repository
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: HelmRepository
+      metadata:
+        name: longhorn-storage
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: https://charts.longhorn.io
+    #Deploy Helm Release
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: longhorn-storage
+        namespace: longhorn-system
+      spec:
+        #serviceAccountName: flux-operator
+        chart:
+          spec:
+            chart: longhorn
+            sourceRef:
+              kind: HelmRepository
+              name: longhorn-storage
+              namespace: flux-system
+            version: "1.12.*"
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          defaultSettings:
+            defaultDataPath: /var/lib/longhorn
+            defaultReplicaCount: 3
+            storageMinimalAvailablePercentage: 15
+            storageOverProvisioningPercentage: 100
+            createDefaultDiskLabeledNodes: true
+            defaultDataLocality: best-effort
+            replicaSoftAntiAffinity: true
+            replicaAutoBalance: best-effort
+            guaranteedInstanceManagerCPU: 15
+            allowCollectingLonghornUsageMetrics: false
+            upgradeChecker: false
+          preUpgradeChecker:
+              jobEnabled: false
+          persistence:
+            defaultClass: true
+            defaultFsType: ext4
+            defaultClassReplicaCount: 3
+            reclaimPolicy: Delete
+          longhornUI:
+            replicas: 1
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+          csi:
+            attacherReplicaCount: 2
+            provisionerReplicaCount: 2
+            resizerReplicaCount: 2
+            snapshotterReplicaCount: 2

@@ -1,0 +1,35 @@
+---
+#This playbook will deploy Dapr
+#References:
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-dapr ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ dapr_kubeapp_dir }}"
+
+######################################################
+#Deploying Dapr Resources
+######################################################
+- name: Staging Kubernetes manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ dapr_kubeapp_dir }}/{{ item }}"
+  loop:
+    - dapr-rset.yaml
+
+- name: Deploying Kubernetes manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ dapr_kubeapp_dir }}/dapr-rset.yaml"
+  register: dapr_deploy_result
+  until: dapr_deploy_result is succeeded
+  retries: 10
+  delay: 30

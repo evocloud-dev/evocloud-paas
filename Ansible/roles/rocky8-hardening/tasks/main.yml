@@ -15,6 +15,7 @@
   register: packages_install
   until: packages_install is succeeded
   retries: 2
+  become: true
 
 - name: RHEL-CENTOS | Creating a customized MOTD
   ansible.builtin.copy:
@@ -28,12 +29,14 @@
     service: ssh
     permanent: yes
     state: enabled
+  become: true
 
 - name: RHEL-CENTOS | Start firewalld service
   ansible.builtin.systemd_service:
     name: firewalld
     state: started
     enabled: true
+  become: true
 
 - name: RHEL-CENTOS | Hardening SSHD configuration
   ansible.builtin.copy:
@@ -43,6 +46,7 @@
   loop:
     - "sshd_config"
     - "banner"
+  become: true
 
 - when: cloud_platform_type == 'aws'
   block:
@@ -96,6 +100,7 @@
         remote_src: yes
 
 - when: cloud_platform_type == 'gcp'
+  become: true
   block:
     - name: Setting up gcloud-cli repo...
       ansible.builtin.copy:
@@ -120,7 +125,9 @@
   ansible.builtin.dnf:
     name: "*"
     state: latest
+  become: true
 
 - name: Removing unneeded packages installed as dependencies...
   ansible.builtin.dnf:
     autoremove: yes
+  become: true

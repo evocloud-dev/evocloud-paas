@@ -1,0 +1,165 @@
+############################################
+#DEPLOYING KEYCLOAK SSO SOLUTION
+############################################
+#https://github.com/bitnami/charts/tree/master/bitnami/postgresql
+#https://github.com/codecentric/helm-charts/tree/master/charts/keycloakx
+#https://artifacthub.io/packages/helm/codecentric/keycloakx
+
+---
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: keycloak
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    # Add dependsOn storageClass
+    # Lose dependsOn CloudnativePG
+  resources:
+    #- apiVersion: rbac.authorization.k8s.io/v1
+    #  kind: ClusterRoleBinding
+    #  metadata:
+    #    name: keycloak-cr
+    #  roleRef:
+    #    apiGroup: rbac.authorization.k8s.io
+    #    kind: ClusterRole
+    #    name: cluster-admin
+    #  subjects:
+    #    - kind: ServiceAccount
+    #      name: keycloak-sa
+    #      namespace: evocloud-ns
+    #- apiVersion: v1
+    #  kind: ServiceAccount
+    #  metadata:
+    #    name: keycloak-sa
+    #    namespace: evocloud-ns
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: postgresql-keycloak
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://registry-1.docker.io/bitnamicharts/postgresql
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "18.*.*"
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: postgresql-keycloak
+        namespace: evocloud-ns
+      spec:
+        #serviceAccountName: keycloak-sa
+        chartRef:
+          kind: OCIRepository
+          name: postgresql-keycloak
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          auth:
+            username: keycloak
+            password: keycloakpass
+            database: keycloakdb
+          primary:
+            persistence:
+              enabled: true
+              size: 20Gi
+
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: keycloak-app
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/codecentric/helm-charts/keycloakx
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "7.2.*"
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: keycloak-app
+        namespace: evocloud-ns
+      spec:
+        #serviceAccountName: keycloak-sa
+        chartRef:
+          kind: OCIRepository
+          name: keycloak-app
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          replicas: 1
+          command:
+            - "/opt/keycloak/bin/kc.sh"
+            - "start"
+            - "--http-port=8080"
+            - "--hostname-strict=false"
+          extraEnv: |
+            - name: JAVA_OPTS_APPEND
+              value: >-
+                -Djgroups.dns.query=kube-keycloak-stack-keycloakx-headless.evocloud-ns.svc.cluster.local
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME
+              value: admin
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              value: admin123
+            - name: KC_PROXY
+              value: "edge"
+            - name: KC_HOSTNAME
+              value: "sso.evocloud.gov"
+            - name: KC_HOSTNAME_STRICT_HTTPS
+              value: "true"
+          dbchecker:
+            enabled: true
+          database:
+            vendor: postgres
+            hostname: kube-keycloak-postgresql.evocloud-ns.svc.cluster.local
+            port: 5432
+            database: keycloakdb
+            username: keycloak
+            password: keycloakpass
+          autoscaling:
+            enabled: true
+            minReplicas: 1
+            maxReplicas: 10
+          httpRoute:
+            enabled: true
+            parentRefs:
+              - name: shared-gtw
+                namespace: evocloud-ns
+                sectionName: https-sso-tls
+            hostnames:
+              - sso.evocloud.gov

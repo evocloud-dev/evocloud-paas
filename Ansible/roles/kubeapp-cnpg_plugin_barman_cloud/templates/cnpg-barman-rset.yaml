@@ -1,0 +1,77 @@
+---
+############################################
+#DEPLOYING Cloudnative-PG
+############################################
+#Reference:
+#           https://cloudnative-pg.io/docs/1.28/image_catalog/
+
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: cloudnative-plugin-barman
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    #Requirement for storageclass
+    #Requirement for cert-manager
+  resources:
+    #OCI Repository
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: cloudnative-plugin-barman
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci:oci://ghcr.io/cloudnative-pg/charts/plugin-barman-cloud
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "0.7.*"
+        verify:
+          provider: cosign
+          matchOIDCIdentity:
+            - issuer: ^https://token\.actions\.githubusercontent\.com$
+              subject: ^https://github\.com/cloudnative-pg/charts.*$
+    # Helm Release
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: cloudnative-plugin-barman
+        namespace: cnpg-system
+      spec:
+        #serviceAccountName: cloudnative-pg-sa
+        chartRef:
+          kind: OCIRepository
+          name: cloudnative-plugin-barman
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          image:
+            registry: ghcr.io
+            repository: cloudnative-pg/plugin-barman-cloud
+            tag: v0.13.0@sha256:71589dbac582333442812b07b31f7ea4d00324a8358aac7ca507dabf9f4b6c96
+          sidecarImage:
+            registry: ghcr.io
+            repository: cloudnative-pg/plugin-barman-cloud-sidecar
+            tag: v0.13.0@sha256:990361af3319f9e23aafa0f6d7981f99bf1f69b4e6a85cf1bc7d71d6f09bb288

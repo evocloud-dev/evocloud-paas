@@ -1,0 +1,87 @@
+---
+############################################
+#DEPLOYING Cloudnative-PG Images Catalog
+############################################
+#Reference: https://github.com/cloudnative-pg/artifacts/tree/main/image-catalogs-extensions
+#           https://cloudnative-pg.io/docs/1.28/image_catalog/
+
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: cnpg-image-catalogs-extensions
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: cloudnative-pg-operator
+      namespace: cnpg-system
+      ready: true
+  resources:
+    # Cloudnative-pg ImageCatalog:
+    # https://cloudnative-pg.io/docs/1.28/image_catalog/
+    - apiVersion: postgresql.cnpg.io/v1
+      kind: ClusterImageCatalog
+      metadata:
+        name: postgresql-minimal-trixie-extended
+        labels:
+          images.cnpg.io/date: "20260624"
+          images.cnpg.io/family: postgresql
+          images.cnpg.io/os: trixie
+          images.cnpg.io/publisher: cnpg.io
+          images.cnpg.io/type: minimal-extended
+      spec:
+        images:
+          - major: 18
+            image: ghcr.io/cloudnative-pg/postgresql:18.4-202606221003-minimal-trixie@sha256:538f1b327b8dc7621a94aac79c9c3e5c50dfa29115a6c291e19372a5b876f415
+            extensions:
+              - name: pgaudit
+                image:
+                  reference: ghcr.io/cloudnative-pg/pgaudit:18.0-202606230929-18-trixie@sha256:b5fd12229d99629bb0a79e4791697cdad0cea55029ec39bf952d5c720faf643c
+              - name: pgvector
+                image:
+                  reference: ghcr.io/cloudnative-pg/pgvector:0.8.3-202606230947-18-trixie@sha256:9a8536b205076e688c6ff52e45b3ad0d39c445ea5ad1eb51a584c0ce162e3a71
+              - name: postgis
+                image:
+                  reference: ghcr.io/cloudnative-pg/postgis-extension:3.6.4-202606230930-18-trixie@sha256:3dce94a3e7e504b1ea39ccee9228e1fae96c18a17c8bdccffaee4fe7b73c5d0c
+                ld_library_path:
+                  - system
+                env:
+                  - name: GDAL_DATA
+                    value: $${image_root}/share/gdal
+                  - name: PROJ_DATA
+                    value: $${image_root}/share/proj
+              - name: vchord
+                image:
+                  reference: ghcr.io/tensorchord/vchord-scratch:pg18-v1.1.1
+                dynamic_library_path:
+                  - /usr/lib/postgresql/18/lib
+                extension_control_path:
+                  - /usr/share/postgresql/18/
+              - name: documentdb
+                image:
+                  reference: ghcr.io/documentdb/documentdb-kubernetes-operator/documentdb:0.110.0
+                dynamic_library_path:
+                  - "lib"
+                extension_control_path:
+                  - "share"
+                ld_library_path:
+                  - "lib"
+                  - "system"
+              - name: timescaledb
+                image:
+                  reference: ghcr.io/m00nwtchr/timescaledb:2.28.1
+                ld_library_path:
+                  - "system"
+              - name: wal2json
+                image:
+                  reference: ghcr.io/cloudnative-pg/wal2json:2.6-202606230930-18-trixie@sha256:e92031788af921c2655a6929e8b94f28cf10d641f20df7147834b38314b2469d
+              - name: pg-crash
+                image:
+                  reference: ghcr.io/cloudnative-pg/pg-crash:0.3-202606230930-18-trixie@sha256:a7be7c6429c461f2a2555e4a5ab07bdce76e23f663aaed5ccd0ce8e69de3cc18
+

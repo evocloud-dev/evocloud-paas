@@ -72,4 +72,23 @@ spec:
     domainFilters:
       - {{ domain_tld }}
     serviceMonitor:
-      enabled: true
+      enabled: false
+
+#enum value
+  service
+  ingress
+  node
+  pod
+  istio-gateway
+  istio-virtualservice
+  contour-ingressroute
+  contour-httpproxy
+  gloo-proxy
+  fake
+  connector
+  crd
+  empty
+  skipper-routegroup
+  openshift-route
+  ambassador-host
+  kong-tcpingress, got 'gateway-httproute

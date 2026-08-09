@@ -1,0 +1,34 @@
+# Cilium IP Pool
+---
+# https://kubernetes-schemas.pages.dev/cilium.io/ciliumloadbalancerippool_v2.json
+apiVersion: "cilium.io/v2"
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: "cilium-ip-pool-01"
+spec:
+  blocks:
+    #- cidr: "{{ gtw_lb_ip }}"
+    - start: "{{ gtw_lb_ip }}"
+      stop: "{{ gtw_lb_ip }}"
+
+# Cilium IP Pool Policy
+---
+# https://kubernetes-schemas.pages.dev/cilium.io/ciliuml2announcementpolicy_v2alpha1.json
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumL2AnnouncementPolicy
+metadata:
+  name: l2-announcement-policy
+spec:
+  nodeSelector:
+    matchExpressions:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+  interfaces:
+    - ^eth+
+    - ^enp+
+    - ^ens+
+    - ^wlan+
+    - ^vmbr+
+    - ^wlp+
+  externalIPs: true
+  loadBalancerIPs: true

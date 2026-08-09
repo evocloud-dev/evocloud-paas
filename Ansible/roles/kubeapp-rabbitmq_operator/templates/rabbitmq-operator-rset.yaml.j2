@@ -1,0 +1,89 @@
+---
+############################################
+#DEPLOYING RabbitMQ Operator
+############################################
+#Reference: https://www.rabbitmq.com/kubernetes/operator/install-operator
+#           https://github.com/rabbitmq/cluster-operator/
+
+# Sources: https://github.com/rabbitmq/cluster-operator/releases/download/v2.21.1/cluster-operator.yml
+#          https://github.com/rabbitmq/messaging-topology-operator/releases/latest/download/messaging-topology-operator-with-certmanager.yaml
+#          https://github.com/bitnami/charts/tree/main/bitnami/rabbitmq-cluster-operator
+
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: rabbitmq-operator
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    #Requirement for storageclass
+    #Requirement for cert-manager
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        labels:
+          app.kubernetes.io/component: rabbitmq-operator
+          app.kubernetes.io/name: rabbitmq-system
+          app.kubernetes.io/part-of: rabbitmq
+        name: rabbitmq-system
+    # OCI Repository
+    # https://github.com/bitnami/charts/tree/main/bitnami/rabbitmq-cluster-operator
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: rabbitmq-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://registry-1.docker.io/bitnamicharts/rabbitmq-cluster-operator
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "4.4.*"
+    # Helm Release
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: rabbitmq-operator
+        namespace: rabbitmq-system
+      spec:
+        #serviceAccountName: rabbitmq-sa
+        chartRef:
+          kind: OCIRepository
+          name: rabbitmq-operator
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          clusterOperator:
+            image:
+              registry: docker.io
+              repository: bitnamilegacy/rabbitmq-cluster-operator
+              tag: 2.16.1-debian-12-r0
+          msgTopologyOperator:
+            image:
+              registry: docker.io
+              repository: bitnamilegacy/rmq-messaging-topology-operator
+              tag: 1.17.4-debian-12-r0
+
+    #

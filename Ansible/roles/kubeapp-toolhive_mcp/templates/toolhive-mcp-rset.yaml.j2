@@ -1,0 +1,155 @@
+---
+#############################################
+#DEPLOYING TOOLHIVE MCP OPERATOR
+#############################################
+#Reference: https://github.com/stacklok/toolhive/tree/main/deploy/charts/operator
+#           https://github.com/stacklok/toolhive/tree/main/deploy/charts/operator-crds
+#           https://docs.stacklok.com/toolhive/guides-k8s/deploy-operator
+#           https://github.com/stacklok/toolhive/tree/main/examples/operator/mcp-servers
+
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: toolhive-mcp-operator
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    # Add dependsOn storageClass
+    # Add dependsOn Monitoring Stack
+
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: toolhive-system
+
+    #https://github.com/fluxcd-community/flux2-schemas/blob/main/ocirepository-source-v1.json
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: toolhive-operator-crds
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/stacklok/toolhive/toolhive-operator-crds
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "0.29.*"
+
+    #https://github.com/fluxcd-community/flux2-schemas/blob/main/ocirepository-source-v1.json
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: toolhive-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/stacklok/toolhive/toolhive-operator
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "0.29.*"
+
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: toolhive-operator-crds
+        namespace: toolhive-system
+      spec:
+        #serviceAccountName: toolhive-sa
+        chartRef:
+          kind: OCIRepository
+          name: toolhive-operator-crds
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          crds:
+            keep: false
+
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: toolhive-operator
+        namespace: toolhive-system
+      spec:
+        #serviceAccountName: toolhive-sa
+        chartRef:
+          kind: OCIRepository
+          name: toolhive-operator
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          operator:
+            features:
+              experimental: false
+
+---
+############################################
+## Create an MCP Server: toolhive-docs-mcp
+############################################
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: toolhive-mcp-servers
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: toolhive-operator
+      namespace: toolhive-system
+      ready: true
+  resources:
+    # Create first demo MCP Server: toolhive-doc-mcp
+    - apiVersion: toolhive.stacklok.dev/v1beta1
+      kind: MCPServer
+      metadata:
+        name: toolhive-docs-mcp
+        namespace: evocloud-ns #MCP Server can be deployed in any namespace
+      spec:
+        image: ghcr.io/stackloklabs/toolhive-doc-mcp
+        transport: streamable-http
+        proxyPort: 8080
+        mcpPort: 8080
+        resources:
+          limits:
+            cpu: '100m'
+            memory: '128Mi'
+          requests:
+            cpu: '50m'
+            memory: '64Mi'

@@ -24,6 +24,42 @@ You can contribute to the EvoCloud ecosystem in many ways:
 
 ---
 
+## 🐛 Bug Reports & Feature Suggestions
+
+Please use the [issue tracker](https://github.com/evocloud-dev/evocloud-paas/issues) to report any bugs or file feature requests.
+
+## 💻 Code Improvements
+
+PRs are welcome. In general, we follow the "fork-and-pull" Git workflow.
+
+ 1. **Fork** the repo on GitHub or
+ 2. **Clone** the project to your own machine
+ 3. **Commit** changes to your own branch
+ 4. **Push** your work back up to your fork
+ 5. Submit a **Pull request** so that we can review your changes
+
+NOTE: Be sure to merge the latest from "upstream" before making a pull request!
+
+## 🧪 Branching Suggestions
+
+PRs are welcome. And here are suggestions on how to name your branch depending on the issue you are working on:
+- Features: **feat/my-cool-feature**
+- Bug Fixes: **fix/my-cool-code-improvement**
+- Performance Improvements or Enhancements: **enhance/my-cool-tuning**
+- Documentation: **docs/my-cool-doc**
+- General chores: **chore/my-annoying-cleanup**
+
+## 🎉 Pull Request Workflow
+
+* Keep the main branch clean, only merge via PR
+* PR title format follows conventional commits: (recommended: fix:, feat:, docs:, enhance:, chore:, …)
+* Link related Issues in PR description
+* Include screenshots for UI changes
+* Ask for review from at least one maintainer
+* Keep your feature branch up-to-date, maintainers will squash-merge the PR
+  
+---
+
 ## 📜 Ground Rules
 
 - Follow our [Code of Conduct](CODE_OF_CONDUCT.md)
@@ -33,13 +69,3 @@ You can contribute to the EvoCloud ecosystem in many ways:
 - Add tests for new functionality when possible
 
 ---
-
-# Branching & Pull Request Workflow
-
-* Use a feature, fix or chore branch (feat/my-new-feature)
-* Keep main branch clean—only merged via PR
-* PR title format (conventional commits recommended: fix:, feat:, docs:…) - we release with Release-Please
-* Link related Issues in PR description
-* Include screenshots for UI changes
-* Ask for review from at least one maintainer
-* Keep your feature branch up-to-date, maintainers will squash-merge the PR

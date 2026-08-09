@@ -88,6 +88,11 @@ variable "CLOUD_PLATFORM" {
   type        = string
 }
 
+variable "GCP_JSON_CREDS" {
+  description = "GCP Secret Json Key File"
+  type        = string
+}
+
 variable "use_spot" {
   description = "Use Ephemeral VM Instances that can be Terminated"
   type        = bool

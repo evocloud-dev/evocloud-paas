@@ -1,0 +1,71 @@
+###################################################
+#DEPLOYING DRADONFLY-DB SOLUTION
+###################################################
+#Reference: https://github.com/dragonflydb/dragonfly-operator
+#           https://github.com/dragonflydb/dragonfly-operator/tree/main/charts/dragonfly-operator
+
+---
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: dragonflydb-operator
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+  resources:
+    #dragonfly-operator-system
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: dragonfly-operator-system
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: dragonflydb-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/dragonflydb/dragonfly-operator/helm/dragonfly-operator
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "1.6.x"
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: dragonflydb-operator
+        namespace: dragonfly-operator-system
+      spec:
+        #serviceAccountName: flux-operator
+        chartRef:
+          kind: OCIRepository
+          name: dragonflydb-operator
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          manager:
+            image:
+              repository: ghcr.io/dragonflydb/operator
+            grafanaDashboard:
+              enabled: true
+              folder: database

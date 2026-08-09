@@ -1,0 +1,35 @@
+---
+#This playbook will deploy RabbitMQ-Operator
+#References:
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-rabbitmq_operator ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ rabbitmq_kubeapp_dir }}"
+
+######################################################
+#Deploying RabbitMQ Operator Resources
+######################################################
+- name: Staging Kubernetes manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ rabbitmq_kubeapp_dir }}/{{ item }}"
+  loop:
+    - rabbitmq-operator-rset.yaml
+
+- name: Deploying Kubernetes manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ rabbitmq_kubeapp_dir }}/rabbitmq-operator-rset.yaml"
+  register: rabbitmq_deploy_result
+  until: rabbitmq_deploy_result is succeeded
+  retries: 10
+  delay: 30

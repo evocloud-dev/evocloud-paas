@@ -1,0 +1,35 @@
+---
+#This playbook will deploy KEDA
+#References:
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-keda ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ keda_kubeapp_dir }}"
+
+######################################################
+#Deploying KEDA Resources
+######################################################
+- name: Staging Kubernetes manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ keda_kubeapp_dir }}/{{ item }}"
+  loop:
+    - keda-rset.yaml
+
+- name: Deploying Kubernetes manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ keda_kubeapp_dir }}/keda-rset.yaml"
+  register: keda_deploy_result
+  until: keda_deploy_result is succeeded
+  retries: 10
+  delay: 30

@@ -1,0 +1,48 @@
+---
+#This playbook will install Kubesec Binary
+#
+#References:
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-kubesec ##################"
+
+- name: Checking if Kubesec already exist...
+  ansible.builtin.stat:
+    path: '{{ kubesec_install_dir }}/kubesec'
+  changed_when: false
+  become: true
+  register: kubesec_cli_binary
+
+- name: Uninstalling...
+  ansible.builtin.file:
+    path: '{{ kubesec_install_dir }}/kubesec'
+    state: absent
+  become: true
+  when: (kubesec_cli_binary.stat.exists) and (kubesec_cli_force_update | bool)
+
+- when: (not kubesec_cli_binary.stat.exists) or (kubesec_cli_force_update | bool)
+  block:
+    - name: Verifying sha256 checksum...
+      ansible.builtin.get_url:
+        url: '{{ kubesec_download_url }}'
+        dest: '/tmp'
+        mode: '0644'
+        checksum: '{{ kubesec_checksum }}'
+      become: true
+
+    - name: Installing...
+      ansible.builtin.unarchive:
+        src: '/tmp/kubesec_linux_amd64.tar.gz'
+        dest: '{{ kubesec_install_dir }}'
+        mode: '0755'
+        remote_src: yes
+      become: true
+
+  always:
+    - name: Removing detritus...
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '/tmp/kubesec_{{ kubesec_version }}_linux_amd64.tar.gz'
+      become: true
