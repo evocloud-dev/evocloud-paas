@@ -12,4 +12,4 @@ hubble_cli_download_url: 'https://github.com/cilium/hubble/releases/download/{{ 
 
 #https://github.com/cilium/hubble/releases/download/v1.19.4/hubble-linux-amd64.tar.gz.sha256sum
 # renovate: datasource=github-releases depName=cilium/hubble packageName=hubble-linux-amd64.tar.gz
-hubble_cli_checksum: sha256:c7c37a5f27ed2ae2d5495c6ddbecc61cebbb841508e77af3c131e96f005ed247
+hubble_cli_checksum: 'sha256:c7c37a5f27ed2ae2d5495c6ddbecc61cebbb841508e77af3c131e96f005ed247'
