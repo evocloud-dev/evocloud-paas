@@ -29,7 +29,7 @@ tasks:
   copy-files:
     # Task only runs if one or more status commands not satisfied"
     # Files: gcp-evocloud.pem, gcp-evocloud.pub, ansible-vault-pass.txt, secret-store.yml and root.hcl
-    desc: "HCLOUD: Copies files from mount directory inside container to their respective locations."
+    desc: "AZURE: Copies files from mount directory inside container to their respective locations."
     status:
       - "ls -al Ansible/secret-vault | grep ansible-vault-pass.txt"
       - "ls -al Ansible/secret-vault | grep secret-store.yml"
