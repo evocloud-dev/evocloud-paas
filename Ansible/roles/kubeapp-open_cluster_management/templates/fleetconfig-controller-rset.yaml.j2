@@ -147,7 +147,7 @@ spec:
 
 ---
 ############################################
-#DEPLOYING OCM ADDONS
+#DEPLOYING Open Cluster Management ADDONS
 ############################################
 # https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
 apiVersion: fluxcd.controlplane.io/v1
@@ -205,7 +205,7 @@ spec:
           remediation:
             retries: 2
         driftDetection:
-          mode: disabled # when enabled the HelmRelease is in constant drift reconciliation loop
+          mode: enabled
         #values:
 
     #Deploy Helm Release for ocm-managed-serviceaccount Addon
@@ -234,5 +234,93 @@ spec:
           remediation:
             retries: 2
         driftDetection:
-          mode: disabled # when enabled the HelmRelease is in constant drift reconciliation loop
+          mode: enabled
+        #values:
+
+    #Deploy Helm Release for ocm-cluster-gateway-addon-manager Addon
+    ## This addon is useful if using KubeVela
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: ocm-cluster-gateway-addon-manager
+        namespace: open-cluster-management-addon
+      spec:
+        #serviceAccountName: flux-operator
+        chart:
+          spec:
+            chart: cluster-gateway-addon-manager
+            sourceRef:
+              kind: HelmRepository
+              name: ocm-fleetconfig-controller
+              namespace: flux-system
+            version: "1.4.*"
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        #values:
+
+    #Deploy Helm Release for ocm-dynamic-scoring-framework Addon
+    ## https://github.com/open-cluster-management-io/dynamic-scoring-framework
+    ## Requires Kube Prometheus Stack Monitoring installed on hub and spoke clusters
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: ocm-dynamic-scoring-framework
+        namespace: open-cluster-management-addon
+      spec:
+        #serviceAccountName: flux-operator
+        chart:
+          spec:
+            chart: dynamic-scoring-framework
+            sourceRef:
+              kind: HelmRepository
+              name: ocm-fleetconfig-controller
+              namespace: flux-system
+            version: "0.1.*"
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        #values:
+
+    #Deploy Helm Release for ocm-resource-usage-collect-addon Addon
+    ## https://github.com/open-cluster-management-io/addon-contrib/tree/main/resource-usage-collect-addon
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: ocm-resource-usage-collect-addon
+        namespace: open-cluster-management-addon
+      spec:
+        #serviceAccountName: flux-operator
+        chart:
+          spec:
+            chart: resource-usage-collect-addon
+            sourceRef:
+              kind: HelmRepository
+              name: ocm-fleetconfig-controller
+              namespace: flux-system
+            version: "0.1.*"
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
         #values:
