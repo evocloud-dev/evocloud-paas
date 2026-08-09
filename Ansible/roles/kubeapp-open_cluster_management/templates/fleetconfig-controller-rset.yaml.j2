@@ -147,7 +147,7 @@ spec:
 
 ---
 ############################################
-#DEPLOYING OCM CLUSTER PROXY ADDON
+#DEPLOYING OCM ADDONS
 ############################################
 # https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
 apiVersion: fluxcd.controlplane.io/v1
@@ -208,7 +208,7 @@ spec:
           mode: disabled # when enabled the HelmRelease is in constant drift reconciliation loop
         #values:
 
-    #Deploy Helm Release for ocm-cluster-proxy Addon
+    #Deploy Helm Release for ocm-managed-serviceaccount Addon
     ## https://open-cluster-management.io/docs/getting-started/integration/cluster-proxy/
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
@@ -224,7 +224,7 @@ spec:
               kind: HelmRepository
               name: ocm-fleetconfig-controller
               namespace: flux-system
-            version: "*"
+            version: "0.10.*"
         interval: 30m
         timeout: 15m0s
         install:
