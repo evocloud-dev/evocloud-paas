@@ -5,11 +5,11 @@ sops_force_update: false
 # renovate: datasource=github-releases depName=getsops/sops versioning=semver
 sops_ver: 'v3.13.3'
 
-#https://github.com/getsops/sops/releases/download/v3.11.0/sops-v3.11.0.linux.amd64
+#https://github.com/getsops/sops/releases/download/v3.13.3/sops-v3.13.3.linux.amd64
 sops_download_url: 'https://github.com/getsops/sops/releases/download/{{ sops_ver }}/sops-{{ sops_ver }}.linux.amd64'
 
-#https://github.com/getsops/sops/releases/download/v3.11.0/sops-v3.11.0.checksums.txt
+#https://github.com/getsops/sops/releases/download/v3.13.3/sops-v3.13.3.checksums.txt
 # renovate: datasource=github-releases depName=getsops/sops packageName=sops-*.linux.amd64 versioning=semver
-sops_checksum: sha256:775f1384d55decfad228e7196a3f683791914f92a473f78fc47700531c29dfef
+sops_checksum: 'sha256:e5bec3346a873ae91d871550f3e698c1aad962aff462a080e40f25fde17fef6b'
 
 sops_install_dir: '/usr/local/bin'
