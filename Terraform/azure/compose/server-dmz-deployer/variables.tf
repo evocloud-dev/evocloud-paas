@@ -8,6 +8,21 @@ variable "AUTOMATION_FOLDER" {
   type        = string
 }
 
+variable "AZ_CLIENT_ID" {
+  description = "AZ Client ID"
+  type        = string
+}
+
+variable "AZ_CLIENT_SECRET" {
+  description = "AZ Client Secret"
+  type        = string
+}
+
+variable "AZ_TENANT_ID" {
+  description = "AZ Tenant ID"
+  type        = string
+}
+
 variable "AZ_STORAGE_RG" {
   description = "Azure Storage Resource Group"
   type        = string

@@ -1,3 +1,12 @@
+variable "AZ_CLIENT_ID" {
+  description = "AZ Client ID"
+  type        = string
+}
+
+variable "AZ_CLIENT_SECRET" {
+  description = "AZ Client Secret"
+  type        = string
+}
 
 variable "AZ_DEPLOY_RG" {
   description = "AZ Deployment RG"
@@ -21,6 +30,11 @@ variable "AZ_STORAGE_ACCT" {
 
 variable "AZ_SUBSCRIPTION_ID" {
   description = "AZ Subscription ID"
+  type        = string
+}
+
+variable "AZ_TENANT_ID" {
+  description = "AZ Tenant ID"
   type        = string
 }
 

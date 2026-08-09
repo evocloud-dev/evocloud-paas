@@ -30,7 +30,11 @@ inputs = {
   CLOUD_USER         = "mlkroot"
   PUBLIC_KEY_PAIR    = "/etc/pki/tls/az-evocloud.pub"
   PRIVATE_KEY_PAIR   = "/etc/pki/tls/az-evocloud.pem"
+  AZ_ACCESS_KEY      = "xxx-xxx-xxx"
+  AZ_CLIENT_ID       = "xxx-xxx-xxx"
+  AZ_CLIENT_SECRET   = "xxx-xxx-xxx"
   AZ_SUBSCRIPTION_ID = "xxx-xxx-xxx"
+  AZ_TENANT_ID       = "xxx-xxx-xxx"
 
   ###########################################################################
   # Ansible/Automation Runtime Environment Configurations
@@ -193,6 +197,9 @@ remote_state {
     storage_account_name = "evocloudstate"
     container_name       = "evo-deploy-tf-state"
     key                  = "${basename(get_parent_terragrunt_dir())}/${path_relative_to_include()}"
+    access_key           = "xxx-xxx-xxx"
+    tenant_id            = "xxx-xxx-xxx"
+    subscription_id      = "xxx-xxx-xxx"
   }
 }
 
