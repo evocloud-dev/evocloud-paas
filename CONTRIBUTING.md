@@ -46,9 +46,18 @@ PRs are welcome. And here are suggestions on how to name your branch depending o
 - Features: **feat/my-cool-feature**
 - Bug Fixes: **fix/my-cool-code-improvement**
 - Performance Improvements or Enhancements: **enhance/my-cool-tuning**
-- Documentation: **doc/my-cool-doc**
+- Documentation: **docs/my-cool-doc**
 - General chores: **chore/my-annoying-cleanup**
 
+## 🎉 Pull Request Workflow
+
+* Keep the main branch clean, only merge via PR
+* PR title format follows conventional commits: (recommended: fix:, feat:, docs:, enhance:, chore:, …)
+* Link related Issues in PR description
+* Include screenshots for UI changes
+* Ask for review from at least one maintainer
+* Keep your feature branch up-to-date, maintainers will squash-merge the PR
+  
 ---
 
 ## 📜 Ground Rules
@@ -60,13 +69,3 @@ PRs are welcome. And here are suggestions on how to name your branch depending o
 - Add tests for new functionality when possible
 
 ---
-
-# Branching & Pull Request Workflow
-
-* Use a feature, fix or chore branch (feat/my-new-feature)
-* Keep main branch clean—only merged via PR
-* PR title format (conventional commits recommended: fix:, feat:, docs:…) - we release with Release-Please
-* Link related Issues in PR description
-* Include screenshots for UI changes
-* Ask for review from at least one maintainer
-* Keep your feature branch up-to-date, maintainers will squash-merge the PR
