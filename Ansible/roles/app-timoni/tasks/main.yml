@@ -1,0 +1,48 @@
+---
+#This playbook will install Timoni CLI
+#
+#References: https://github.com/stefanprodan/timoni
+
+- ansible.builtin.debug:
+    msg: "################# STARTING ANSIBLE ROLE: app-timoni ##################"
+
+- name: Checking if timoni already exist...
+  ansible.builtin.stat:
+    path: '{{ timoni_install_dir }}/timoni'
+  changed_when: false
+  become: true
+  register: timoni_cli_binary
+
+- name: Uninstalling timoni...
+  ansible.builtin.file:
+    path: '{{ timoni_install_dir }}/timoni'
+    state: absent
+  become: true
+  when: (timoni_cli_binary.stat.exists) and (timoni_force_update | bool)
+
+- when: (not timoni_cli_binary.stat.exists) or (timoni_force_update | bool)
+  block:
+    - name: Verifying timoni sha256 checksum...
+      ansible.builtin.get_url:
+        url: '{{ timoni_download_url }}'
+        dest: '/tmp'
+        mode: '0644'
+        checksum: '{{ timoni_checksum }}'
+      become: true
+
+    - name: Installing timoni...
+      ansible.builtin.unarchive:
+        src: '/tmp/timoni_{{ timoni_version }}_linux_amd64.tar.gz'
+        dest: '{{ timoni_install_dir }}'
+        mode: '0755'
+        remote_src: yes
+      become: true
+
+  always:
+    - name: Removing timoni detritus...
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '/tmp/timoni_{{ timoni_version }}_linux_amd64.tar.gz'
+      become: true
