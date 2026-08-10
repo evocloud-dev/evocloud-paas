@@ -1,0 +1,98 @@
+############################################
+#DEPLOYING KOPIUR CLUSTER BACKUP CONTROLLER
+############################################
+# Reference: https://github.com/home-operations/kopiur
+#            https://kopiur.home-operations.com/install/
+
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: backup-kopiur
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    # dependsOn cert-manager
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: cert-manager-stack
+      namespace: cert-manager
+      ready: true
+    # dependsOn kube-promstack-operator
+    # dependsOn kubeapp-snapshot_controller
+
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: kopiur-system
+
+    #Create OCI Repository
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: backup-kopiur
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/home-operations/charts/kopiur
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "0.10.*"
+
+    #Deploy OCI Release
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: backup-kopiur
+        namespace: kopiur-system
+      spec:
+        #serviceAccountName: kopiur-operator
+        chartRef:
+          kind: OCIRepository
+          name: backup-kopiur
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          monitoring:
+            dashboards:
+              enabled: false #Set it to true if promstack is deployed
+              grafanaOperator:
+                enabled: false #Set it to true if promstack is deployed
+                matchLabels:
+                  dashboards: grafana
+            prometheusRule:
+              enabled: false #Set it to true if promstack is deployed
+            serviceMonitor:
+              enabled: false #Set it to true if promstack is deployed
+          podSecurityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+          resources:
+            requests:
+              cpu: 100m
+            limits:
+              memory: 2Gi
