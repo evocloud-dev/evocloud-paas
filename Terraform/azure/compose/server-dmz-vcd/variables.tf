@@ -63,6 +63,11 @@ variable "PRIVATE_KEY_PAIR" {
   type        = string
 }
 
+variable "PUBLIC_KEY_PAIR" {
+  description = "Public Key Pair"
+  type        = string
+}
+
 variable "VCD_SHORT_HOSTNAME" {
   description = "Deployer Short Name"
   type        = string

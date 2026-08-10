@@ -2,6 +2,7 @@
 # Include inputs
 #--------------------------------------------------
 inputs = {
+  deployer_server_eip          = dependency.server-dmz-deployer.outputs.deployer_server_ip
   admin_subnet_id              = dependency.network-subnet.outputs.admin_subnet_id
   idam_server_ip               = dependency.server-admin-idam.outputs.private_ip
   idam_replica_ip              = dependency.server-admin-idam_replica.outputs.private_ip

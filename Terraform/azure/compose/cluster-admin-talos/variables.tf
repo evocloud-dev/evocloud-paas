@@ -101,7 +101,7 @@ variable "admin_subnet_id" {
   type        = string
 }
 
-variable "admin_subnet_prefix" {
+variable "ADMIN_SUBNET_CIDR" {
   description = "CIDR of the admin subnet used to derive the default gateway"
   type        = string
 }

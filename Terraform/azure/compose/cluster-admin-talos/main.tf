@@ -314,7 +314,7 @@ data "talos_machine_configuration" "talos_controlplane" {
               routes     = [
                 {
                   network = "0.0.0.0/0"
-                  gateway = cidrhost(var.admin_subnet_prefix, 1)
+                  gateway = cidrhost(var.ADMIN_SUBNET_CIDR, 1)
                   metric  = 1024
                 }
               ]
@@ -1517,7 +1517,7 @@ data "talos_machine_configuration" "talos_worker" {
               routes     = [
                 {
                   network = "0.0.0.0/0"
-                  gateway = cidrhost(var.admin_subnet_prefix, 1)
+                  gateway = cidrhost(var.ADMIN_SUBNET_CIDR, 1)
                 }
               ]
             }
