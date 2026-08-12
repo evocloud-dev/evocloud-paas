@@ -1,6 +1,6 @@
 ---
 # renovate: datasource=github-releases depName=kubescape/kubescape versioning=semver
-kubescape_ver: '4.0.11'
+kubescape_ver: '4.0.12'
 
 kubescape_install_dir: /usr/local/bin
 
