@@ -1,0 +1,69 @@
+############################################
+#DEPLOYING KOPIUR S3 Backup repository
+############################################
+# Reference: https://kopiur.home-operations.com/getting-started/
+#            https://github.com/onedr0p/home-ops/blob/main/kubernetes/apps/kopiur-system/kopiur/repository/clusterrepository.yaml
+#            https://github.com/onedr0p/home-ops/blob/main/kubernetes/components/kopiur/secret/externalsecret.yaml
+
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: backup-kopiur-s3-repo
+  namespace: kopiur-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    # dependsOn kubeapp-backup_kopiur
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: backup-kopiur
+      namespace: kopiur-system
+      ready: true
+
+  resources:
+    # Kopiur Kubernetes Secrets for API Keys and Credentials
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: kopiur-s3-repo-secret
+      type: Opaque
+      stringData:
+        KOPIA_PASSWORD: "{{ .KOPIA_PASSWORD }}" #Update to your actual value / Ansible variable
+        AWS_ACCESS_KEY_ID: "{{ .AWS_ACCESS_KEY_ID }}" #Update to your actual value / Ansible variable
+        AWS_SECRET_ACCESS_KEY: "{{ .AWS_SECRET_ACCESS_KEY }}" #Update to your actual value / Ansible variable
+
+    # Kopiur Backup S3 Repository
+    - apiVersion: kopiur.home-operations.com/v1alpha1
+      kind: ClusterRepository
+      metadata:
+        name: evok8s-hub-s3 # Each cluster must have heir unique name
+      spec:
+        allowedNamespaces:
+          all: true
+        backend:
+          s3:
+            auth:
+              secretRef:
+                name: kopiur-s3-repo-secret
+                namespace: kopiur-system
+            bucket: evok8s-hub-s3
+            endpoint: expanse.internal:9000
+            region: us-east-1
+            tls:
+              disableTls: true
+        encryption:
+          passwordSecretRef:
+            name: kopiur-s3-repo-secret
+            namespace: kopiur-system
+            key: KOPIA_PASSWORD
+        scheduleDefaults:
+          timezone: America/New_York
