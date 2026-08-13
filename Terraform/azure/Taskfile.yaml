@@ -76,6 +76,16 @@ tasks:
           SERVER: server-03-admin-idam_replica-helper
           ACTION: "{{.BUILD_CMD}}"
 
+  build-evo-idpclient:
+    desc: "AZURE: Configure EvoCloud Idpclient on Evo Master"
+    deps: [copy-files]
+    cmds:
+      - echo "AZURE':' Configure EvoCloud Idpclient on Evo Master"
+      - task: vm-operation
+        vars:
+          SERVER: server-04-dmz-deployer-idpclient-helper
+          ACTION: "{{.BUILD_CMD}}"
+
   build-evo-rdp:
     desc: "AZURE: Build EvoCloud Remote Desktop Server"
     deps: [copy-files]
