@@ -3,8 +3,8 @@
 # Input Variables
 #--------------------------------------------------
 inputs = {
-  deployer_server_eip = dependency.server-dmz-deployer.outputs.public_ip
-  deployer_private_ip = dependency.server-dmz-deployer.outputs.private_ip
+  deployer_server_eip = dependency.server-dmz-deployer.outputs.deployer_server_ip
+  deployer_private_ip = dependency.server-dmz-deployer.outputs.deployer_private_ip
   idam_server_ip      = dependency.server-admin-idam.outputs.private_ip
   idam_replica_ip     = dependency.server-admin-idam_replica.outputs.private_ip
   ipaclient_revision  = "0.0.1"
