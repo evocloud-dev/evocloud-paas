@@ -1673,7 +1673,7 @@ resource "terraform_data" "cluster_post_configuration" {
   provisioner "local-exec" {
     command = <<EOF
       ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 \
-      /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/kubeapp-essentials.yml \
+      /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/evok8s-admin-cluster.yml \
       --forks 10 \
       --inventory-file 127.0.0.1, \
       --user ${var.CLOUD_USER} --private-key ${var.PRIVATE_KEY_PAIR} \
@@ -1683,7 +1683,7 @@ resource "terraform_data" "cluster_post_configuration" {
     EOF
     #Ansible logs
     environment = {
-      ANSIBLE_LOG_PATH = "/${var.CLOUD_USER}/Logs/kubeapp-essentials-ansible.log"
+      ANSIBLE_LOG_PATH = "/${var.CLOUD_USER}/Logs/evok8s-admin-cluster-ansible.log"
     }
   }
 }
