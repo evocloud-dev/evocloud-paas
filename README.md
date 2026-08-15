@@ -11,7 +11,7 @@ The Right to Bear Cloud has been made easy with EvoCloud-PaaS, a Platform stack 
 - **An OCI Compliant registry:** for OCI artifacts such as container images, helm charts, and other OCI compliant artifacts.
 - **A Kubernetes management platform:** with tools and custom resource definitions needed to deploy downstream Kubernetes clusters on IaaS agnostic infrastructure. All the Kubernetes infrastructures come in ready to host production Cloud-native applications with CSI providers in place, data in transit and data at rest encryption, CNI fabric, Policy engine for policy enforcement, Audits and Monitoring for compliance, Tracebility and Observability.
 - **SaaS specialized services:** such as Database as a Service, event-driven applications and data processing, and others...
-<p align="center"><img src="./assets/evocloud-architecture.png" /></p>
+<p align="center"><img src="./assets/Bootstrap-EvoCloud-Platform.png" /></p>
 
 ## We Play Nice with the CNCF Foundation
 EvoCloud-PaaS plays well with other CNCF projects. We integrate the following core technologies from the Cloud-native foundation to bring you a robust platform built on trusted and vetted solutions.

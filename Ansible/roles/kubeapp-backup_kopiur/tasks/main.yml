@@ -1,0 +1,36 @@
+---
+#This playbook will deploy Kopiur Cluster Backup Controller
+#References: https://kopiur.home-operations.com/install/
+#            https://github.com/home-operations/kopiur
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-backup_kopiur ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ kopuir_operator_kubeapp_dir }}"
+
+######################################################
+#Deploying Kopiur Controller Resources
+######################################################
+- name: Staging Kubernetes manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ kopuir_operator_kubeapp_dir }}/{{ item }}"
+  loop:
+    - kopiur-controller-rset.yaml
+
+- name: Deploying Kubernetes manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ kopuir_operator_kubeapp_dir }}/kopiur-controller-rset.yaml"
+  register: kopiur_operator_result
+  until: kopiur_operator_result is succeeded
+  retries: 10
+  delay: 30
