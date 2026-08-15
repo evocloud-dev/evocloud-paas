@@ -51,6 +51,16 @@ resource "azurerm_lb_backend_address_pool" "controlplane_pool" {
   loadbalancer_id = azurerm_lb.this.id
 }
 
+resource "azurerm_lb_outbound_rule" "OutboundTraffic" {
+  name                    = "OutboundRule"
+  loadbalancer_id         = azurerm_lb.this.id
+  protocol                = "All"
+  backend_address_pool_id = azurerm_lb_backend_address_pool.controlplane_pool.id
+
+  frontend_ip_configuration {
+    name = "PublicIPAddress"
+  }
+}
 # --- Health Probes ---
 
 resource "azurerm_lb_probe" "k8s_apiserver" {
@@ -100,6 +110,7 @@ resource "azurerm_lb_rule" "apiserver" {
   frontend_ip_configuration_name = "PublicIPAddress"
   backend_address_pool_ids       = [azurerm_lb_backend_address_pool.controlplane_pool.id]
   probe_id                       = azurerm_lb_probe.k8s_apiserver.id
+  disable_outbound_snat          = true
 }
 
 resource "azurerm_lb_rule" "apid" {
@@ -111,6 +122,7 @@ resource "azurerm_lb_rule" "apid" {
   frontend_ip_configuration_name = "PublicIPAddress"
   backend_address_pool_ids       = [azurerm_lb_backend_address_pool.controlplane_pool.id]
   probe_id                       = azurerm_lb_probe.talos_apid.id
+  disable_outbound_snat          = true
 }
 
 resource "azurerm_lb_rule" "httproute" {
@@ -122,6 +134,7 @@ resource "azurerm_lb_rule" "httproute" {
   frontend_ip_configuration_name = "PublicIPAddress"
   backend_address_pool_ids       = [azurerm_lb_backend_address_pool.controlplane_pool.id]
   probe_id                       = azurerm_lb_probe.http.id
+  disable_outbound_snat          = true
 }
 
 resource "azurerm_lb_rule" "httpsroute" {
@@ -133,6 +146,7 @@ resource "azurerm_lb_rule" "httpsroute" {
   frontend_ip_configuration_name = "PublicIPAddress"
   backend_address_pool_ids       = [azurerm_lb_backend_address_pool.controlplane_pool.id]
   probe_id                       = azurerm_lb_probe.https.id
+  disable_outbound_snat          = true
 }
 
 #------------------------------------------------------
@@ -1665,7 +1679,7 @@ resource "terraform_data" "cluster_post_configuration" {
       --user ${var.CLOUD_USER} --private-key ${var.PRIVATE_KEY_PAIR} \
       --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt \
       --ssh-common-args '-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'' \
-      --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} gtw_lb_ip=${azurerm_public_ip.lb_pip.ip_address} kubeapp_dir=/${var.CLOUD_USER}/kubeapps kubeconfig=/${var.CLOUD_USER}/kubeconfig/kubeconfig-${var.cluster_name}.yaml'
+      --extra-vars 'ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml cloud_user=${var.CLOUD_USER} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} kube_cluster_name=${var.cluster_name} gtw_lb_ip=${azurerm_public_ip.lb_pip.ip_address}'
     EOF
     #Ansible logs
     environment = {
