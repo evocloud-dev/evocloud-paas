@@ -4,6 +4,7 @@
 
 output "main_rg_id" {
   value = azurerm_resource_group.evocloud-deploy-rg.id
+  sensitive = true
 }
 
 output "main_rg_name" {
@@ -16,6 +17,7 @@ output "main_rg_location" {
 
 output "vnet_id" {
   value = azurerm_virtual_network.main.id
+  sensitive = true
 }
 
 output "vnet_name" {
