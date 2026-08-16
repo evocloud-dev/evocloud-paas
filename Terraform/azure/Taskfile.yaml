@@ -206,7 +206,7 @@ tasks:
       - echo "AZURE':' Destroying EvoCloud Single Node Kube Cluster"
       - task: vm-operation
         vars:
-          SERVER: cluster-talos-standalone-helper-destroyer
+          SERVER: cluster-talos-standalone-helper-destroy
           ACTION: "{{.CLUSTER_DESTROY_CMD}}"
 
   destroy-evo-cluster-mgr:
@@ -216,7 +216,7 @@ tasks:
       - echo "AZURE':' Destroying EvoCloud Full Kube Cluster"
       - task: vm-operation
         vars:
-          SERVER: cluster-admin-talos-helper-destroyer
+          SERVER: cluster-admin-talos-helper-destroy
           ACTION: "{{.CLUSTER_DESTROY_CMD}}"
 
   destroy-evo-code:
