@@ -69,6 +69,11 @@ variable "PRIVATE_KEY_PAIR" {
   type        = string
 }
 
+variable "PUBLIC_KEY_PAIR" {
+  description = "Public Key Pair"
+  type        = string
+}
+
 variable "backend_subnet_id" {
   description = "Backend Subnet Id"
   type        = string
