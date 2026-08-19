@@ -5,6 +5,8 @@ domain_tld: ""
 
 idam_server_ip: ""
 
+idam_replica_ip: ""
+
 idam_short_hostname: ""
 
 kube_cluster_name: ""
@@ -13,7 +15,7 @@ kubeapp_dir: '/home/{{ cloud_user }}/kubeapps/{{ kube_cluster_name }}'
 
 kubeconfig: '/home/{{ cloud_user }}/kubeconfig/kubeconfig-{{ kube_cluster_name }}.yaml'
 
-certmanager_min_ver: v1.20
+certmanager_min_ver: v1.21
 
 certmanager_namespace: cert-manager
 

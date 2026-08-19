@@ -38,9 +38,12 @@ spec:
   values:
     provider:
       name: rfc2136
+    extraArgs:
+      - --rfc2136-host={{ idam_server_ip }}
+      - --rfc2136-host={{ idam_replica_ip }}
     env:
-      - name: EXTERNAL_DNS_RFC2136_HOST
-        value: "{{ idam_server_ip }}"
+      - name: EXTERNAL_DNS_RFC2136_LOAD_BALANCING_STRATEGY
+        value: "round-robin"
       - name: EXTERNAL_DNS_RFC2136_PORT
         value: "53"
       - name: EXTERNAL_DNS_RFC2136_ZONE
@@ -73,22 +76,3 @@ spec:
       - {{ domain_tld }}
     serviceMonitor:
       enabled: false
-
-#enum value
-  service
-  ingress
-  node
-  pod
-  istio-gateway
-  istio-virtualservice
-  contour-ingressroute
-  contour-httpproxy
-  gloo-proxy
-  fake
-  connector
-  crd
-  empty
-  skipper-routegroup
-  openshift-route
-  ambassador-host
-  kong-tcpingress, got 'gateway-httproute

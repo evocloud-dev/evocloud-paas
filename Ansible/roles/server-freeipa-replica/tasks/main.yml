@@ -25,10 +25,17 @@
   become: true
 
 ## Difference between AWS platform and GCP Platform. GCP platform requires dnsmasq
-- when: cloud_platform == "áws"
+- when: cloud_platform == "aws"
   block:
     - name: Initializing and configuring FreeIPA Replica server on AWS...
-      ansible.builtin.command: "ipa-replica-install --principal admin --admin-password {{ freeipa_admin_passwd }} --setup-ca --setup-dns --setup-kra --realm {{ domain_tld.upper() }} --domain {{ domain_tld }} --no-forwarders --hostname {{ replica_server_fqdn }} --force-join --unattended"
+      ansible.builtin.command: >
+        ipa-replica-install --principal admin 
+          --admin-password {{ freeipa_admin_passwd }} 
+          --setup-ca --setup-dns --setup-kra 
+          --realm {{ domain_tld.upper() }} 
+          --domain {{ domain_tld }} --no-forwarders 
+          --hostname {{ replica_server_fqdn }} 
+          --force-join --unattended
       args:
         creates: /opt/freeipa_replica_installed
       register: freeipa_init_succeeded
@@ -41,21 +48,28 @@
       when: freeipa_init_succeeded.rc == 0
       become: true
 
-- when: cloud_platform == "gcp"
+- when: cloud_platform != "aws"
   block:
-    - name: Initializing and configuring FreeIPA Replica server on GCP... #this task takes 12 minutes to run. Needs optimization if possible
-      ansible.builtin.command: "ipa-replica-install --principal admin --admin-password {{ freeipa_admin_passwd }} --setup-ca --setup-dns --setup-kra --realm {{ domain_tld.upper() }} --domain {{ domain_tld }} --no-forwarders --hostname {{ replica_server_fqdn }} --force-join --unattended"
-      args:
-        creates: /opt/freeipa_replica_installed
-      ignore_errors: true
-      become: true
-
     # We need to turn off dnsmasq at this stage as it conflicts with the IPA Replica DNS Server
     - name: Stopping and disabling Dnsmasq service...
       ansible.builtin.systemd:
         name: dnsmasq
         state: stopped
         enabled: false
+      become: true
+
+    - name: Initializing and configuring FreeIPA Replica server... #this task takes 12 minutes to run. Needs optimization if possible
+      ansible.builtin.command: > 
+        ipa-replica-install --principal admin 
+          --admin-password {{ freeipa_admin_passwd }} 
+          --setup-ca --setup-dns --setup-kra 
+          --realm {{ domain_tld.upper() }} 
+          --domain {{ domain_tld }} --no-forwarders 
+          --hostname {{ replica_server_fqdn }} 
+          --force-join --unattended
+      args:
+        creates: /opt/freeipa_replica_installed
+      ignore_errors: true
       become: true
 
     # Then restart IPA Server Replica Service
@@ -105,4 +119,27 @@
   ansible.builtin.systemd:
     name: sssd
     state: started
+  become: true
+
+#Setting up ACME provider TSIG Secret
+- name: Fetching TSIG configuration from the IPA Primary named server...
+  ansible.builtin.slurp:
+    src: /etc/named/ipa-ext.conf
+  register: ipa_ext_conf_primary
+  become: true
+  delegate_to: "{{ idam_server_ip }}"
+
+- name: Updating ipa-replica named server config...
+  ansible.builtin.copy:
+    content: " {{ ipa_ext_conf_primary.content | b64decode }}"
+    dest: /etc/named/ipa-ext.conf
+    owner: root
+    group: named
+    mode: '0644'
+  become: true
+
+- name: Starting ipa-replica DNS service...
+  ansible.builtin.systemd:
+    name: named-pkcs11.service
+    state: restarted
   become: true
