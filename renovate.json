@@ -9,7 +9,9 @@
     "geanttechnology"
   ],
   "ignorePaths": [
-    "assets/"
+    "assets/",
+    "Keys/",
+    "Logs/"
   ],
   "ansible": {
     "managerFilePatterns": ["Ansible/.+\\.ya?ml$"]
@@ -58,6 +60,24 @@
     },
     {
       "customType": "regex",
+      "description": "Update clusteradm binary package",
+      "managerFilePatterns": ["Ansible/roles/app-clusteradm/vars/main.yml"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*clusteradm_version:\\s*['\"](?<currentValue>[^'\"]+)['\"]"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      "customType": "regex",
+      "description": "Update copa binary package",
+      "managerFilePatterns": ["Ansible/roles/app-copa/vars/main.yml"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*copa_version:\\s*['\"](?<currentValue>[^'\"]+)['\"]"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      "customType": "regex",
       "description": "Update cosign binary package",
       "managerFilePatterns": ["Ansible/roles/app-cosign/vars/main.yml"],
       "matchStrings": [
@@ -76,13 +96,21 @@
     },
     {
       "customType": "regex",
-      "description": "Update flux-cli binary package sha256 checksum",
-      "managerFilePatterns": ["Ansible/roles/app-flux-cli/vars/main.yml"],
+      "description": "Update flux-operator-cli binary package sha256 checksum",
+      "managerFilePatterns": ["Ansible/roles/app-flux-operator-cli/vars/main.yml"],
       "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)\\s*packageName=(?<packageName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*flux_cli_checksum:\\s*sha256:(?<currentValue>[a-f0-9]{64})"
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*flux_operator_cli_ver:\\s*['\"](?<currentValue>[^'\"]+)['\"]"
       ],
-      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}",
-      "autoReplaceStringTemplate": "sha256:{{newDigest}}"
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      "customType": "regex",
+      "description": "Update flux-operator-mcp binary package",
+      "managerFilePatterns": ["Ansible/roles/app-flux-operator-mcp/vars/main.yml"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*flux_operator_mcp_ver:\\s*['\"](?<currentValue>[^'\"]+)['\"]"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
     },
     {
       "customType": "regex",
@@ -200,6 +228,15 @@
     },
     {
       "customType": "regex",
+      "description": "Update kubesec binary package",
+      "managerFilePatterns": ["Ansible/roles/app-kubesec/vars/main.yml"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*kubesec_version:\\s*['\"](?<currentValue>[^'\"]+)['\"]"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      "customType": "regex",
       "description": "Update kubevela binary package",
       "managerFilePatterns": ["Ansible/roles/app-kubevela/vars/main.yml"],
       "matchStrings": [
@@ -245,6 +282,15 @@
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}",
       "autoReplaceStringTemplate": "sha256:{{newDigest}}"
+    },
+    {
+      "customType": "regex",
+      "description": "Update packer binary package",
+      "managerFilePatterns": ["Ansible/roles/app-packer/vars/main.yml"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*packer_version:\\s*['\"](?<currentValue>[^'\"]+)['\"]"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
     },
     {
       "customType": "regex",
@@ -324,6 +370,15 @@
     },
     {
       "customType": "regex",
+      "description": "Update timoni binary package",
+      "managerFilePatterns": ["Ansible/roles/app-timoni/vars/main.yml"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*timoni_version:\\s*['\"](?<currentValue>[^'\"]+)['\"]"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      "customType": "regex",
       "description": "Update trivy binary package",
       "managerFilePatterns": ["Ansible/roles/app-trivy/vars/main.yml"],
       "matchStrings": [
@@ -340,6 +395,15 @@
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}",
       "autoReplaceStringTemplate": "sha256:{{newDigest}}"
+    },
+    {
+      "customType": "regex",
+      "description": "Update vault binary package",
+      "managerFilePatterns": ["Ansible/roles/app-vault/vars/main.yml"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s*depName=(?<depName>[^\\s]+)(?:\\s+versioning=(?<versioning>[^\\s]+))?[^\\n]*?\\s*vault_ver:\\s*['\"](?<currentValue>[^'\"]+)['\"]"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
     }
   ]
 }

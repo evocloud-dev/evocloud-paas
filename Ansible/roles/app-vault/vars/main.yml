@@ -1,6 +1,7 @@
 ---
 os_arch: 'linux_amd64'
 
+# renovate: datasource=github-releases depName=hashicorp/vault versioning=semver
 vault_ver: '1.20.4'
 
 vault_force_update: false
