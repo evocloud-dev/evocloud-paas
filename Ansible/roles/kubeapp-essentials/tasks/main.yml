@@ -16,6 +16,7 @@
   register: packages_install
   until: packages_install is succeeded
   retries: 2
+  become: true
 
 - name: Waiting for Kubernetes cluster to fully bootstrap...
   kubernetes.core.k8s_info:
