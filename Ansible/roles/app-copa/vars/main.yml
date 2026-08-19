@@ -4,7 +4,7 @@
 #--------------------------------------------------------------
 # Copa Version
 # renovate: datasource=github-releases depName=project-copacetic/copacetic versioning=semver
-copa_version: "0.14.1"
+copa_version: "0.14.2"
 
 # Directory
 copa_install_dir: "/usr/local/bin"
