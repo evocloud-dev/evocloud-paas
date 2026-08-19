@@ -277,13 +277,19 @@
     state: restarted
   become: true
 
-- name: Enabling dynamic updates for the IPA DNS domain or sub-domain
+- name: Retrieving the existing DNS update policy...
   ansible.builtin.shell: |
-    /bin/kinit admin <<< {{ freeipa_admin_passwd }}
-    ipa dnszone-mod {{ domain_tld }} --dynamic-update=True --update-policy='grant cert-manager-acme wildcard * TXT;'
-    ipa dnszone-mod {{ domain_tld }} --dynamic-update=True --update-policy='grant cert-manager-acme zonesub ANY;'
+    ipa dnszone-show {{ domain_tld }} --all | grep "BIND update policy" | sed 's/.*BIND update policy: //'
   become: true
   no_log: true
+  register: dns_update_policy
+
+- name: Enabling dynamic updates for the IPA DNS domain or sub-domain
+  ansible.builtin.shell: |
+    ipa dnszone-mod {{ domain_tld }} --dynamic-update=True --update-policy='{{ dns_update_policy.stdout }} grant cert-manager-acme wildcard * TXT; grant cert-manager-acme zonesub ANY;'
+  become: true
+  no_log: true
+  when: "'cert-manager-acme' not in dns_update_policy.stdout"
 
 # external-dns requires zone transfers, which is required for deletion of records.
 - name: Setting facts for Domain TLD...

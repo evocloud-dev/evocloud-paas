@@ -3,6 +3,7 @@ server_timezone: ""
 server_ip: ""
 domain_tld: ""
 idam_short_hostname: ""
+idam_server_ip: ""
 cloud_platform: "" # aws | gcp | alicloud
 directory_manager_passwd: "{{ creds_store.directory_manager_passwd }}"
 freeipa_admin_passwd: "{{ creds_store.freeipa_admin_passwd }}"
