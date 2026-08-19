@@ -1,6 +1,6 @@
 ---
 # renovate: datasource=github-releases depName=hashicorp/packer versioning=semver
-packer_version: '1.8.6'
+packer_version: '1.16.0'
 
 os_arch: linux_amd64
 
