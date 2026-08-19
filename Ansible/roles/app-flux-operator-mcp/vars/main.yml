@@ -2,7 +2,7 @@
 cloud_user: ''
 
 # renovate: datasource=github-releases depName=controlplaneio-fluxcd/flux-operator versioning=semver
-flux_operator_mcp_ver: "0.46.0"
+flux_operator_mcp_ver: "0.58.1"
 
 flux_operator_mcp_install_dir: /usr/local/bin
 
