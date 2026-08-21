@@ -279,6 +279,7 @@
 
 - name: Retrieving the existing DNS update policy...
   ansible.builtin.shell: |
+    /bin/kinit admin <<< {{ freeipa_admin_passwd }}
     ipa dnszone-show {{ domain_tld }} --all | grep "BIND update policy" | sed 's/.*BIND update policy: //'
   become: true
   no_log: true
