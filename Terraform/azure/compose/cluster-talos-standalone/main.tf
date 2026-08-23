@@ -77,8 +77,6 @@ resource "azurerm_linux_virtual_machine" "evok8s_stdalone_ctrlplane" {
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
-
-  #source_image_id = "/subscriptions/ad0bf289-b1c8-43d4-b325-997780dc89d9/resourceGroups/STORAGE-RG/providers/Microsoft.Compute/images/evovm-os-8-10"
 }
 
 ## Create and Attach an Extra Volume
@@ -789,7 +787,7 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
 resource "local_file" "talos_kubeconfig_file" {
   depends_on  = [talos_cluster_kubeconfig.kubeconfig]
 
-  filename    = "/${var.CLOUD_USER}/kubeconfig/kubeconfig-${var.cluster_name}.yaml"
+  filename    = "/home/${var.CLOUD_USER}/kubeconfig/kubeconfig-${var.cluster_name}.yaml"
   directory_permission = "0740"
   file_permission      = "0640"
   content     = <<-EOF
@@ -800,7 +798,7 @@ resource "local_file" "talos_kubeconfig_file" {
 resource "local_file" "talos_talosconfig_file" {
   depends_on  = [talos_cluster_kubeconfig.kubeconfig]
 
-  filename    = "/${var.CLOUD_USER}/talosconfig/talosconfig-${var.cluster_name}.yaml"
+  filename    = "/home/${var.CLOUD_USER}/talosconfig/talosconfig-${var.cluster_name}.yaml"
   directory_permission = "0740"
   file_permission      = "0640"
   content     = <<-EOF

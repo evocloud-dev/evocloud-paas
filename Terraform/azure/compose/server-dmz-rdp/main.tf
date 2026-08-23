@@ -53,8 +53,6 @@ resource "azurerm_linux_virtual_machine" "rdp_server" {
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
-
-  #source_image_id = "/subscriptions/ad0bf289-b1c8-43d4-b325-997780dc89d9/resourceGroups/STORAGE-RG/providers/Microsoft.Compute/images/evovm-os-8-10"
 }
 
 #--------------------------------------------------
