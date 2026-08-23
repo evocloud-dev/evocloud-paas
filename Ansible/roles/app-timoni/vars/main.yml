@@ -4,7 +4,7 @@
 #--------------------------------------------------------------
 # Timoni Version
 # renovate: datasource=github-releases depName=stefanprodan/timoni versioning=semver
-timoni_version: "0.30.0"
+timoni_version: "0.33.0"
 
 # Directory
 timoni_install_dir: "/usr/local/bin"
@@ -12,9 +12,9 @@ timoni_install_dir: "/usr/local/bin"
 # Update flag
 timoni_force_update: false
 
-# URLS: https://github.com/stefanprodan/timoni/releases/download/v0.30.0/timoni_0.30.0_linux_amd64.tar.gz
+# URLS: https://github.com/stefanprodan/timoni/releases/download/v0.33.0/timoni_0.33.0_linux_amd64.tar.gz
 timoni_download_url: "https://github.com/stefanprodan/timoni/releases/download/v{{ timoni_version }}/timoni_{{ timoni_version }}_linux_amd64.tar.gz"
 
 #https://github.com/stefanprodan/timoni/releases/
-# renovate: datasource=github-releases depName=stefanprodan/timoni packageName=timoni_0.30.0_linux_amd64.tar.gz
-timoni_checksum: 'sha256:a6012761eb6870a5c6f27d35794148836cea262536f61bbb2250caca48e708a9'
+# renovate: datasource=github-releases depName=stefanprodan/timoni packageName=timoni_0.33.0_linux_amd64.tar.gz
+timoni_checksum: 'sha256:830cb40a45d22d062af3f7b0bb4058b5ce4495918c8d9a2c2375bc9f2a8d70bb'
