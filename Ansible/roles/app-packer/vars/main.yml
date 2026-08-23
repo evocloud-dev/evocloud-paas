@@ -10,12 +10,12 @@ packer_install_dir: /usr/local/bin
 
 packer_force_update: false
 
-# https://releases.hashicorp.com/packer/1.8.6/packer_1.8.6_SHA256SUMS
-packer_checksum: sha256:57d0411e578aea62918d36ed186951139d5d49d44b76e5666d1fbf2427b385ae
+# https://releases.hashicorp.com/packer/1.16.0/packer_1.16.0_SHA256SUMS
+packer_checksum: 'sha256:5edcd14ab59b535040c512dbecd6ec9ef976a000b073c19d93e4c431c948581e'
 
 packer_zip: 'packer_{{ packer_version }}_{{ os_arch }}.zip'
 
-# https://releases.hashicorp.com/packer/1.8.6/packer_1.8.6_linux_amd64.zip
+# https://releases.hashicorp.com/packer/1.16.0/packer_1.16.0_linux_amd64.zip
 packer_download_url: '{{ packer_mirror }}/{{ packer_version }}/{{ packer_zip }}'
 
 packer_binary_dir: '{{ packer_install_dir }}/packer_{{ packer_version }}'
