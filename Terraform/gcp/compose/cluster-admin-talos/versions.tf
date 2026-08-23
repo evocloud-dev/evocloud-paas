@@ -20,13 +20,13 @@ terraform {
     #Timer
     time = {
       source = "hashicorp/time"
-      version = "0.14.0"
+      version = "0.14.1"
     }
 
     #HTTP CLIENT
     http = {
       source = "hashicorp/http"
-      version = "3.6.0"
+      version = "3.6.1"
     }
   }
 }
