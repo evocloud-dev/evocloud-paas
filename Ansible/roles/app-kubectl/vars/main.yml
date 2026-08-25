@@ -3,13 +3,13 @@ kubectl_force_update: false
 
 #https://kubernetes.io/releases/
 # renovate: datasource=github-releases depName=kubernetes/kubernetes versioning=semver
-kubectl_ver: 'v1.36.3'
+kubectl_ver: 'v1.36.4'
 
-#https://dl.k8s.io/v1.36.3/kubernetes-client-linux-amd64.tar.gz
+#https://dl.k8s.io/v1.36.4/kubernetes-client-linux-amd64.tar.gz
 kubectl_download_url: 'https://dl.k8s.io/{{ kubectl_ver }}/kubernetes-client-linux-amd64.tar.gz'
 
 kubectl_install_dir: '/usr/local/bin'
 
 #https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.34.md#client-binaries
 # renovate: datasource=github-releases depName=kubernetes/kubernetes packageName=kubernetes-client-linux-amd64.tar.gz
-kubectl_checksum: sha512:f68e81568b0356e81d27073876356f5516b84f3bc55ddfd7ebab199045b82a720e2adbac7124e800b8b705d1647721b1a529ba524b982d4ff433f62f26f5cdc9
+kubectl_checksum: 'sha512:611ab5bb43640f4eb37302faddde2dbb900e0b79d3e96286acd86a6935b55ad766b7083aa1dcf0e7806da43de5055b1f7056454aaff33d6fabf11cf5c7b41f7d'
