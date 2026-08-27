@@ -69,6 +69,13 @@ spec:
             adminPassword: prom-operator
           nodeExporter:
             enabled: true
+            resources:
+              limits:
+                cpu: 200m
+                memory: 50Mi
+              requests:
+                cpu: 100m
+                memory: 30Mi
             operatingSystems:
               linux:
                 enabled: true
