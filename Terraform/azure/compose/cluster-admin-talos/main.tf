@@ -824,6 +824,13 @@ data "talos_machine_configuration" "talos_controlplane" {
                   discoveryDaemonInterval: 15m
                   monitoring:
                     enabled: true
+                  resources:
+                    requests:
+                      cpu: 25m
+                      memory: 250Mi
+                    limits:
+                      cpu: 25m
+                      memory: 250Mi
               ---
               apiVersion: helm.toolkit.fluxcd.io/v2
               kind: HelmRelease
@@ -1019,8 +1026,22 @@ data "talos_machine_configuration" "talos_controlplane" {
                 values:
                   grafana:
                     adminPassword: prom-operator
+                    resources:
+                      requests:
+                        cpu: 296m
+                        memory: 273M
+                      limits:
+                        cpu: 296m
+                        memory: 273M
                   nodeExporter:
                     enabled: true
+                    resources:
+                      requests:
+                        cpu: 25m
+                        memory: 250Mi
+                      limits:
+                        cpu: 25m
+                        memory: 250Mi
                     operatingSystems:
                       linux:
                         enabled: true
@@ -1028,6 +1049,22 @@ data "talos_machine_configuration" "talos_controlplane" {
                         enabled: false
                       darwin:
                         enabled: false
+                  kube-state-metrics:
+                    resources:
+                      requests:
+                        cpu: 35m
+                        memory: 250Mi
+                      limits:
+                        cpu: 35m
+                        memory: 250Mi
+                  ku-operator:
+                    resources:
+                      requests:
+                        cpu: 1554m
+                        memory: 250Mi
+                      limits:
+                        cpu: 1554m
+                        memory: 250Mi
               ---
               ###################################################
               #OpenCost Billing
@@ -1418,6 +1455,13 @@ data "talos_machine_configuration" "talos_controlplane" {
                 values:
                   server:
                     replicas: 1
+                  resources:
+                    requests:
+                      cpu: 1038m
+                      memory: 512M
+                    limits:
+                      cpu: 1038m
+                      memory: 512M
               ---
             EOT
           },

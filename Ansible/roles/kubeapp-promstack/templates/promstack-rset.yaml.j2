@@ -33,7 +33,7 @@ spec:
       metadata:
         name: kube-promstack-operator
         namespace: flux-system
-      spec:
+      spec:3
         interval: 12h
         url: oci://ghcr.io/prometheus-community/charts/kube-prometheus-stack
         layerSelector:
@@ -71,11 +71,11 @@ spec:
             enabled: true
             resources:
               limits:
-                cpu: 200m
-                memory: 50Mi
+                cpu: 25m
+                memory: 250Mi
               requests:
-                cpu: 100m
-                memory: 30Mi
+                cpu: 25m
+                memory: 250Mi
             operatingSystems:
               linux:
                 enabled: true

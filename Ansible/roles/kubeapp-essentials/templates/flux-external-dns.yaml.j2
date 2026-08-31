@@ -76,3 +76,10 @@ spec:
       - {{ domain_tld }}
     serviceMonitor:
       enabled: false
+    resources:
+      requests:
+        cpu: 25m
+        memory: 250Mi
+      limits:
+        cpu: 25m
+        memory: 250Mi
