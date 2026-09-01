@@ -1,0 +1,220 @@
+[
+  {
+    "name": "allow-hostpath-cilium",
+    "policyType": "postureExceptionPolicy",
+    "actions": ["alertOnly"],
+    "resources": [
+      {
+        "designatorType": "Attribute",
+        "attributes": {
+          "namespace": "kube-system",
+          "kind": "DaemonSet",
+          "name": "cilium"
+        }
+      }
+    ],
+    "posturePolicies": [
+      { "controlID": "C-0048" },
+      { "controlID": "C-0045" },
+      { "controlID": "C-0044" }
+    ]
+  },
+  {
+    "name": "allow-hostpath-cilium",
+    "policyType": "postureExceptionPolicy",
+    "actions": ["alertOnly"],
+    "resources": [
+      {
+        "designatorType": "Attribute",
+        "attributes": {
+          "namespace": "kube-system",
+          "kind": "^(DaemonSet|Deployment)$",
+          "name": "cilium-.*"
+        }
+      }
+    ],
+    "posturePolicies": [
+      { "controlID": "C-0048" },
+      { "controlID": "C-0045" },
+      { "controlID": "C-0044" }
+    ]
+  },
+  {
+    "name": "allow-hostpath-rook-ceph",
+    "policyType": "postureExceptionPolicy",
+    "actions": ["alertOnly"],
+    "resources": [
+      {
+        "designatorType": "Attribute",
+        "attributes": {
+          "namespace": "rook-ceph",
+          "kind": "*"
+        }
+      }
+    ],
+    "posturePolicies": [
+      { "controlID": "C-0048" },
+      { "controlID": "C-0045" }
+    ]
+  },
+  {
+    "name": "allow-hostpath-control-plane-static-pods",
+    "policyType": "postureExceptionPolicy",
+    "actions": ["alertOnly"],
+    "resources": [
+      {
+        "designatorType": "Attributes",
+        "attributes": {
+          "namespace": "kube-system",
+          "kind": "Pod",
+          "name": "^(kube-apiserver|kube-scheduler|kube-controller-manager|etcd)-.*"
+        }
+      }
+    ],
+    "posturePolicies": [
+      { "controlID": "C-0048" },
+      { "controlID": "C-0045" }
+    ]
+  },
+  {
+    "name": "allow-hostpath-node-exporter",
+    "policyType": "postureExceptionPolicy",
+    "actions": ["alertOnly"],
+    "resources": [
+      {
+        "designatorType": "Attributes",
+        "attributes": {
+          "kind": "DaemonSet",
+          "name": ".*node-exporter.*"
+        }
+      }
+    ],
+    "posturePolicies": [
+      { "controlID": "C-0048" },
+      { "controlID": "C-0045" }
+    ]
+  },
+  {
+    "name": "allow-hostpath-trivy-node-collector",
+    "policyType": "postureExceptionPolicy",
+    "actions": ["alertOnly"],
+    "resources": [
+      {
+        "designatorType": "Attributes",
+        "attributes": {
+          "kind": "Job",
+          "name": ".*node-collector.*"
+        }
+      }
+    ],
+    "posturePolicies": [
+      { "controlID": "C-0048" },
+      { "controlID": "C-0045" }
+    ]
+  },
+  {
+    "name": "allow-service-account-rook",
+    "policyType": "postureExceptionPolicy",
+    "actions": ["alertOnly"],
+    "resources": [
+      {
+        "designatorType": "Attributes",
+        "attributes": {
+          "namespace": "rook-ceph",
+          "kind": "ServiceAccount"
+        }
+      }
+    ],
+    "posturePolicies": [
+      { "controlID": "C-0053" }
+    ]
+  },
+  {
+    "name": "allow-service-account-ceph",
+    "policyType": "postureExceptionPolicy",
+    "actions": ["alertOnly"],
+    "resources": [
+      {
+        "designatorType": "Attributes",
+        "attributes": {
+          "namespace": "ceph-*",
+          "kind": "ServiceAccount"
+        }
+      }
+    ],
+    "posturePolicies": [
+      { "controlID": "C-0053" }
+    ]
+  },
+  {
+    "name": "allow-service-account-flux",
+    "policyType": "postureExceptionPolicy",
+    "actions": ["alertOnly"],
+    "resources": [
+      {
+        "designatorType": "Attributes",
+        "attributes": {
+          "namespace": "flux-system",
+          "kind": "ServiceAccount"
+        }
+      }
+    ],
+    "posturePolicies": [
+      { "controlID": "C-0053" }
+    ]
+  },
+  {
+    "name": "allow-service-account-vpa",
+    "policyType": "postureExceptionPolicy",
+    "actions": ["alertOnly"],
+    "resources": [
+      {
+        "designatorType": "Attributes",
+        "attributes": {
+          "namespace": "kube-system",
+          "kind": "ServiceAccount",
+          "name": "^(vertical-pod-autoscaler|vertical-pod-autoscaler-*)$"
+        }
+      }
+    ],
+    "posturePolicies": [
+      { "controlID": "C-0053" }
+    ]
+  },
+  {
+    "name": "allow-service-account-keda",
+    "policyType": "postureExceptionPolicy",
+    "actions": ["alertOnly"],
+    "resources": [
+      {
+        "designatorType": "Attributes",
+        "attributes": {
+          "namespace": "keda",
+          "kind": "ServiceAccount",
+          "name": "^(keda|keda-*)$"
+        }
+      }
+    ],
+    "posturePolicies": [
+      { "controlID": "C-0053" }
+    ]
+  },
+  {
+    "name": "allow-service-account-cert-manager",
+    "policyType": "postureExceptionPolicy",
+    "actions": ["alertOnly"],
+    "resources": [
+      {
+        "designatorType": "Attributes",
+        "attributes": {
+          "namespace": "cert-manager",
+          "kind": "ServiceAccount",
+          "name": "^(cert-manager|cert-manager-*|external-dns-*)$"
+        }
+      }
+    ],
+    "posturePolicies": [
+      { "controlID": "C-0053" }
+    ]
+  }
+]
