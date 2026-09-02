@@ -190,8 +190,7 @@
         "designatorType": "Attributes",
         "attributes": {
           "namespace": "keda",
-          "kind": "ServiceAccount",
-          "name": "^(keda|keda-*)$"
+          "kind": "ServiceAccount"
         }
       }
     ],
@@ -208,8 +207,126 @@
         "designatorType": "Attributes",
         "attributes": {
           "namespace": "cert-manager",
-          "kind": "ServiceAccount",
-          "name": "^(cert-manager|cert-manager-*|external-dns-*)$"
+          "kind": "ServiceAccount"
+        }
+      }
+    ],
+    "posturePolicies": [
+      { "controlID": "C-0053" }
+    ]
+  },
+  {
+    "name": "allow-service-account-kyverno",
+    "policyType": "postureExceptionPolicy",
+    "actions": ["alertOnly"],
+    "resources": [
+      {
+        "designatorType": "Attributes",
+        "attributes": {
+          "namespace": "kyverno",
+          "kind": "ServiceAccount"
+        }
+      }
+    ],
+    "posturePolicies": [
+      { "controlID": "C-0053" }
+    ]
+  },
+  {
+    "name": "allow-service-account-kubevela",
+    "policyType": "postureExceptionPolicy",
+    "actions": ["alertOnly"],
+    "resources": [
+      {
+        "designatorType": "Attributes",
+        "attributes": {
+          "namespace": "vela-system",
+          "kind": "ServiceAccount"
+        }
+      }
+    ],
+    "posturePolicies": [
+      { "controlID": "C-0053" }
+    ]
+  },
+  {
+    "name": "allow-service-account-opencost",
+    "policyType": "postureExceptionPolicy",
+    "actions": ["alertOnly"],
+    "resources": [
+      {
+        "designatorType": "Attributes",
+        "attributes": {
+          "namespace": "opencost",
+          "kind": "ServiceAccount"
+        }
+      }
+    ],
+    "posturePolicies": [
+      { "controlID": "C-0053" }
+    ]
+  },
+  {
+    "name": "allow-service-account-kubescape",
+    "policyType": "postureExceptionPolicy",
+    "actions": ["alertOnly"],
+    "resources": [
+      {
+        "designatorType": "Attributes",
+        "attributes": {
+          "namespace": "kubescape",
+          "kind": "ServiceAccount"
+        }
+      }
+    ],
+    "posturePolicies": [
+      { "controlID": "C-0053" }
+    ]
+  },
+  {
+    "name": "allow-service-account-dapr",
+    "policyType": "postureExceptionPolicy",
+    "actions": ["alertOnly"],
+    "resources": [
+      {
+        "designatorType": "Attributes",
+        "attributes": {
+          "namespace": "dapr-system",
+          "kind": "ServiceAccount"
+        }
+      }
+    ],
+    "posturePolicies": [
+      { "controlID": "C-0053" }
+    ]
+  },
+  {
+    "name": "allow-service-account-monitoring",
+    "policyType": "postureExceptionPolicy",
+    "actions": ["alertOnly"],
+    "resources": [
+      {
+        "designatorType": "Attributes",
+        "attributes": {
+          "namespace": "monitoring",
+          "kind": "ServiceAccount"
+        }
+      }
+    ],
+    "posturePolicies": [
+      { "controlID": "C-0053" }
+    ]
+  },
+  {
+    "name": "allow-service-account-trivy",
+    "policyType": "postureExceptionPolicy",
+    "actions": ["alertOnly"],
+    "resources": [
+      {
+        "designatorType": "Attributes",
+        "attributes": {
+          "namespace": "trivy-system",
+          "kind": "ServiceAccount"
         }
       }
     ],
