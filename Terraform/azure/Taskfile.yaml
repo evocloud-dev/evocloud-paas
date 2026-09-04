@@ -27,6 +27,7 @@ tasks:
   # Neutral/Dependency Tasks
   ###############################
   copy-files:
+    internal: true
     # Task only runs if one or more status commands not satisfied"
     # Files: gcp-evocloud.pem, gcp-evocloud.pub, ansible-vault-pass.txt, secret-store.yml and root.hcl
     desc: "AZURE: Copies files from mount directory inside container to their respective locations."
@@ -159,84 +160,14 @@ tasks:
   ###############################
   # Destroy Tasks
   ###############################
-  destroy-evo-master:
-    desc: "AZURE: Destroy evo-master"
+  destroy-evo-vcd:
+    desc: "AZURE: Destroy EvoCloud Virtual Cloud Desktop Server"
     deps: [copy-files]
     cmds:
-      - echo "AZURE':' Destroying evo-master"
+      - echo "AZURE':' Destroying EvoCloud Virtual Cloud Desktop Server"
       - task: vm-operation
         vars:
-          SERVER: server-01-dmz-deployer
-          ACTION: "{{.DESTROY_CMD}}"
-
-  destroy-evo-idp:
-    desc: "AZURE: Destroy EvoCloud IdM Server"
-    deps: [copy-files]
-    cmds:
-      - echo "AZURE':' Destroying EvoCloud IdM Server"
-      - task: vm-operation
-        vars:
-          SERVER: server-02-admin-idam
-          ACTION: "{{.DESTROY_CMD}}"
-
-  destroy-evo-idpr:
-    desc: "AZURE: Destroy EvoCloud IdM Replica Server"
-    deps: [copy-files]
-    cmds:
-      - echo "AZURE':' Destroying EvoCloud IdM Replica Server"
-      - task: vm-operation
-        vars:
-          SERVER: server-03-admin-idam_replica
-          ACTION: "{{.DESTROY_CMD}}"
-
-  destroy-evo-rdp:
-    desc: "AZURE: Destroy EvoCloud Remote Desktop Server"
-    deps: [copy-files]
-    cmds:
-      - echo "AZURE':' Destroying EvoCloud Remote Desktop Server"
-      - task: vm-operation
-        vars:
-          SERVER: server-dmz-rdp
-          ACTION: "{{.DESTROY_CMD}}"
-
-  destroy-evo-cluster-std:
-    desc: "AZURE: Destroy EvoCloud Single Node Kube Cluster"
-    deps: [copy-files]
-    cmds:
-      - echo "AZURE':' Destroying EvoCloud Single Node Kube Cluster"
-      - task: vm-operation
-        vars:
-          SERVER: cluster-talos-standalone-helper-destroy
-          ACTION: "{{.CLUSTER_DESTROY_CMD}}"
-
-  destroy-evo-cluster-mgr:
-    desc: "AZURE: Destroy EvoCloud Full  Kube Cluster"
-    deps: [copy-files]
-    cmds:
-      - echo "AZURE':' Destroying EvoCloud Full Kube Cluster"
-      - task: vm-operation
-        vars:
-          SERVER: cluster-admin-talos-helper-destroy
-          ACTION: "{{.CLUSTER_DESTROY_CMD}}"
-
-  destroy-evo-code:
-    desc: "AZURE: Destroy EvoCloud Code Server"
-    deps: [copy-files]
-    cmds:
-      - echo "AZURE':' Destroy EvoCloud Code Server"
-      - task: vm-operation
-        vars:
-          SERVER: server-backend-evocode
-          ACTION: "{{.DESTROY_CMD}}"
-
-  destroy-evo-code-runner:
-    desc: "AZURE: Destroy EvoCloud Code Runner Server"
-    deps: [copy-files]
-    cmds:
-      - echo "AZURE':' Destroy EvoCloud Code Runner Server"
-      - task: vm-operation
-        vars:
-          SERVER: server-backend-evocode-runner
+          SERVER: server-dmz-vcd
           ACTION: "{{.DESTROY_CMD}}"
 
   destroy-evo-harbor:
@@ -249,12 +180,82 @@ tasks:
           SERVER: server-backend-evoharbor
           ACTION: "{{.DESTROY_CMD}}"
 
-  destroy-evo-vcd:
-    desc: "AZURE: Destroy EvoCloud Virtual Cloud Desktop Server"
+  destroy-evo-code-runner:
+    desc: "AZURE: Destroy EvoCloud Code Runner Server"
     deps: [copy-files]
     cmds:
-      - echo "AZURE':' Destroying EvoCloud Virtual Cloud Desktop Server"
+      - echo "AZURE':' Destroy EvoCloud Code Runner Server"
       - task: vm-operation
         vars:
-          SERVER: server-dmz-vcd
+          SERVER: server-backend-evocode-runner
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-code:
+    desc: "AZURE: Destroy EvoCloud Code Server"
+    deps: [copy-files]
+    cmds:
+      - echo "AZURE':' Destroy EvoCloud Code Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-backend-evocode
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-cluster-mgr:
+    desc: "AZURE: Destroy EvoCloud Full  Kube Cluster"
+    deps: [copy-files]
+    cmds:
+      - echo "AZURE':' Destroying EvoCloud Full Kube Cluster"
+      - task: vm-operation
+        vars:
+          SERVER: cluster-admin-talos-helper-destroy
+          ACTION: "{{.CLUSTER_DESTROY_CMD}}"
+
+  destroy-evo-cluster-std:
+    desc: "AZURE: Destroy EvoCloud Single Node Kube Cluster"
+    deps: [copy-files]
+    cmds:
+      - echo "AZURE':' Destroying EvoCloud Single Node Kube Cluster"
+      - task: vm-operation
+        vars:
+          SERVER: cluster-talos-standalone-helper-destroy
+          ACTION: "{{.CLUSTER_DESTROY_CMD}}"
+
+  destroy-evo-rdp:
+    desc: "AZURE: Destroy EvoCloud Remote Desktop Server"
+    deps: [copy-files]
+    cmds:
+      - echo "AZURE':' Destroying EvoCloud Remote Desktop Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-dmz-rdp
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-idpr:
+    desc: "AZURE: Destroy EvoCloud IdM Replica Server"
+    deps: [copy-files]
+    cmds:
+      - echo "AZURE':' Destroying EvoCloud IdM Replica Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-03-admin-idam_replica
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-idp:
+    desc: "AZURE: Destroy EvoCloud IdM Server"
+    deps: [copy-files]
+    cmds:
+      - echo "AZURE':' Destroying EvoCloud IdM Server"
+      - task: vm-operation
+        vars:
+          SERVER: server-02-admin-idam
+          ACTION: "{{.DESTROY_CMD}}"
+
+  destroy-evo-master:
+    desc: "AZURE: Destroy evo-master"
+    deps: [copy-files]
+    cmds:
+      - echo "AZURE':' Destroying evo-master"
+      - task: vm-operation
+        vars:
+          SERVER: server-01-dmz-deployer
           ACTION: "{{.DESTROY_CMD}}"
