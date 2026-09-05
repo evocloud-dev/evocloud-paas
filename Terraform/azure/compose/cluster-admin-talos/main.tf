@@ -382,7 +382,41 @@ data "talos_machine_configuration" "talos_controlplane" {
         }
       }
       cluster = {
+        controllerManager = {
+          resources = {
+            requests = {
+              cpu = "200m"
+              memory = "256Mi"
+            }
+            limits = {
+              cpu = "1"
+              memory = "512Mi"
+            }
+          }
+        }
+        scheduler = {
+          resources = {
+            requests = {
+              cpu = "200m"
+              memory = "256Mi"
+            }
+            limits = {
+              cpu = "1"
+              memory = "512Mi"
+            }
+          }
+        }
         apiServer = {
+          resources = {
+            requests = {
+              cpu = "500m"
+              memory = "1Gi"
+            }
+            limits = {
+              cpu = "2"
+              memory = "2Gi"
+            }
+          }
           extraArgs = {
             feature-gates = "UserNamespacesSupport=true,UserNamespacesPodSecurityStandards=true"
           }
@@ -530,6 +564,13 @@ data "talos_machine_configuration" "talos_controlplane" {
                           --set cgroup.hostRoot=/sys/fs/cgroup \
                           --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
                           --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}"
+                      resources:
+                        requests:
+                          cpu: 200m
+                          memory: 256Mi
+                        limits:
+                          cpu: 1
+                          memory: 1Gi
                     serviceAccount: cilium-install-sa
                     serviceAccountName: cilium-install-sa
                     hostNetwork: true
@@ -597,6 +638,13 @@ data "talos_machine_configuration" "talos_controlplane" {
                             --create-namespace \
                             --version 1.10.6 \
                             --wait
+                      resources:
+                        requests:
+                          cpu: 100m
+                          memory: 128Mi
+                        limits:
+                          cpu: 500m
+                          memory: 512Mi
                     restartPolicy: OnFailure
                     serviceAccount: vela-install
                     serviceAccountName: vela-install
@@ -1024,6 +1072,24 @@ data "talos_machine_configuration" "talos_controlplane" {
                 driftDetection:
                   mode: enabled
                 values:
+                  prometheus:
+                    prometheusSpec:
+                      resources:
+                        requests:
+                          cpu: 500m
+                          memory: 2Gi
+                        limits:
+                          cpu: 2
+                          memory: 4Gi
+                  alertmanager:
+                    alertmanagerSpec:
+                      resources:
+                        requests:
+                          cpu: 25m
+                          memory: 64Mi
+                        limits:
+                          cpu: 200m
+                          memory: 128Mi
                   grafana:
                     adminPassword: prom-operator
                     resources:
@@ -1033,7 +1099,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                       limits:
                         cpu: 296m
                         memory: 273M
-                  nodeExporter:
+                  prometheus-node-exporter:
                     enabled: true
                     resources:
                       requests:
@@ -1057,7 +1123,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                       limits:
                         cpu: 35m
                         memory: 250Mi
-                  ku-operator:
+                  prometheusOperator:
                     resources:
                       requests:
                         cpu: 1554m
@@ -1525,6 +1591,13 @@ data "talos_machine_configuration" "talos_controlplane" {
                             --set cleanupController.replicas=2 \
                             --set reportsController.replicas=2 \
                             --wait
+                      resources:
+                        requests:
+                          cpu: 200m
+                          memory: 256Mi
+                        limits:
+                          cpu: 1
+                          memory: 1Gi
                     restartPolicy: OnFailure
                     serviceAccount: kyverno-install
                     serviceAccountName: kyverno-install
