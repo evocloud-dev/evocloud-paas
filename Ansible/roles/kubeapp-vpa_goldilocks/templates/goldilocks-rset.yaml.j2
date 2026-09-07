@@ -66,6 +66,21 @@ spec:
         values:
           controller:
             enabled: true
+            resources:
+              requests:
+                cpu: 25m
+                memory: 250Mi
+              limits:
+                cpu: 25m
+                memory: 250Mi
+          dashboard:
+            resources:
+              requests:
+                cpu: 25m
+                memory: 250Mi
+              limits:
+                cpu: 25m
+                memory: 250Mi
 
 ## Notes:
 ### Namespaces must be labelled for goldilocks to monitor resources limits recommendations:

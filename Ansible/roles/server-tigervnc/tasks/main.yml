@@ -49,9 +49,10 @@
 
 - name: Restarting and enabling XRDP service...
   ansible.builtin.systemd:
-    name: xrdp
+    name: "{{ item }}"
     state: restarted
     enabled: yes
+  loop: "{{ xrdp_services }}"
   become: true
 
 #Configuring TigerVNC-Server
