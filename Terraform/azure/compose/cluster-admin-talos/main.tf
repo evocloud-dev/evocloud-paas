@@ -202,7 +202,7 @@ resource "azurerm_linux_virtual_machine" "controlplane" {
 
   os_disk {
     caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
+    storage_account_type = "Premium_LRS"
   }
 }
 
@@ -251,7 +251,7 @@ resource "azurerm_linux_virtual_machine" "worker" {
 
   os_disk {
     caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
+    storage_account_type = "Premium_LRS"
   }
 }
 
@@ -261,7 +261,7 @@ resource "azurerm_managed_disk" "extra_disk" {
   name                 = "${each.value.short_name}-extra-disk"
   location             = var.rg_location
   resource_group_name  = var.rg_name
-  storage_account_type = "Standard_LRS"
+  storage_account_type = "Premium_LRS"
   create_option        = "Empty"
   disk_size_gb         = var.BASE_VOLUME_200
 
