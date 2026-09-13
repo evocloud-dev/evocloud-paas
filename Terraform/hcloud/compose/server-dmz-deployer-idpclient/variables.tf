@@ -59,15 +59,20 @@ variable "DEPLOYER_SHORT_HOSTNAME" {
   type        = string
 }
 
+variable "DEPLOYER_PRIVATE_IP" {
+  description = "Deployer Short Name"
+  type        = string
+}
+
 variable "deployer_server_eip" {
   description = "Deployer Server Public IP"
   type        = string
 }
 
-variable "deployer_server_ip" {
-  description = "Deployer Private IP"
-  type        = string
-}
+#variable "deployer_server_ip" {
+#  description = "Deployer Private IP"
+#  type        = string
+#}
 
 variable "idam_server_ip" {
   description = "IDAM Server Private IPv4"

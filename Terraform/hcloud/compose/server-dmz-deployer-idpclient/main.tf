@@ -21,14 +21,14 @@ resource "terraform_data" "deployer_server_idam_configuration" {
   provisioner "local-exec" {
     command = <<EOF
       ${var.ANSIBLE_DEBUG_FLAG ? "ANSIBLE_DEBUG=1" : ""} ANSIBLE_PIPELINING=True ansible-playbook --timeout 60 \
-        ${var.AUTOMATION_FOLDER}/Ansible/server-dmz-deployer-idpclient.yml \
+        /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/server-dmz-deployer-idpclient.yml \
         --forks 10 \
-        --inventory-file ${var.deployer_server_ip}, \
+        --inventory-file ${var.DEPLOYER_PRIVATE_IP}, \
         --user ${var.CLOUD_USER} \
         --private-key ${var.PRIVATE_KEY_PAIR} \
         --vault-password-file /home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/ansible-vault-pass.txt \
         --ssh-common-args "-o 'StrictHostKeyChecking=no' -o 'ControlMaster=auto' -o 'ControlPersist=120s'" \
-        --extra-vars "ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml server_ip=${var.deployer_server_ip} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} server_short_hostname=${var.DEPLOYER_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} server_timezone=${var.DEFAULT_TIMEZONE} metadata_ns_ip=${var.HCLOUD_METADATA_NS} idam_replica_ip=${var.idam_replica_ip} cloud_platform=${var.CLOUD_PLATFORM}"
+        --extra-vars "ansible_secret=/home/${var.CLOUD_USER}/EVOCLOUD/Ansible/secret-vault/secret-store.yml server_ip=${var.DEPLOYER_PRIVATE_IP} idam_server_ip=${var.idam_server_ip} idam_short_hostname=${var.IDAM_SHORT_HOSTNAME} server_short_hostname=${var.DEPLOYER_SHORT_HOSTNAME} domain_tld=${var.DOMAIN_TLD} server_timezone=${var.DEFAULT_TIMEZONE} metadata_ns_ip=${var.HCLOUD_METADATA_NS} idam_replica_ip=${var.idam_replica_ip} cloud_platform=${var.CLOUD_PLATFORM}"
     EOF
     #Ansible logs
     environment = {
