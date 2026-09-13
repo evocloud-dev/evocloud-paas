@@ -33,3 +33,11 @@
   until: kubescape_deploy_result is succeeded
   retries: 10
   delay: 30
+
+- name: Placing exceptions.json in proper folder
+  ansible.builtin.copy:
+    src: exceptions.json
+    dest: "/home/mlkroot/.kubescape/exceptions.json"
+    owner: "{{ cloud-user }}"
+    group: "{{ cloud-user }}"
+    mode: "0644"

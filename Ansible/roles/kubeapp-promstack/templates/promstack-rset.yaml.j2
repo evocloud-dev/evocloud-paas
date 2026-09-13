@@ -69,6 +69,13 @@ spec:
             adminPassword: prom-operator
           nodeExporter:
             enabled: true
+            resources:
+              limits:
+                cpu: 25m
+                memory: 250Mi
+              requests:
+                cpu: 25m
+                memory: 250Mi
             operatingSystems:
               linux:
                 enabled: true
@@ -76,3 +83,19 @@ spec:
                 enabled: false
               darwin:
                 enabled: false
+          kube-state-metrics:
+            resources:
+              requests:
+                cpu: 25m
+                memory: 250Mi
+              limits:
+                cpu: 25m
+                memory: 250Mi
+          prometheus-node-exporter:
+            resources:
+              requests:
+                cpu: 25m
+                memory: 250Mi
+              limits:
+                cpu: 25m
+                memory: 250Mi
