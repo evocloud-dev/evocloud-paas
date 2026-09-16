@@ -925,7 +925,7 @@ resource "talos_cluster_kubeconfig" "kubeconfig" {
 resource "local_file" "talos_kubeconfig_file" {
   depends_on  = [talos_cluster_kubeconfig.kubeconfig]
 
-  filename    = "/${var.CLOUD_USER}/kubeconfig/kubeconfig-${var.cluster_name}.yaml"
+  filename    = "/home/${var.CLOUD_USER}/kubeconfig/kubeconfig-${var.cluster_name}.yaml"
   directory_permission = "0740"
   file_permission      = "0640"
   content     = talos_cluster_kubeconfig.kubeconfig.kubeconfig_raw
@@ -935,11 +935,10 @@ resource "local_file" "talos_kubeconfig_file" {
 resource "local_file" "talos_talosconfig_file" {
   depends_on  = [talos_cluster_kubeconfig.kubeconfig]
 
-  filename    = "/${var.CLOUD_USER}/talosconfig/talosconfig-${var.cluster_name}.yaml"
+  filename    = "/home/${var.CLOUD_USER}/talosconfig/talosconfig-${var.cluster_name}.yaml"
   directory_permission = "0740"
   file_permission      = "0640"
   content     = data.talos_client_configuration.talosconfig.talos_config
-
 }
 
 #--------------------------------------------------
@@ -970,7 +969,7 @@ resource "terraform_data" "cluster_post_configuration" {
     EOF
     #Ansible logs
     environment = {
-      ANSIBLE_LOG_PATH = "/home/${var.CLOUD_USER}/Logs/evok8s-admin-cluster-ansible.log"
+      ANSIBLE_LOG_PATH = "/home/${var.CLOUD_USER}/EVOCLOUD/Logs/evok8s-admin-cluster-ansible.log"
     }
   }
 }
