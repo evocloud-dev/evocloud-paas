@@ -85,7 +85,7 @@ spec:
     #EvoCloud Observability Endpoint - AlertManager
     ###############################################
     - name: http-alertmanager
-      hostname: altertmanager.{{ domain_tld }}
+      hostname: alertmanager.{{ domain_tld }}
       port: 80
       protocol: HTTP
       allowedRoutes:
@@ -147,7 +147,7 @@ spec:
       tls:
         mode: Terminate #Passthrough mode is not supported yet.
         certificateRefs:
-          - name: https-flux-tls
+          - name: https-storage-tls
             kind: Secret            #https://github.com/cert-manager/cert-manager/issues/5610
             namespace: evocloud-ns
 

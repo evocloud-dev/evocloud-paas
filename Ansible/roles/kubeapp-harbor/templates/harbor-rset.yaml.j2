@@ -1,10 +1,12 @@
 ---
 # Harbor as a Flux Operator ResourceSet
-#   - Database: CloudNativePG (operator already installed), Cluster lives in this ResourceSet
+#   - Database: toggle via inputs.dbType
+#       "external" -> CloudNativePG Cluster is created by this ResourceSet, operator must already be installed
+#       "internal" -> Harbor's bundled Postgres subchart (single pod, own PVC, no HA)
 #   - Image storage: AWS S3 using a static access key / secret key from a Kubernetes Secret
 #   - Redis: Harbor's bundled (internal) Redis until you decide on an external one
 #
-# Prerequisites, created OUTSIDE this ResourceSet (SOPS / ExternalSecrets / kubectl):
+# Prerequisites, created OUTSIDE this ResourceSet (Ansible playbook harbor-secrets.yml):
 #   Namespace "harbor"
 #   Secret harbor-s3            keys: REGISTRY_STORAGE_S3_ACCESSKEY, REGISTRY_STORAGE_S3_SECRETKEY
 #   Secret harbor-admin         key:  HARBOR_ADMIN_PASSWORD
@@ -12,26 +14,24 @@
 #   Secret harbor-chart-secrets keys: core-secret, jobservice-secret, registry-secret, xsrf-key (32 chars)
 #   Secret harbor-tls           kubernetes.io/tls (or let cert-manager create it)
 #
-# The DB secret is NOT needed: CNPG generates <pgName>-app (username, password, ...).
+# No database secret needed either way:
+#   dbType: external -> CNPG generates <pgName>-app (username, password, ...)
+#   dbType: internal -> the bundled Postgres subchart generates its own
 apiVersion: fluxcd.controlplane.io/v1
 kind: ResourceSet
 metadata:
   name: harbor
   namespace: flux-system
 spec:
-  # Reconcile only once the namespace/secrets exist and the CNPG operator is up.
-  # Adjust names to match your Kustomizations.
-  dependsOn:
-    - apiVersion: kustomize.toolkit.fluxcd.io/v1
-      kind: Kustomization
-      name: harbor-secrets
-      namespace: flux-system
-      ready: true
-    - apiVersion: kustomize.toolkit.fluxcd.io/v1
-      kind: Kustomization
-      name: cnpg-operator
-      namespace: flux-system
-      ready: true
+  # If inputs.dbType is "external", add a dependency on your CNPG operator's
+  # Kustomization so the Cluster CRD is registered before this applies.
+  # NOTE: dependsOn is a fixed, non-templated field -- keep it in sync by hand.
+  # dependsOn:
+  #   - apiVersion: kustomize.toolkit.fluxcd.io/v1
+  #     kind: Kustomization
+  #     name: cnpg-operator
+  #     namespace: flux-system
+  #     ready: true
 
   # ResourceSet becomes Ready only when everything it applied is healthy
   wait: true
@@ -40,228 +40,259 @@ spec:
     - name: harbor
       namespace: harbor
       host: harbor.example.com
-      ingressClass: nginx
+      ingressClass: cilium
       tlsSecret: harbor-tls
-      chartVersion: "1.x"            # pin an exact version: helm search repo harbor/harbor --versions
+      chartVersion: "1.19.2"   # helm repo update && helm search repo harbor/harbor --versions
+
       # S3
-      s3Region: us-east-1
-      s3Bucket: my-harbor-registry
+      s3Region: us-east-2
+      s3Bucket: evocloud-harbor-registry-315183407055-us-east-2-an
       s3Secret: harbor-s3
-      # CloudNativePG
+
+      # --- Database backend switch ---
+      # "external" = CloudNativePG Cluster, created below, operator must pre-exist
+      # "internal" = Harbor's bundled Postgres subchart, no operator needed, no HA
+      dbType: internal
+
+      # Used only when dbType: external
       pgName: harbor-pg
       pgInstances: 3
-      pgStorageSize: 50Gi
-      pgStorageClass: gp3
       pgAntiAffinityTopologyKey: kubernetes.io/hostname   # or topology.kubernetes.io/zone if you have >= 3 zones
 
-  resources:
-    # ---------------------------------------------------------------- Postgres
-    - apiVersion: postgresql.cnpg.io/v1
-      kind: Cluster
-      metadata:
-        name: << inputs.pgName >>
-        namespace: << inputs.namespace >>
-      spec:
-        instances: << inputs.pgInstances >>
-        storage:
-          size: << inputs.pgStorageSize >>
-          storageClass: << inputs.pgStorageClass >>
-        bootstrap:
-          initdb:
-            database: registry
-            owner: harbor
-        postgresql:
-          parameters:
-            max_connections: "200"
-        affinity:
-          enablePodAntiAffinity: true
-          podAntiAffinityType: required
-          topologyKey: << inputs.pgAntiAffinityTopologyKey >>
-        resources:
-          requests:
-            cpu: "1"
-            memory: 2Gi
-          limits:
-            memory: 2Gi
+      # Storage sizing -- applies to the CNPG Cluster's PVC (external) or the
+      # bundled Postgres subchart's PVC (internal), whichever is active
+      pgStorageSize: 50Gi
+      pgStorageClass: ceph-block
 
+  resourcesTemplate: |
+    << if eq inputs.dbType "external" >>
+    ---
+    # ---------------------------------------------------------------- Postgres (CloudNativePG)
+    apiVersion: postgresql.cnpg.io/v1
+    kind: Cluster
+    metadata:
+      name: << inputs.pgName >>
+      namespace: << inputs.namespace >>
+    spec:
+      instances: << inputs.pgInstances >>
+      storage:
+        size: << inputs.pgStorageSize >>
+        storageClass: << inputs.pgStorageClass >>
+      bootstrap:
+        initdb:
+          database: registry
+          owner: harbor
+      postgresql:
+        parameters:
+          max_connections: "200"
+      affinity:
+        enablePodAntiAffinity: true
+        podAntiAffinityType: required
+        topologyKey: << inputs.pgAntiAffinityTopologyKey >>
+      resources:
+        requests:
+          cpu: "1"
+          memory: 2Gi
+        limits:
+          memory: 2Gi
+    << end >>
+    ---
     # ------------------------------------------------------------- Helm source
-    - apiVersion: source.toolkit.fluxcd.io/v1
-      kind: HelmRepository
-      metadata:
-        name: harbor
-        namespace: << inputs.namespace >>
-      spec:
-        interval: 1h
-        url: https://helm.goharbor.io
-
+    apiVersion: source.toolkit.fluxcd.io/v1
+    kind: HelmRepository
+    metadata:
+      name: harbor
+      namespace: << inputs.namespace >>
+    spec:
+      interval: 1h
+      url: https://helm.goharbor.io
+    ---
     # ------------------------------------------------------------------ Harbor
-    - apiVersion: helm.toolkit.fluxcd.io/v2
-      kind: HelmRelease
-      metadata:
-        name: << inputs.name >>
-        namespace: << inputs.namespace >>
-      spec:
-        interval: 30m
-        releaseName: harbor
-        chart:
-          spec:
-            chart: harbor
-            version: << inputs.chartVersion | quote >>
-            sourceRef:
-              kind: HelmRepository
-              name: harbor
-        install:
-          timeout: 15m               # core crash-loops until Postgres is ready; give it room
-          remediation:
-            retries: 3
-        upgrade:
-          timeout: 15m
-          cleanupOnFail: true
-          remediation:
-            retries: 3
-            remediateLastFailure: true
-        # Keep these deterministic and out of Git plaintext
-        valuesFrom:
-          - kind: Secret
-            name: harbor-chart-secrets
-            valuesKey: core-secret
-            targetPath: core.secret
-          - kind: Secret
-            name: harbor-chart-secrets
-            valuesKey: jobservice-secret
-            targetPath: jobservice.secret
-          - kind: Secret
-            name: harbor-chart-secrets
-            valuesKey: registry-secret
-            targetPath: registry.secret
-          - kind: Secret
-            name: harbor-chart-secrets
-            valuesKey: xsrf-key
-            targetPath: core.xsrfKey
-        values:
-          externalURL: https://<< inputs.host >>
+    apiVersion: helm.toolkit.fluxcd.io/v2
+    kind: HelmRelease
+    metadata:
+      name: << inputs.name >>
+      namespace: << inputs.namespace >>
+    spec:
+      interval: 30m
+      releaseName: harbor
+      chart:
+        spec:
+          chart: harbor
+          version: << inputs.chartVersion | quote >>
+          sourceRef:
+            kind: HelmRepository
+            name: harbor
+      install:
+        timeout: 15m               # core crash-loops until Postgres is ready; give it room
+        remediation:
+          retries: 3
+      upgrade:
+        timeout: 15m
+        cleanupOnFail: true
+        remediation:
+          retries: 3
+          remediateLastFailure: true
+      # Keep these deterministic and out of Git plaintext
+      valuesFrom:
+        - kind: Secret
+          name: harbor-chart-secrets
+          valuesKey: core-secret
+          targetPath: core.secret
+        - kind: Secret
+          name: harbor-chart-secrets
+          valuesKey: jobservice-secret
+          targetPath: jobservice.secret
+        - kind: Secret
+          name: harbor-chart-secrets
+          valuesKey: registry-secret
+          targetPath: registry.secret
+        - kind: Secret
+          name: harbor-chart-secrets
+          valuesKey: xsrf-key
+          targetPath: core.xsrfKey
+      values:
+        externalURL: https://<< inputs.host >>
 
-          expose:
-            type: ingress
-            tls:
-              enabled: true
-              certSource: secret
-              secret:
-                secretName: << inputs.tlsSecret >>
-            ingress:
-              className: << inputs.ingressClass >>
-              hosts:
-                core: << inputs.host >>
-
-          existingSecretAdminPassword: harbor-admin
-          existingSecretAdminPasswordKey: HARBOR_ADMIN_PASSWORD
-          existingSecretSecretKey: harbor-secretkey
-
-          persistence:
+        expose:
+          type: ingress
+          tls:
             enabled: true
-            imageChartStorage:
-              disableredirect: false          # true = registry proxies all blob traffic instead of redirecting clients to S3
-              type: s3
-              s3:
-                existingSecret: << inputs.s3Secret >>   # keys: REGISTRY_STORAGE_S3_ACCESSKEY / REGISTRY_STORAGE_S3_SECRETKEY
-                region: << inputs.s3Region >>
-                bucket: << inputs.s3Bucket >>
-                encrypt: true
-                secure: true
-                v4auth: true
-            persistentVolumeClaim:
-              trivy:
-                size: 10Gi
+            certSource: secret
+            secret:
+              secretName: << inputs.tlsSecret >>
+          ingress:
+            className: << inputs.ingressClass >>
+            hosts:
+              core: << inputs.host >>
 
-          # CloudNativePG as the external database
-          database:
-            type: external
-            external:
-              host: << inputs.pgName >>-rw.<< inputs.namespace >>.svc
-              port: "5432"
-              username: harbor
-              coreDatabase: registry
-              existingSecret: << inputs.pgName >>-app   # CNPG-generated, has a "password" key
-              sslmode: require
-            maxIdleConns: 20
-            maxOpenConns: 100
+        existingSecretAdminPassword: harbor-admin
+        existingSecretAdminPasswordKey: HARBOR_ADMIN_PASSWORD
+        existingSecretSecretKey: harbor-secretkey
 
-          # Bundled Redis for now. Switch to type: external when you pick one.
-          redis:
-            type: internal
+        persistence:
+          enabled: true
+          imageChartStorage:
+            disableredirect: false          # true = registry proxies all blob traffic instead of redirecting clients to S3
+            type: s3
+            s3:
+              existingSecret: << inputs.s3Secret >>   # keys: REGISTRY_STORAGE_S3_ACCESSKEY / REGISTRY_STORAGE_S3_SECRETKEY
+              region: << inputs.s3Region >>
+              bucket: << inputs.s3Bucket >>
+              encrypt: true
+              secure: true
+              v4auth: true
+          persistentVolumeClaim:
+            trivy:
+              size: 10Gi
+            << if eq inputs.dbType "internal" >>
+            database:
+              size: << inputs.pgStorageSize >>
+              storageClass: << inputs.pgStorageClass >>
+            << end >>
 
-          portal:
-            replicas: 2
-            resources:
-              requests:
-                cpu: 100m
-                memory: 128Mi
-              limits:
-                memory: 256Mi
-          core:
-            replicas: 3
-            topologySpreadConstraints:
-              - maxSkew: 1
-                topologyKey: topology.kubernetes.io/zone
-                whenUnsatisfiable: ScheduleAnyway
-                labelSelector:
-                  matchLabels:
-                    app: harbor
-                    component: core
+        << if eq inputs.dbType "external" >>
+        # CloudNativePG as the external database
+        database:
+          type: external
+          external:
+            host: << inputs.pgName >>-rw.<< inputs.namespace >>.svc
+            port: "5432"
+            username: harbor
+            coreDatabase: registry
+            existingSecret: << inputs.pgName >>-app   # CNPG-generated, has a "password" key
+            sslmode: require
+          maxIdleConns: 20
+          maxOpenConns: 100
+        << else >>
+        # Harbor's own bundled Postgres subchart -- single replica, own PVC, no HA
+        database:
+          type: internal
+          internal:
             resources:
               requests:
                 cpu: 250m
                 memory: 256Mi
               limits:
                 memory: 512Mi
-          registry:
-            replicas: 3
-            resources:
-              requests:
-                cpu: 250m
-                memory: 256Mi
-              limits:
-                memory: 512Mi
-          jobservice:
-            replicas: 2
-            jobLoggers:
-              - stdout
-            resources:
-              requests:
-                cpu: 250m
-                memory: 256Mi
-              limits:
-                memory: 512Mi
-          trivy:
-            enabled: true
-            replicas: 2
-            resources:
-              requests:
-                cpu: 250m
-                memory: 512Mi
-              limits:
-                memory: 1Gi
+          maxIdleConns: 20
+          maxOpenConns: 100
+        << end >>
 
+        # Bundled Redis for now. Switch to type: external when you pick one.
+        redis:
+          type: internal
+
+        portal:
+          replicas: 2
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+        core:
+          replicas: 3
+          topologySpreadConstraints:
+            - maxSkew: 1
+              topologyKey: topology.kubernetes.io/zone
+              whenUnsatisfiable: ScheduleAnyway
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+        registry:
+          replicas: 3
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+        jobservice:
+          replicas: 2
+          jobLoggers:
+            - stdout
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+        trivy:
+          enabled: true
+          replicas: 2
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
+    ---
     # ------------------------------------------------ PDBs (chart doesn't ship them)
-    - apiVersion: policy/v1
-      kind: PodDisruptionBudget
-      metadata:
-        name: harbor-core
-        namespace: << inputs.namespace >>
-      spec:
-        minAvailable: 2
-        selector:
-          matchLabels:
-            app: harbor
-            component: core
-    - apiVersion: policy/v1
-      kind: PodDisruptionBudget
-      metadata:
-        name: harbor-registry
-        namespace: << inputs.namespace >>
-      spec:
-        minAvailable: 2
-        selector:
-          matchLabels:
-            app: harbor
-            component: registry
+    apiVersion: policy/v1
+    kind: PodDisruptionBudget
+    metadata:
+      name: harbor-core
+      namespace: << inputs.namespace >>
+    spec:
+      minAvailable: 2
+      selector:
+        matchLabels:
+          app: harbor
+          component: core
+    ---
+    apiVersion: policy/v1
+    kind: PodDisruptionBudget
+    metadata:
+      name: harbor-registry
+      namespace: << inputs.namespace >>
+    spec:
+      minAvailable: 2
+      selector:
+        matchLabels:
+          app: harbor
+          component: registry
+
