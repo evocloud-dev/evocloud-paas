@@ -1,0 +1,132 @@
+---
+#This playbook will deploy Harbor
+#References:
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-harbor ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ kubeapp_dir }}/harbor"
+
+
+######################################################
+#Deploying Harbor Prereqs
+######################################################
+- name: Starting harbor install
+  module_defaults:
+    group/kubernetes.core.k8s:
+      kubeconfig: "{{ kubeconfig }}"
+  block:
+
+    - name: Ensure namespace exists
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ harbor_namespace }}"
+
+    - name: Create harbor-s3
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          type: Opaque
+          metadata:
+            name: harbor-s3
+            namespace: "{{ harbor_namespace }}"
+          stringData:
+            REGISTRY_STORAGE_S3_ACCESSKEY: ""
+            REGISTRY_STORAGE_S3_SECRETKEY: ""
+      no_log: true
+
+    - name: Create harbor-admin
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          type: Opaque
+          metadata:
+            name: harbor-admin
+            namespace: "{{ harbor_namespace }}"
+          stringData:
+            HARBOR_ADMIN_PASSWORD: "iamharbor"
+      no_log: true
+
+    - name: Create harbor-secretkey
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          type: Opaque
+          metadata:
+            name: harbor-secretkey
+            namespace: "{{ harbor_namespace }}"
+          stringData:
+            secretKey: "iam_harbor_secret_key"
+      no_log: true
+
+    - name: Create harbor-chart-secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          type: Opaque
+          metadata:
+            name: harbor-chart-secrets
+            namespace: "{{ harbor_namespace }}"
+          stringData:
+            core-secret: "iam_harbor_core_secret"
+            jobservice-secret: "iam_harbor_jobservice_secret"
+            registry-secret: "iam_harbor_registry_secret"
+            xsrf-key: "iam_harbor_xsrf_key"
+      no_log: true
+
+    - name: Create harbor-tls (skip when cert-manager owns it)
+      when: harbor_tls_manage | bool
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          type: kubernetes.io/tls
+          metadata:
+            name: harbor-tls
+            namespace: "{{ harbor_namespace }}"
+          data:
+            tls.crt: "{{ lookup('ansible.builtin.file', harbor_tls_cert_file) | b64encode }}"
+            tls.key: "{{ lookup('ansible.builtin.file', harbor_tls_key_file) | b64encode }}"
+      no_log: true
+
+    ######################################################
+    #Deploying Harbor
+    ######################################################
+    - name: Staging Kubernetes manifests...
+      ansible.builtin.template:
+        src: "{{ item }}.j2"
+        dest: "{{ kubeapp_dir }}/harbor/{{ item }}"
+      loop:
+        - harbor-rset.yaml
+
+    - name: Deploying Kubernetes manifests...
+      kubernetes.core.k8s:
+        #kubeconfig: "{{ kubeconfig }}"
+        #state: present
+        src: "{{ item }}"
+      loop:
+        - "{{ kubeapp_dir }}/harbor/harbor-rset.yaml"
+      register: harbor_deploy_result
+      until: harbor_deploy_result is succeeded
+      retries: 4
+      delay: 30
+
+

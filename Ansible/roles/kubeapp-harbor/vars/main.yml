@@ -1,0 +1,12 @@
+---
+cloud_user: ""
+
+harbor_namespace: "harbor"
+
+harbor_tls_manage: false
+
+kube_cluster_name: ""
+
+kubeapp_dir: '/home/{{ cloud_user }}/kubeapps/{{ kube_cluster_name }}'
+
+kubeconfig: '/home/{{ cloud_user }}/kubeconfig/kubeconfig-{{ kube_cluster_name }}.yaml'
