@@ -4,7 +4,7 @@ hubble_cli_ver: 'v1.19.4'
 
 hubble_cli_install_dir: /usr/local/bin
 
-hubble_cli_force_update: false
+hubble_cli_force_update: true
 
 #https://github.com/cilium/hubble/releases/tag/v1.19.4
 #https://github.com/cilium/hubble/releases/download/v1.19.4/hubble-linux-amd64.tar.gz

@@ -4,7 +4,7 @@ kubevela_ver: 'v1.11.0'
 
 kubevela_install_dir: /usr/local/bin
 
-kubevela_force_update: false
+kubevela_force_update: true
 
 #https://github.com/kubevela/kubevela/releases/tag/v1.11.0
 #https://github.com/kubevela/kubevela/releases/download/v1.11.0/kubectl-vela-v1.11.0-linux-amd64.tar.gz

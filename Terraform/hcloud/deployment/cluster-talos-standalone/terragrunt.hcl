@@ -5,8 +5,8 @@
 inputs = {
   dmz_subnet_id       = dependency.network-subnet.outputs.dmz_subnet_id
   cluster_name        = "evo-cluster-std"
-  talos_version       = "v1.11.5"
-  kubernetes_version  = "v1.34.0"
+  talos_version       = "v1.14.0"
+  kubernetes_version  = "v1.37.1"
 }
 
 #--------------------------------------------------

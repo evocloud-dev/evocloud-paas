@@ -13,21 +13,33 @@ locals {
   })
 
   talos_containerd_config = yamlencode({
-    machine = {
-      files = [
-        {
-          op          = "create"
-          path        = "/etc/cri/conf.d/20-customization.part"
-          content     = <<-EOT
-            [plugins."io.containerd.cri.v1.images"]
-              discard_unpacked_layers = false
-            [plugins."io.containerd.cri.v1.runtime"]
-              device_ownership_from_security_context = true
-          EOT
-        }
-      ]
-    }
+    apiVersion = "v1alpha1"
+    kind = "CRICustomizationConfig"
+    name = "spegel-config"
+    content = <<-EOT
+      [plugins."io.containerd.cri.v1.images"]
+        discard_unpacked_layers = false
+      [plugins."io.containerd.cri.v1.runtime"]
+        device_ownership_from_security_context = true
+    EOT
   })
+
+  #talos_containerd_config = yamlencode({
+  #  machine = {
+  #    files = [
+  #      {
+  #        op          = "create"
+  #        path        = "/etc/cri/conf.d/20-customization.part"
+  #        content     = <<-EOT
+  #          [plugins."io.containerd.cri.v1.images"]
+  #            discard_unpacked_layers = false
+  #          [plugins."io.containerd.cri.v1.runtime"]
+  #            device_ownership_from_security_context = true
+  #        EOT
+  #      }
+  #    ]
+  #  }
+  #})
 }
 
 data "hcloud_image" "evok8s" {
@@ -319,6 +331,7 @@ data "talos_machine_configuration" "talos_controlplane" {
           hcloud_load_balancer_network.this.ip,
         ]
         kubelet = {
+          image = "ghcr.io/evocloud-dev/oci-fips/kubelet-fips:${var.kubernetes_version}-amd64"
           extraArgs = {
             cloud-provider = "external"
             rotate-server-certificates = true
@@ -358,6 +371,7 @@ data "talos_machine_configuration" "talos_controlplane" {
       }
       cluster = {
         apiServer = {
+          image = "ghcr.io/evocloud-dev/oci-fips/kube-apiserver-fips:${var.kubernetes_version}-amd64"
           auditPolicy = {
             apiVersion = "audit.k8s.io/v1"
             kind = "Policy"
@@ -382,10 +396,27 @@ data "talos_machine_configuration" "talos_controlplane" {
             #feature-gates = "HPAScaleToZero=true,DynamicResourceAllocation=true"
           }
         }
+        controllerManager = {
+          image = "ghcr.io/evocloud-dev/oci-fips/kube-controller-manager-fips:${var.kubernetes_version}-amd64"
+          extraArgs = {
+            "bind-address" = "0.0.0.0"
+            "cloud-provider" = "external"
+          }
+        }
         #https://docs.siderolabs.com/kubernetes-guides/monitoring-and-observability/etcd-metrics
         etcd = {
+          image = "ghcr.io/evocloud-dev/oci-fips/etcd-fips:v3.7.2-amd64"
           extraArgs = {
             "listen-metrics-urls" = "http://0.0.0.0:2381"
+          }
+        }
+        coreDNS = {
+          image = "ghcr.io/evocloud-dev/oci-fips/coredns-fips:v1.14.7-amd64"
+        }
+        scheduler = {
+          image = "ghcr.io/evocloud-dev/oci-fips/kube-scheduler-fips:${var.kubernetes_version}-amd64"
+          extraArgs = {
+            "bind-address" = "0.0.0.0"
           }
         }
         network = {
@@ -501,7 +532,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                         - |
                           helm upgrade --install --namespace kube-system talos-cloud-controller-manager oci://ghcr.io/siderolabs/charts/talos-cloud-controller-manager -f https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/talos-ccm-gcp.yaml
                           helm upgrade --install cilium oci://quay.io/cilium/charts/cilium \
-                          --version 1.20.0 \
+                          --version 1.20.2 \
                           --namespace kube-system \
                           --set operator.replicas=2 \
                           --set k8sServiceHost=localhost \
@@ -595,7 +626,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install flux-operator oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator \
                             --namespace flux-system \
                             --create-namespace \
-                            --version 0.57.0 \
+                            --version 0.61.0 \
                             --wait
                     restartPolicy: OnFailure
                     serviceAccount: flux-install
@@ -677,7 +708,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                         mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
                         operation: copy
                       ref:
-                        semver: "0.57.x"
+                        semver: "0.61.x"
                   - apiVersion: helm.toolkit.fluxcd.io/v2
                     kind: HelmRelease
                     metadata:
@@ -834,6 +865,7 @@ data "talos_machine_configuration" "talos_worker" {
           ]
         }
         kubelet = {
+          image = "ghcr.io/evocloud-dev/oci-fips/kubelet-fips:${var.kubernetes_version}-amd64"
           extraArgs = {
             cloud-provider = "external"
             rotate-server-certificates = true
@@ -844,7 +876,7 @@ data "talos_machine_configuration" "talos_worker" {
           }
         }
         install = {
-          extraKernelArgs = ["talos.dashboard.disabled=1"]
+          image = "ghcr.io/evocloud-dev/oci/installer:${var.talos_version}"
         }
         systemDiskEncryption = {
           ephemeral = {

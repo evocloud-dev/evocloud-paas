@@ -26,18 +26,12 @@
   ansible.builtin.shell: "/usr/bin/ansible-galaxy collection install community.mysql"
   #become: true #Commented this out to enable installation of collection in /home/mlkroot/.ansible
 
-- name: Copy ansible.cfg to /etc/ansible
-  ansible.builtin.copy:
-    src: "/tmp/ansible.cfg"
-    dest: "/etc/ansible/ansible.cfg"
+- name: Copy ansible.cfg to /etc/ansible...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/ansible//{{ item }}"
     owner: root
     group: root
-    mode: '0644'
-    remote_src: yes
-  become: true
-
-- name: Remove ansible.cfg in /tmp
-  ansible.builtin.file:
-    path: /tmp/ansible.cfg
-    state: absent
+  loop:
+    - ansible.cfg
   become: true

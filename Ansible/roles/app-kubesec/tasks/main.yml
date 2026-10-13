@@ -18,9 +18,9 @@
     path: '{{ kubesec_install_dir }}/kubesec'
     state: absent
   become: true
-  when: (kubesec_cli_binary.stat.exists) and (kubesec_cli_force_update | bool)
+  when: (kubesec_cli_binary.stat.exists) and (kubesec_force_update | bool)
 
-- when: (not kubesec_cli_binary.stat.exists) or (kubesec_cli_force_update | bool)
+- when: (not kubesec_cli_binary.stat.exists) or (kubesec_force_update | bool)
   block:
     - name: Verifying sha256 checksum...
       ansible.builtin.get_url:

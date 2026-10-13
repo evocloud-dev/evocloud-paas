@@ -1,15 +1,15 @@
 ---
-#https://github.com/FiloSottile/age/releases/tag/v1.3.1
-#https://github.com/FiloSottile/age/releases/download/v1.3.1/age-v1.3.1-linux-amd64.tar.gz
+#https://github.com/FiloSottile/age/releases/tag/v1.3.2
 
 # renovate: datasource=github-releases depName=FiloSottile/age versioning=semver
-age_ver: 'v1.3.1'
+age_ver: 'v1.3.2'
 
 age_install_dir: /usr/local/bin
 
-age_force_update: false
+age_force_update: true
 
+#https://github.com/FiloSottile/age/releases/download/v1.3.2/age-v1.3.2-linux-amd64.tar.gz
 age_download_url: 'https://github.com/FiloSottile/age/releases/download/{{ age_ver }}/age-{{ age_ver }}-linux-amd64.tar.gz'
 
 # renovate: datasource=github-releases depName=FiloSottile/age packageName=age-v<semver>-linux-amd64.tar.gz versioning=semver
-age_checksum: sha256:bdc69c09cbdd6cf8b1f333d372a1f58247b3a33146406333e30c0f26e8f51377
+age_checksum: sha256:cbe24006683f8eb669266162894b9a522a1af52f2665fbc63a4bb032ed26ac10
