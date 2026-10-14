@@ -1,4 +1,81 @@
 ---
+# 1. Creates the namespace only
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: harbor-namespace
+  namespace: flux-system
+spec:
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: harbor
+---
+# 2. Waits for the namespace, then creates the secrets in it
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: harbor-prereqs
+  namespace: flux-system
+spec:
+  dependsOn:
+    - apiVersion: v1
+      kind: Namespace
+      name: harbor
+      ready: false
+  inputs:
+    # Set to false when cert-manager owns harbor-tls
+    - tls_manage: false
+  resources:
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: harbor-s3
+        namespace: harbor
+      type: Opaque
+      stringData:
+        REGISTRY_STORAGE_S3_ACCESSKEY: ""
+        REGISTRY_STORAGE_S3_SECRETKEY: ""
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: harbor-admin
+        namespace: harbor
+      type: Opaque
+      stringData:
+        HARBOR_ADMIN_PASSWORD: "iamharbor"
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: harbor-secretkey
+        namespace: harbor
+      type: Opaque
+      stringData:
+        secretKey: "iam_harbor_secret_key"
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: harbor-chart-secrets
+        namespace: harbor
+      type: Opaque
+      stringData:
+        core-secret: "iam_harbor_core_secret"
+        jobservice-secret: "iam_harbor_jobservice_secret"
+        registry-secret: "iam_harbor_registry_secret"
+        xsrf-key: "iam_harbor_xsrf_key"
+  resourcesTemplate: |
+    <<- if inputs.tls_manage >>
+    apiVersion: v1
+    kind: Secret
+    type: kubernetes.io/tls
+    metadata:
+      name: harbor-tls
+      namespace: harbor
+      annotations:
+        fluxcd.controlplane.io/copyFrom: "flux-system/harbor-tls"
+    <<- end >>
+---
 # Harbor as a Flux Operator ResourceSet
 #   - Database: toggle via inputs.dbType
 #       "external" -> CloudNativePG Cluster is created by this ResourceSet, operator must already be installed
@@ -25,8 +102,14 @@ metadata:
 spec:
   # If inputs.dbType is "external", add a dependency on your CNPG operator's
   # Kustomization so the Cluster CRD is registered before this applies.
+
   # NOTE: dependsOn is a fixed, non-templated field -- keep it in sync by hand.
-  # dependsOn:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: ResourceSet
+      name: harbor-prereqs
+      namespace: flux-system
+      ready: true
   #   - apiVersion: kustomize.toolkit.fluxcd.io/v1
   #     kind: Kustomization
   #     name: cnpg-operator
