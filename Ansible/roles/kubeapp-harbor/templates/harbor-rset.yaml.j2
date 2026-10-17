@@ -79,7 +79,7 @@ spec:
         driftDetection:
           mode: enabled
         values:
-          externalURL: https://harbor.example.com
+          externalURL: https://harbor.{{ domain_tld }}
 
           # The chart renders an HTTPRoute (api/service/v2/c -> core, / -> portal).
           # TLS terminates at the Gateway listener, so chart TLS must stay off:
@@ -87,19 +87,19 @@ spec:
           expose:
             type: route
             tls:
-              enabled: false
+              enabled: true
             route:
               parentRefs:
-                - name: CHANGE_ME            # your Gateway
-                  namespace: CHANGE_ME       # its namespace
-                  sectionName: https         # the HTTPS listener
+                - name: shared-gtw            # Name of your specific Gateway
+                  namespace: evocloud-ns      # Namespace of your specific Gateway
+                  sectionName: https-harbor   # the HTTPS listener for Harbor
                   group: gateway.networking.k8s.io
                   kind: Gateway
               hosts:
-                - harbor.example.com
+                - harbor.{{ domain_tld }}
 
-          harborAdminPassword: "CHANGE_ME"
-          secretKey: "CHANGE_ME_16char"   # must be exactly 16 chars
+          harborAdminPassword: "Harbor12345!" #Change this to something more secure
+          secretKey: "0630c7f4f70329b29aa8dc84cedf75e0"       # must be exactly 16 Characters long: openssl rand -hex 16
 
           persistence:
             enabled: true
@@ -107,7 +107,7 @@ spec:
               disableredirect: false   # true = registry proxies blob traffic instead of redirecting clients to S3
               type: s3
               s3:
-                accesskey: "CHANGE_ME"
+                accesskey: "CHANGE_ME" 
                 secretkey: "CHANGE_ME"
                 region: "CHANGE_ME"
                 bucket: "CHANGE_ME"
