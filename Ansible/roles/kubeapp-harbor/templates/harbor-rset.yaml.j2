@@ -130,7 +130,9 @@ spec:
             enabled: true
             imageChartStorage:
               disableredirect: false   # true = registry proxies blob traffic instead of redirecting clients to S3
-              type: s3
+              
+              # Specify the type of storage: "filesystem", "azure", "gcs", "s3", "swift", "oss"
+              type: filesystem
               s3:
                 accesskey: "CHANGE_ME" 
                 secretkey: "CHANGE_ME"
@@ -139,12 +141,34 @@ spec:
                 encrypt: true
                 secure: true
                 v4auth: true
+              gcs:
+                bucket: bucketname
+                # The base64 encoded json file which contains the key
+                encodedkey: base64-encoded-json-key-file
+                #rootdirectory: /gcs/object/name/prefix
+                #chunksize: "5242880"
+                # To use existing secret, the key must be GCS_KEY_DATA
+                existingSecret: ""
+                useWorkloadIdentity: false
+              oss:
+                accesskeyid: accesskeyid
+                accesskeysecret: accesskeysecret
+                region: regionname
+                bucket: bucketname
+                # key in existingSecret must be REGISTRY_STORAGE_OSS_ACCESSKEYSECRET
+                existingSecret: ""
+                #endpoint: endpoint
+                #internal: false
+                #encrypt: false
+                #secure: true
+                #chunksize: 10M
+                #rootdirectory: rootdirectory
+                
             persistentVolumeClaim:
               trivy:
                 size: 10Gi
               database:
                 size: 50Gi
-                storageClass: "CHANGE_ME"
 
           # Harbor's bundled Postgres -- single replica, own PVC, no HA
           database:
