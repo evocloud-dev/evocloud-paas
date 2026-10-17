@@ -82,16 +82,23 @@ spec:
         driftDetection:
           mode: enabled
         values:
+          logLevel: error
           externalURL: https://harbor.{{ domain_tld }}
 
           # The chart renders an HTTPRoute (api/service/v2/c -> core, / -> portal).
           # TLS terminates at the Gateway listener, so chart TLS must stay off:
           # with it on, core mounts a cert secret that is never created for routes.
           expose:
-            type: route
-            tls:
-              enabled: true
+            type: route # Type route enables Gateway API
             route:
+              annotations:
+                forecastle.stakater.com/expose: "true"
+                forecastle.stakater.com/icon: "https://raw.githubusercontent.com/cncf/artwork/refs/heads/main/projects/harbor/icon/color/harbor-icon-color.svg"
+                forecastle.stakater.com/appName: "Harbor OCI Repository"
+                forecastle.stakater.com/group: "APIs & Interfaces"
+                forecastle.stakater.com/instance: "Evodashboard"
+                forecastle.stakater.com/properties: "Platform:EvoCloud, Version:1.19.4"
+                forecastle.stakater.com/network-restricted: "true"
               parentRefs:
                 - name: shared-gtw            # Name of your specific Gateway
                   namespace: evocloud-ns      # Namespace of your specific Gateway
@@ -100,7 +107,22 @@ spec:
                   kind: Gateway
               hosts:
                 - harbor.{{ domain_tld }}
+            tls:
+              enabled: true
+              certSource: none
 
+          trace:
+            enabled: false
+            # trace provider: jaeger or otel
+            provider: otel
+            otel:
+              endpoint: hostname:4318
+              url_path: /v1/traces
+              compression: false
+              insecure: true
+              # timeout is in seconds
+              timeout: 10
+        
           harborAdminPassword: "Harbor12345!" #Change this to something more secure
           secretKey: "0630c7f4f70329b29aa8dc84cedf75e0"       # must be exactly 16 Characters long: openssl rand -hex 16
 
