@@ -30,6 +30,9 @@ spec:
       name: flux
       namespace: flux-system
       ready: true
+    # Add dependsOn storageClass
+    # Add dependsOn Monitoring Stack
+    # Add dependsOn Cert-Manager
 
   resources:
     #Namespace (applied first by the operator, before any namespaced resource)
@@ -38,7 +41,7 @@ spec:
       metadata:
         name: harbor
 
-    #Create Helm Repository
+    #Create OCI Repository
     - apiVersion: source.toolkit.fluxcd.io/v1
       kind: OCIRepository
       metadata:
