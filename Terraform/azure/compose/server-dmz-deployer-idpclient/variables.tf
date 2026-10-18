@@ -8,6 +8,11 @@ variable "AZ_CLIENT_SECRET" {
   type        = string
 }
 
+variable "AZ_METADATA_NS" {
+  description = "Azure Metadata NS"
+  type        = string
+}
+
 variable "AZ_TENANT_ID" {
   description = "AZ Tenant ID"
   type        = string
