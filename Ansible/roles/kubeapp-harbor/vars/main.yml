@@ -1,6 +1,8 @@
 ---
 cloud_user: ""
 
+domain_tld: ""
+
 kube_cluster_name: ""
 
 kubeapp_name: 'harbor'
