@@ -1,5 +1,5 @@
 ---
-kubelogin_force_update: false
+kubelogin_force_update: true
 
 #https://kubernetes.io/releases/
 # renovate: datasource=github-releases depName=int128/kubelogin versioning=semver

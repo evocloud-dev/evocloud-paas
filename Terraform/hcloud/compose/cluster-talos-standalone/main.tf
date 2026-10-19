@@ -24,7 +24,7 @@ data "hcloud_image" "evok8s" {
 }
 
 resource "hcloud_firewall" "evok8s_wks_firewall" {
-  name = "my-firewall"
+  name = "evok8s-std-firewall"
   rule {
     direction = "in"
     protocol  = "tcp"
@@ -168,6 +168,7 @@ data "talos_machine_configuration" "talos_controlplane" {
           one(hcloud_server.talos_ctrlplane["node01"].network[*].ip)
         ]
         kubelet = {
+          image = "ghcr.io/evocloud-dev/oci-fips/kubelet-fips:${var.kubernetes_version}-amd64"
           extraArgs = {
             cloud-provider             = "external"
             rotate-server-certificates = true
@@ -185,10 +186,13 @@ data "talos_machine_configuration" "talos_controlplane" {
             }
           ]
         }
+        install = {
+          image = "ghcr.io/evocloud-dev/oci/installer:${var.talos_version}"
+        }
         features = {
           kubernetesTalosAPIAccess = {
             enabled = true
-            allowedRoles = ["os:reader"]
+            allowedRoles = ["os:reader", "os:admin"]
             allowedKubernetesNamespaces = ["kube-system"]
           }
           hostDNS = {
@@ -239,6 +243,7 @@ EOT
       }
       cluster = {
         apiServer = {
+          image = "ghcr.io/evocloud-dev/oci-fips/kube-apiserver-fips:${var.kubernetes_version}-amd64"
           extraArgs = {
             # https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/
             enable-aggregator-routing = true
@@ -249,17 +254,23 @@ EOT
           ]
         }
         controllerManager = {
+          image = "ghcr.io/evocloud-dev/oci-fips/kube-controller-manager-fips:${var.kubernetes_version}-amd64"
           extraArgs = {
             "bind-address" = "0.0.0.0"
             "cloud-provider" = "external"
           }
         }
         etcd = {
+          image = "ghcr.io/evocloud-dev/oci-fips/etcd-fips:v3.7.2-amd64"
           extraArgs = {
             "listen-metrics-urls" = "http://0.0.0.0:2381"
           }
         }
+        coreDNS = {
+          image = "ghcr.io/evocloud-dev/oci-fips/coredns-fips:v1.14.7-amd64"
+        }
         scheduler = {
+          image = "ghcr.io/evocloud-dev/oci-fips/kube-scheduler-fips:${var.kubernetes_version}-amd64"
           extraArgs = {
             "bind-address" = "0.0.0.0"
           }

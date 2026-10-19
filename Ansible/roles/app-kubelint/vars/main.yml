@@ -4,7 +4,7 @@ kube_linter_version: 'v0.8.3'
 
 kube_linter_install_dir: /usr/local/bin
 
-kube_linter_force_update: false
+kube_linter_force_update: true
 
 # https://github.com/stackrox/kube-linter/releases/
 # https://github.com/stackrox/kube-linter/releases/download/v0.8.3/kube-linter-linux

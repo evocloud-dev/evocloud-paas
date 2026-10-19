@@ -18,9 +18,9 @@
     path: '{{ copa_install_dir }}/copa'
     state: absent
   become: true
-  when: (copa_cli_binary.stat.exists) and (copa_cli_force_update | bool)
+  when: (copa_cli_binary.stat.exists) and (copa_force_update | bool)
 
-- when: (not copa_cli_binary.stat.exists) or (copa_cli_force_update | bool)
+- when: (not copa_cli_binary.stat.exists) or (copa_force_update | bool)
   block:
     - name: Verifying COPA sha256 checksum...
       ansible.builtin.get_url:

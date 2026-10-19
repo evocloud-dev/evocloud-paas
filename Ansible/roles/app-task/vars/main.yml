@@ -6,7 +6,7 @@ task_ver: 'v3.53.1'
 
 task_install_dir: /usr/local/bin
 
-task_force_update: false
+task_force_update: true
 
 #https://github.com/go-task/task/releases/tag/v3.53.1
 #https://github.com/go-task/task/releases/download/v3.53.1/task_linux_amd64.tar.gz

@@ -10,7 +10,7 @@ copa_version: "0.14.2"
 copa_install_dir: "/usr/local/bin"
 
 # Update flag
-copa_force_update: false
+copa_force_update: true
 
 # URLS: https://github.com/project-copacetic/copacetic/releases/download/v0.14.2/copa_0.14.2_linux_amd64.tar.gz
 copa_download_url: "https://github.com/project-copacetic/copacetic/releases/download/v{{ copa_version }}/copa_{{ copa_version }}_linux_amd64.tar.gz"

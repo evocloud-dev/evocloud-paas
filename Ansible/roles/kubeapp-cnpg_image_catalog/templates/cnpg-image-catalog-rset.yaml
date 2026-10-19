@@ -3,13 +3,14 @@
 #DEPLOYING Cloudnative-PG Images Catalog
 ############################################
 #Reference: https://github.com/cloudnative-pg/artifacts/tree/main/image-catalogs
-#           https://cloudnative-pg.io/docs/1.28/image_catalog/
+#           https://github.com/cloudnative-pg/artifacts/blob/main/image-catalogs/catalog-minimal-trixie.yaml
+#           https://cloudnative-pg.io/docs/1.30/image_catalog
 
 # https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
 apiVersion: fluxcd.controlplane.io/v1
 kind: ResourceSet
 metadata:
-  name: cnpg-image-catalogs-base
+  name: cnpg-image-catalog-base
   namespace: flux-system
   annotations:
     fluxcd.controlplane.io/reconcile: "enabled"
@@ -30,16 +31,21 @@ spec:
       metadata:
         name: postgresql-minimal-trixie-base
         labels:
-          images.cnpg.io/date: "20260624"
           images.cnpg.io/family: postgresql
           images.cnpg.io/os: trixie
-          images.cnpg.io/publisher: cnpg.io
-          images.cnpg.io/type: minimal-base
+          images.cnpg.io/type: minimal
       spec:
+        # PostgreSQL major versions - OCI images
         images:
-          - major: 18
-            image: ghcr.io/cloudnative-pg/postgresql:18.4-202606221003-minimal-trixie@sha256:538f1b327b8dc7621a94aac79c9c3e5c50dfa29115a6c291e19372a5b876f415
-          - major: 17
-            image: ghcr.io/cloudnative-pg/postgresql:17.10-202606221003-minimal-trixie@sha256:ed9e490fef3cc3d6bda0ad29028e90c9b0c6eeb978fa3f21f8b0e82690f797e2
           - major: 16
-            image: ghcr.io/cloudnative-pg/postgresql:16.14-202606221003-minimal-trixie@sha256:322ac0b84afe6b7894285d48258e749c4a38e60cacac5ae7e9740623cd0263a2
+            image: ghcr.io/cloudnative-pg/postgresql:16.15-202610120828-minimal-trixie@sha256:5e44466914a2de2bf0f1d8eec1388f31f42bacab71454a4a2ea20c31284e617e
+          - major: 17
+            image: ghcr.io/cloudnative-pg/postgresql:17.11-202610120828-minimal-trixie@sha256:e1f13bf01149991575399038559935f839686073e0f18255a28ec68a3d283568
+          #Starting with PostgreSQL 18 (and CloudNativePG 1.29+), you can attach extension images as read-only volumes instead of baking the extensions into the main PostgreSQL image.
+          - major: 18
+            image: ghcr.io/cloudnative-pg/postgresql:18.6-202610120828-minimal-trixie@sha256:c9be7f221a05b18fe65259d9136affbabe3b39ad91c3b68f8f2f990a45f35f38
+
+        # Component images – this is what the Pooler will use
+        componentImages:
+          - key: pgbouncer
+            image: ghcr.io/cloudnative-pg/pgbouncer:1.26.0@sha256:ce54f1133c509f1db8a8092c3f1c761d8c9292065ed6b6698786bb966da4dab9

@@ -8,7 +8,7 @@ packer_mirror: https://releases.hashicorp.com/packer
 
 packer_install_dir: /usr/local/bin
 
-packer_force_update: false
+packer_force_update: true
 
 # https://releases.hashicorp.com/packer/1.16.0/packer_1.16.0_SHA256SUMS
 packer_checksum: 'sha256:5edcd14ab59b535040c512dbecd6ec9ef976a000b073c19d93e4c431c948581e'

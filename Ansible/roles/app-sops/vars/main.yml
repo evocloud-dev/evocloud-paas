@@ -1,5 +1,5 @@
 ---
-sops_force_update: false
+sops_force_update: true
 
 #https://github.com/getsops/sops/releases
 # renovate: datasource=github-releases depName=getsops/sops versioning=semver

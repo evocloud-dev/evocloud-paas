@@ -4,7 +4,7 @@ helm_ver: 'v4.2.4'
 
 helm_install_dir: /usr/local/bin
 
-helm_force_update: false
+helm_force_update: true
 
 #https://github.com/helm/helm/tags
 # https://get.helm.sh/helm-v4.2.4-linux-amd64.tar.gz

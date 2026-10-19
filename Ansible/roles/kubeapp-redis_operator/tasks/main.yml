@@ -1,0 +1,37 @@
+---
+#This playbook will deploy Redis-Operator
+#References: https://redis-operator.opstree.dev/docs/installation/installation/
+#            https://github.com/ot-container-kit/redis-operator
+#            https://github.com/OT-CONTAINER-KIT/redis-operator/tree/main/charts
+
+- ansible.builtin.debug:
+    msg: "########### STARTING ANSIBLE ROLE: kubeapp-redis_operator ##############"
+
+- name: Creating directories for manifest files...
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ redis_operator_kubeapp_dir }}"
+
+######################################################
+#Deploying Redis-Operator Resources
+######################################################
+- name: Staging Kubernetes manifests...
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ redis_operator_kubeapp_dir }}/{{ item }}"
+  loop:
+    - redis-operator-rset.yaml
+
+- name: Deploying Kubernetes manifests...
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ item }}"
+  loop:
+    - "{{ redis_operator_kubeapp_dir }}/redis-operator-rset.yaml"
+  register: redis_operator_result
+  until: redis_operator_result is succeeded
+  retries: 10
+  delay: 30

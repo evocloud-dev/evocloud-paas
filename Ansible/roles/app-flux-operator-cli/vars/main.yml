@@ -6,7 +6,7 @@ flux_operator_cli_ver: "0.58.1"
 
 flux_operator_cli_install_dir: /usr/local/bin
 
-flux_operator_cli_force_update: false
+flux_operator_cli_force_update: true
 
 #https://github.com/controlplaneio-fluxcd/flux-operator/releases/tag/v0.58.1
 #https://github.com/controlplaneio-fluxcd/flux-operator/releases/download/v0.58.1/flux-operator_0.58.1_linux_amd64.tar.gz

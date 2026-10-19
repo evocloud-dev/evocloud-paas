@@ -6,7 +6,7 @@ os_arch: 'linux-amd64'
 
 talosctl_install_dir: /usr/local/bin
 
-talosctl_force_update: false
+talosctl_force_update: true
 
 #https://github.com/siderolabs/talos/releases/download/v1.13.9/talosctl-linux-amd64
 talosctl_download_url: 'https://github.com/siderolabs/talos/releases/download/{{ talosctl_version }}/talosctl-{{ os_arch }}'

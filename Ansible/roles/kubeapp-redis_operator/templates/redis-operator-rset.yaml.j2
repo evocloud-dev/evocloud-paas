@@ -1,0 +1,90 @@
+############################################
+#DEPLOYING Redis Operator
+############################################
+# Reference: https://redis-operator.opstree.dev/docs/installation/installation/
+#            https://github.com/OT-CONTAINER-KIT/redis-operator
+#            https://github.com/OT-CONTAINER-KIT/redis-operator/tree/main/charts
+
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: redis-operator
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    # Add dependsOn storageClass
+    # Add dependsOn CertManager
+    # Add dependsOn PromStack
+
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: redis-operator
+        #labels:
+        #  pod-security.kubernetes.io/enforce: privileged
+
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: redis-operator
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: oci://ghcr.io/ot-container-kit/charts/redis-operator
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
+        ref:
+          semver: "0.26.*"
+        #cosign verify --certificate-oidc-issuer https://token.actions.githubusercontent.com --certificate-identity-regexp 'https://github\.com/action-stars/helm-workflows/\.github/workflows/release\.yaml@.+' --certificate-github-workflow-repository fluent/helm-charts --certificate-github-workflow-name Release ghcr.io/fluent/helm-charts/fluent-operator:4.2.0
+        #verify:
+        #  provider: cosign
+        #  matchOIDCIdentity:
+        #    - issuer: ^https://token\.actions\.githubusercontent\.com$
+        #      subject: ^https://github\.com/action-stars/helm-workflows/\.github/workflows/release\.yaml@.+$
+
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: redis-operator
+        namespace: redis-operator
+      spec:
+        #serviceAccountName: redis-operator
+        chartRef:
+          kind: OCIRepository
+          name: redis-operator
+          namespace: flux-system
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        #https://github.com/OT-CONTAINER-KIT/redis-operator/blob/main/charts/redis-operator/values.yaml
+        values:
+          featureGates:
+            ## Enable generating Redis configuration using an init container instead of a regular container
+            GenerateConfigInInitContainer: true
+          certmanager:
+            enabled: true
+          redisOperator:
+            webhook: true
+
+# Now that the operator is installed we can create different ResourceSets for:
+# - Deploying a Redis Cluster: https://redis-operator.opstree.dev/docs/getting-started/cluster/
+# - Deploying a Redis Replica with Sentinel: https://redis-operator.opstree.dev/docs/getting-started/replication/#sentinel-mode
+# - Deploying a Redis Standalone: https://redis-operator.opstree.dev/docs/getting-started/standalone/

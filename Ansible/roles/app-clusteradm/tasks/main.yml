@@ -18,9 +18,9 @@
     path: '{{ clusteradm_install_dir }}/clusteradm'
     state: absent
   become: true
-  when: (clusteradm_cli_binary.stat.exists) and (clusteradm_cli_force_update | bool)
+  when: (clusteradm_cli_binary.stat.exists) and (clusteradm_force_update | bool)
 
-- when: (not clusteradm_cli_binary.stat.exists) or (clusteradm_cli_force_update | bool)
+- when: (not clusteradm_cli_binary.stat.exists) or (clusteradm_force_update | bool)
   block:
     - name: Verifying clusteradm sha256 checksum...
       ansible.builtin.get_url:

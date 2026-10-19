@@ -10,7 +10,7 @@ timoni_version: "0.33.0"
 timoni_install_dir: "/usr/local/bin"
 
 # Update flag
-timoni_force_update: false
+timoni_force_update: true
 
 # URLS: https://github.com/stefanprodan/timoni/releases/download/v0.33.0/timoni_0.33.0_linux_amd64.tar.gz
 timoni_download_url: "https://github.com/stefanprodan/timoni/releases/download/v{{ timoni_version }}/timoni_{{ timoni_version }}_linux_amd64.tar.gz"
