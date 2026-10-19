@@ -13,33 +13,21 @@ locals {
   })
 
   talos_containerd_config = yamlencode({
-    apiVersion = "v1alpha1"
-    kind = "CRICustomizationConfig"
-    name = "spegel-config"
-    content = <<-EOT
-      [plugins."io.containerd.cri.v1.images"]
-        discard_unpacked_layers = false
-      [plugins."io.containerd.cri.v1.runtime"]
-        device_ownership_from_security_context = true
-    EOT
+    machine = {
+      files = [
+        {
+          op          = "create"
+          path        = "/etc/cri/conf.d/20-customization.part"
+          content     = <<-EOT
+            [plugins."io.containerd.cri.v1.images"]
+              discard_unpacked_layers = false
+            [plugins."io.containerd.cri.v1.runtime"]
+              device_ownership_from_security_context = true
+          EOT
+        }
+      ]
+    }
   })
-
-  #talos_containerd_config = yamlencode({
-  #  machine = {
-  #    files = [
-  #      {
-  #        op          = "create"
-  #        path        = "/etc/cri/conf.d/20-customization.part"
-  #        content     = <<-EOT
-  #          [plugins."io.containerd.cri.v1.images"]
-  #            discard_unpacked_layers = false
-  #          [plugins."io.containerd.cri.v1.runtime"]
-  #            device_ownership_from_security_context = true
-  #        EOT
-  #      }
-  #    ]
-  #  }
-  #})
 }
 
 data "hcloud_image" "evok8s" {

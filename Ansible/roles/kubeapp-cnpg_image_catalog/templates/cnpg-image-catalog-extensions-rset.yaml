@@ -1,0 +1,105 @@
+---
+############################################
+#DEPLOYING Cloudnative-PG Images Catalog
+############################################
+#Reference: https://github.com/cloudnative-pg/artifacts/tree/main/image-catalogs
+#           https://github.com/cloudnative-pg/artifacts/blob/main/image-catalogs-extensions/catalog-minimal-trixie.yaml
+#           https://cloudnative-pg.io/docs/1.30/image_catalog
+
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: cnpg-image-catalog-extensions
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: cloudnative-pg-operator
+      namespace: cnpg-system
+      ready: true
+  resources:
+    # Cloudnative-pg ImageCatalog:
+    # https://cloudnative-pg.io/docs/1.28/image_catalog/
+    - apiVersion: postgresql.cnpg.io/v1
+      kind: ClusterImageCatalog
+      metadata:
+        name: postgresql-minimal-trixie-extensions
+        labels:
+          images.cnpg.io/family: postgresql
+          images.cnpg.io/os: trixie
+          images.cnpg.io/type: minimal
+      spec:
+        # PostgreSQL major versions - OCI images
+        images:
+          #Major version from 13 through 17 are omitted because they do not support extensions
+          #since extension_control_path is a PostgreSQL 18+ feature
+          - major: 16
+            image: ghcr.io/cloudnative-pg/postgresql:16.15-202610120828-minimal-trixie@sha256:5e44466914a2de2bf0f1d8eec1388f31f42bacab71454a4a2ea20c31284e617e
+          - major: 17
+            image: ghcr.io/cloudnative-pg/postgresql:17.11-202610120828-minimal-trixie@sha256:e1f13bf01149991575399038559935f839686073e0f18255a28ec68a3d283568
+          #Starting with PostgreSQL 18 (and CloudNativePG 1.29+), you can attach extension images as read-only volumes instead of baking the extensions into the main PostgreSQL image.
+          - major: 18
+            image: ghcr.io/cloudnative-pg/postgresql:18.6-202610120828-minimal-trixie@sha256:c9be7f221a05b18fe65259d9136affbabe3b39ad91c3b68f8f2f990a45f35f38
+            extensions:
+              #PgVector is the most popular PostgreSQL extension for vector similarity search
+              - name: pgvector
+                image:
+                  reference: ghcr.io/cloudnative-pg/pgvector:0.8.6-18-trixie@sha256:2da4ddaf07cec8edf9ea265968c5368a5df4568737964d2a268d9843589e3e42
+              #PostGIS turns PostgreSQL into a full-featured Geographic Information System (GIS) database
+              - name: postgis
+                image:
+                  reference: ghcr.io/cloudnative-pg/postgis-extension:3.6.4-18-trixie@sha256:84a8e286d79aaec6fe824a792179d11252745a0d2b139d88692424fa61494df0
+                ld_library_path:
+                  - system
+                env:
+                  - name: GDAL_DATA
+                    value: $${image_root}/share/gdal
+                  - name: PROJ_DATA
+                    value: $${image_root}/share/proj
+              #pgRouting is a PostgreSQL extension that adds geospatial routing and network analysis capabilities
+              #It builds on top of PostGIS (so PostGIS is a required dependency)
+              - name: pgrouting
+                image:
+                  reference: ghcr.io/cloudnative-pg/pgrouting:4.0.1-202610182228-18-trixie@sha256:dd69ef47260c121fe84c2a3c46e254f6c5e426bbc9dba7eb4df0f6a76013d88d
+              #VectorChord turns PostgreSQL into a powerful vector database optimized for AI / LLM / RAG (Retrieval-Augmented Generation) workloads
+              - name: vchord
+                image:
+                  reference: ghcr.io/tensorchord/vchord-scratch:pg18-v1.1.1@sha256:bdea43bed2a414e21bbf71767bf6f0739747ac480b267b51772dc214ac28dcb3
+                dynamic_library_path:
+                  - /usr/lib/postgresql/18/lib
+                extension_control_path:
+                  - /usr/share/postgresql/18/
+              #DocumentDB turns PostgreSQL into a MongoDB-compatible document database
+              - name: documentdb
+                image:
+                  reference: ghcr.io/documentdb/documentdb-kubernetes-operator/documentdb:0.117.0@sha256:3631846a09417d8f53169841aff0bf901d803e98e7ff8597b9057308a6e85dc2
+                dynamic_library_path:
+                  - "lib"
+                extension_control_path:
+                  - "share"
+                ld_library_path:
+                  - "lib"
+                  - "system"
+              #TimescaledDB turns PostgreSQL into a time-series database
+              - name: timescaledb-oss
+                image:
+                  reference: ghcr.io/cloudnative-pg/timescaledb-oss:2.30.2-202610182228-18-trixie@sha256:c42a765bcb20be74d157e51c21a9dffd03d7d9adb2d336ff15dc05c7e5c2d72d
+              #Wal2json extension converts changes from the PostgreSQL Write-Ahead Log (WAL) into JSON format
+              - name: wal2json
+                image:
+                  reference: ghcr.io/cloudnative-pg/wal2json:2.6-202610182228-18-trixie@sha256:835ea7dfd33f911ec6e7a1e2254858b6290eeb0d9d6a7f7d86909505c51e18ec
+              #Pgivm extension adds Incremental View Maintenance (IVM) to PostgreSQL
+              - name: pg-ivm
+                image:
+                  reference: ghcr.io/cloudnative-pg/pg-ivm:1.15-202610182230-18-trixie@sha256:e1e186e5e1bcf1ec9eee1d8bfb5650ec0d804a09d8b1abca221520a02910a587
+
+        # Component images – this is what the Pooler will use
+        componentImages:
+          - key: pgbouncer
+            image: ghcr.io/cloudnative-pg/pgbouncer:1.26.0@sha256:ce54f1133c509f1db8a8092c3f1c761d8c9292065ed6b6698786bb966da4dab9

@@ -1,0 +1,30 @@
+---
+############################################
+#DEPLOYING Cloudnative-PG Cluster
+############################################
+#Reference:
+#           https://cloudnative-pg.io/docs/1.28/image_catalog/
+
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: cnpg-operator
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "20m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: FluxInstance
+      name: flux
+      namespace: flux-system
+      ready: true
+    #Requirement for storageclass
+    #Requirement for cert-manager
+    #Requirement for external-secrets
+    #Requirement for promstack
+  resources:
+    - apiVersion: v1
