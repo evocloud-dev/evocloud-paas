@@ -17,7 +17,7 @@ terraform {
     #Timer
     time = {
       source = "hashicorp/time"
-      version = "0.14.1"
+      version = "0.14.2"
     }
     #HTTP CLIENT
     http = {
