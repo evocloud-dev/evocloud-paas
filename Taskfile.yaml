@@ -25,7 +25,11 @@ tasks:
           ns=$(basename $(dirname "$taskfile"))
           echo ""
           echo "=== $(echo $ns | tr '[:lower:]' '[:upper:]') ==="
-          task --list --taskfile "$taskfile" | grep '^\*' | sed 's/^/  /' || echo "  No tasks defined"
+          task --list --sort none --taskfile "$taskfile" \
+            | grep '^\*' \
+            | awk '{ sub(/^\* /, ""); printf "%2d. %s\n", NR, $0 }' \
+            | sed 's/^/  /' \
+            || echo "  No tasks defined"
         done
 
         # Handle case where no namespaces found

@@ -75,7 +75,7 @@ resource "azurerm_linux_virtual_machine" "evok8s_stdalone_ctrlplane" {
 
   os_disk {
     caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
+    storage_account_type = "Premium_LRS"
   }
 }
 
@@ -85,7 +85,7 @@ resource "azurerm_managed_disk" "evok8s_data_disk" {
   name                 = "${azurerm_linux_virtual_machine.evok8s_stdalone_ctrlplane[each.key].name}-data-disk"
   location             = var.rg_location
   resource_group_name  = var.rg_name
-  storage_account_type = "Standard_LRS"   # Standard_LRS, StandardSSD_LRS, Premium_LRS, UltraSSD_LRS
+  storage_account_type = "Premium_LRS"   # Premium_LRS, StandardSSD_LRS, Premium_LRS, UltraSSD_LRS
   create_option        = "Empty"
   disk_size_gb         = var.BASE_VOLUME_200
 }
