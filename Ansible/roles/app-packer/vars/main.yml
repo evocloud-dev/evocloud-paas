@@ -1,6 +1,6 @@
 ---
 # renovate: datasource=github-releases depName=hashicorp/packer versioning=semver
-packer_version: '1.16.0'
+packer_version: '1.16.1'
 
 os_arch: linux_amd64
 
@@ -10,12 +10,12 @@ packer_install_dir: /usr/local/bin
 
 packer_force_update: true
 
-# https://releases.hashicorp.com/packer/1.16.0/packer_1.16.0_SHA256SUMS
-packer_checksum: 'sha256:5edcd14ab59b535040c512dbecd6ec9ef976a000b073c19d93e4c431c948581e'
+# https://releases.hashicorp.com/packer/1.16.1/packer_1.16.1_SHA256SUMS
+packer_checksum: 'sha256:af38a9e93e4ed1b9ca68206ae969c64c300c82a3dde46a780dfa629f0867f651'
 
 packer_zip: 'packer_{{ packer_version }}_{{ os_arch }}.zip'
 
-# https://releases.hashicorp.com/packer/1.16.0/packer_1.16.0_linux_amd64.zip
+# https://releases.hashicorp.com/packer/1.16.1/packer_1.16.1_linux_amd64.zip
 packer_download_url: '{{ packer_mirror }}/{{ packer_version }}/{{ packer_zip }}'
 
 packer_binary_dir: '{{ packer_install_dir }}/packer_{{ packer_version }}'
