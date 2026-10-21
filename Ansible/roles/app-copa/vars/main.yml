@@ -4,7 +4,7 @@
 #--------------------------------------------------------------
 # Copa Version
 # renovate: datasource=github-releases depName=project-copacetic/copacetic versioning=semver
-copa_version: "0.14.2"
+copa_version: "0.15.0"
 
 # Directory
 copa_install_dir: "/usr/local/bin"
@@ -12,9 +12,9 @@ copa_install_dir: "/usr/local/bin"
 # Update flag
 copa_force_update: true
 
-# URLS: https://github.com/project-copacetic/copacetic/releases/download/v0.14.2/copa_0.14.2_linux_amd64.tar.gz
+# URLS: https://github.com/project-copacetic/copacetic/releases/download/v0.15.0/copa_0.15.0_linux_amd64.tar.gz
 copa_download_url: "https://github.com/project-copacetic/copacetic/releases/download/v{{ copa_version }}/copa_{{ copa_version }}_linux_amd64.tar.gz"
 
 #https://github.com/project-copacetic/copacetic/releases/
 # renovate: datasource=github-releases depName=project-copacetic/copacetic packageName=copa-linux-amd64
-copa_checksum: 'sha256:756c6e0f287dc7839c0a72e91b4d4712b1d8cd86a7233c068c0208a28bcb9ede'
+copa_checksum: 'sha256:cff3fe9320f3bd24bafcfd0ce877ef57e23acad0836da0ac6c253919f71c9cad'
