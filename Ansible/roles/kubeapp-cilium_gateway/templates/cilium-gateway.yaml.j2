@@ -174,3 +174,27 @@ spec:
           - name: https-crd-schema-tls
             kind: Secret            #https://github.com/cert-manager/cert-manager/issues/5610
             namespace: evocloud-ns
+
+    ###############################################
+    #EvoCloud Harbor Registry Endpoint
+    ###############################################
+    - name: http-harbor
+      hostname: harbor.{{ domain_tld }}
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https-harbor
+      hostname: harbor.{{ domain_tld }}
+      port: 443
+      protocol: HTTPS
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate #Passthrough mode is not supported yet.
+        certificateRefs:
+          - name: https-harbor-tls
+            kind: Secret            #https://github.com/cert-manager/cert-manager/issues/5610
+            namespace: evocloud-ns
