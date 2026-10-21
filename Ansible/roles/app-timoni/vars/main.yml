@@ -4,7 +4,7 @@
 #--------------------------------------------------------------
 # Timoni Version
 # renovate: datasource=github-releases depName=stefanprodan/timoni versioning=semver
-timoni_version: "0.35.0"
+timoni_version: "0.36.0"
 
 # Directory
 timoni_install_dir: "/usr/local/bin"
