@@ -1,23 +1,14 @@
+---
 ############################################
 #DEPLOYING HARBOR
 ############################################
 # Reference: https://github.com/goharbor/harbor-helm
-#
-# All credentials are set inline in the HelmRelease values; the chart creates the
-# Kubernetes Secrets itself. Replace every CHANGE_ME before deploying.
-#   harborAdminPassword  initial admin password
-#   secretKey            exactly 16 chars; encrypts data in the DB, never change it
-#   s3.accesskey/secretkey
-#
-# The chart generates core.secret, jobservice.secret, registry.secret and core.xsrfKey
-# itself when left empty.
-#
-# TLS: terminated at the Gateway listener; the chart only renders the HTTPRoute.
 
+# https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
 apiVersion: fluxcd.controlplane.io/v1
 kind: ResourceSet
 metadata:
-  name: kubeapp-harbor
+  name: harbor-registry
   namespace: flux-system
   annotations:
     fluxcd.controlplane.io/reconcile: "enabled"
@@ -35,7 +26,7 @@ spec:
     # Add dependsOn Cert-Manager
 
   resources:
-    #Namespace (applied first by the operator, before any namespaced resource)
+    #Create Namespace
     - apiVersion: v1
       kind: Namespace
       metadata:
@@ -57,6 +48,9 @@ spec:
           semver: "1.19.*"
         #verify:
         #  provider: cosign
+        #  matchOIDCIdentity:
+        #    - issuer: ^https://token.actions.githubusercontent.com$
+        #      subject: ^https://github.com/goharbor/harbor.*$
 
     #Deploy Helm Release
     - apiVersion: helm.toolkit.fluxcd.io/v2
@@ -84,10 +78,6 @@ spec:
         values:
           logLevel: error
           externalURL: https://harbor.{{ domain_tld }}
-
-          # The chart renders an HTTPRoute (api/service/v2/c -> core, / -> portal).
-          # TLS terminates at the Gateway listener, so chart TLS must stay off:
-          # with it on, core mounts a cert secret that is never created for routes.
           expose:
             type: route # Type route enables Gateway API
             route:
@@ -109,8 +99,7 @@ spec:
                 - harbor.{{ domain_tld }}
             tls:
               enabled: true
-              certSource: none
-
+              certSource: none #Certificates are dynamically provisioned by cert-manager in the Gateway resource
           trace:
             enabled: false
             # trace provider: jaeger or otel
@@ -122,15 +111,12 @@ spec:
               insecure: true
               # timeout is in seconds
               timeout: 10
-        
           harborAdminPassword: "Harbor12345!" #Change this to something more secure
           secretKey: "0630c7f4f70329b29aa8dc84cedf75e0"       # must be exactly 16 Characters long: openssl rand -hex 16
-
           persistence:
             enabled: true
             imageChartStorage:
               disableredirect: false   # true = registry proxies blob traffic instead of redirecting clients to S3
-              
               # Specify the type of storage: "filesystem", "azure", "gcs", "s3", "swift", "oss"
               type: filesystem
               s3:
@@ -163,13 +149,11 @@ spec:
                 #secure: true
                 #chunksize: 10M
                 #rootdirectory: rootdirectory
-                
             persistentVolumeClaim:
               trivy:
                 size: 10Gi
               database:
                 size: 50Gi
-
           # Harbor's bundled Postgres -- single replica, own PVC, no HA
           database:
             type: internal
@@ -182,11 +166,9 @@ spec:
                   memory: 512Mi
             maxIdleConns: 20
             maxOpenConns: 100
-
           # Bundled Redis for now. Switch to type: external when you pick one.
           redis:
             type: internal
-
           portal:
             replicas: 2
             resources:
@@ -240,4 +222,3 @@ spec:
                 memory: 512Mi
               limits:
                 memory: 1Gi
-
