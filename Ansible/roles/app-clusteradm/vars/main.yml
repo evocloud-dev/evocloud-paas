@@ -4,7 +4,7 @@
 #--------------------------------------------------------------
 # Clusteradm Version
 # renovate: datasource=github-releases depName=open-cluster-management-io/clusteradm versioning=semver
-clusteradm_version: "1.3.1"
+clusteradm_version: "1.4.0"
 
 # Directory
 clusteradm_install_dir: "/usr/local/bin"
