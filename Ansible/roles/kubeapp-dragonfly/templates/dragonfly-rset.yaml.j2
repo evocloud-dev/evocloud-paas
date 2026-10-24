@@ -123,18 +123,16 @@ spec:
                 cpu: '4'
                 memory: '8Gi'
 
-
-          # Optional: persistent task / persistent cache task features
-          #redis:
-          #  enable: true
-
-          # Optional: web console, Open API, preheating, multi-cluster
-          #manager:
-          #  enable: true
-          #mysql:
-          #  enable: true
-          #redis:
-          #  enable: true
+          # Manager + MySQL + Redis: required for Harbor P2P preheat
+          # (Open API that Harbor calls), web console and multi-cluster.
+          manager:
+            enable: true
+            metrics:
+              enabled: true
+          mysql:
+            enable: true
+          redis:
+            enable: true
 
           # Optional: webhook that injects dfget/dfdaemon into annotated pods
           # (requires cert-manager)
