@@ -36,7 +36,16 @@ spec:
     - apiVersion: v1
       kind: Namespace
       metadata:
-        name: dragonfly-system
+        name: dragonfly
+        labels:
+          # The cluster enforces PodSecurity "baseline" by default. The client
+          # DaemonSet needs hostNetwork/hostPID/hostIPC, hostPath (containerd
+          # socket + config), hostPorts 4000-4006, and a privileged init
+          # container that restarts containerd, so this namespace must be
+          # privileged.
+          pod-security.kubernetes.io/enforce: privileged
+          pod-security.kubernetes.io/audit: privileged
+          pod-security.kubernetes.io/warn: privileged
 
     #Create Helm Repository
     # dragonflyoss does not publish its charts as OCI artifacts,
@@ -55,7 +64,7 @@ spec:
       kind: HelmRelease
       metadata:
         name: kubeapp-dragonfly
-        namespace: dragonfly-system
+        namespace: dragonfly
       spec:
         releaseName: dragonfly
         chart:
@@ -81,40 +90,46 @@ spec:
         values:
           # Image tags default to the chart appVersion; override only to pin.
           scheduler:
+            replicas: 1
             metrics:
               enable: true
               #serviceMonitor:
               #  enable: true
 
           seedClient:
+            replicas: 1
+            # Chart default requests 8 CPU / 16Gi (requests == limits), which
+            # leaves the pod Pending on most nodes.
+            resources:
+              requests:
+                cpu: "500m"
+                memory: 1Gi
+              limits:
+                cpu: "2"
+                memory: 4Gi
+            # Seed peer cache (chart default 100Gi). Size to roughly the total
+            # of images you preheat. NOTE: StatefulSet volume templates can't
+            # be resized in place; delete an existing seed-client PVC first.
+            persistence:
+              enable: true
+              size: 20Gi
             metrics:
               enable: true
               #serviceMonitor:
               #  enable: true
-            resources:
-              requests:
-                cpu: '8'
-                memory: '16Gi'
-              limits:
-                cpu: '8'
-                memory: '16Gi'
-
 
           client:
             metrics:
               enable: true
               #serviceMonitor:
               #  enable: true
+           # Talos: the OS is immutable and has no systemd, so dfinit can't
+            # rewrite containerd's config or restart containerd. Containerd
+            # is pointed at the local client (http://127.0.0.1:4001) by a
+            # Talos RegistryMirrorConfig in the machine config instead
+            # (see talos-dragonfly-mirror.yaml).
             dfinit:
-              enable: true
-              config:
-                containerRuntime:
-                  containerd:
-                    configPath: /etc/containerd/config.toml
-                    # Route every registry through Dragonfly via a single
-                    # _default/hosts.toml. containerd falls back to the
-                    # upstream registry if the local client is unavailable.
-                    proxyAllRegistries: true
+              enable: false
             resources:
               requests:
                 cpu: '250m'
@@ -126,13 +141,16 @@ spec:
           # Manager + MySQL + Redis: required for Harbor P2P preheat
           # (Open API that Harbor calls), web console and multi-cluster.
           manager:
+            replicas: 1
             enable: true
             metrics:
               enabled: true
           mysql:
             enable: true
+            architecture: standalone   # single primary, no secondaries
           redis:
             enable: true
+            architecture: standalone   # single primary, no secondaries
 
           # Optional: webhook that injects dfget/dfdaemon into annotated pods
           # (requires cert-manager)
