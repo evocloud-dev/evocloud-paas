@@ -28,6 +28,14 @@ locals {
       ]
     }
   })
+
+  dragonfly_p2p =   yamlencode({
+    apiVersion   = "v1alpha1"
+    kind         = "RegistryMirrorConfig"
+    name         = "*"
+    endpoints    = [{ url = "http://127.0.0.1:4001" }]
+    skipFallback = false
+  })
 }
 
 data "hcloud_image" "evok8s" {
@@ -902,6 +910,7 @@ data "talos_machine_configuration" "talos_worker" {
     }),
     local.talos_containerd_config,
     local.trusted_roots_patch,
+    local.dragonfly_p2p,
   ]
 }
 
