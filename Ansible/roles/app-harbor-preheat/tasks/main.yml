@@ -1,0 +1,147 @@
+---
+############################################
+# CONNECT HARBOR P2P PREHEAT -> DRAGONFLY
+############################################
+# Registers the Dragonfly Manager as a Harbor "Distribution" (P2P preheat
+# provider instance) and creates preheat policies on Harbor projects.
+# Idempotent: creates when missing, updates when present.
+#
+# Prerequisites
+#   - Dragonfly deployed WITH the Manager (manager/mysql/redis enabled).
+#     The lightweight (no-Manager) deployment has no Open API, so Harbor
+#     has nothing to talk to.
+#   - A Dragonfly personal access token with the "preheat" scope, created in
+#     the Dragonfly console (Developer -> Personal Access Tokens).
+#   - Harbor admin credentials.
+#
+# Role: app-dragonfly-preheat
+#   tasks/main.yml                    - sanity checks + provider instance
+#   tasks/harbor-preheat-policy.yml   - one preheat policy (looped below)
+#   vars/main.yml                     - settings (secrets come from vault)
+#
+# APIs used:
+#   Harbor:  /api/v2.0/p2p/preheat/instances
+#            /api/v2.0/projects/{project}/preheat/policies
+
+
+#------------------------------------------------------------------------
+# Sanity checks
+#------------------------------------------------------------------------
+- name: Check Harbor is reachable
+  ansible.builtin.uri:
+    url: "{{ harbor_api }}/ping"
+    validate_certs: "{{ harbor_validate_certs }}"
+    return_content: true
+  register: harbor_ping
+  failed_when: harbor_ping.status != 200
+
+- name: Confirm Harbor offers the Dragonfly preheat provider
+  ansible.builtin.uri:
+    url: "{{ harbor_api }}/p2p/preheat/providers"
+    user: "{{ harbor_username }}"
+    password: "{{ harbor_password }}"
+    force_basic_auth: true
+    validate_certs: "{{ harbor_validate_certs }}"
+    return_content: true
+  register: harbor_providers
+  no_log: false
+
+- name: Fail if Dragonfly provider is not available
+  ansible.builtin.assert:
+    that:
+      - harbor_providers.json | selectattr('id', 'equalto', 'dragonfly') | list | length > 0
+    fail_msg: "Harbor does not list a 'dragonfly' preheat provider."
+    quiet: true
+
+#------------------------------------------------------------------------
+# Provider instance (Administration -> Distributions)
+#------------------------------------------------------------------------
+- name: Look up existing preheat instance
+  ansible.builtin.uri:
+    url: "{{ harbor_api }}/p2p/preheat/instances?q={{ ('name=' ~ preheat_instance.name) | urlencode }}"
+    user: "{{ harbor_username }}"
+    password: "{{ harbor_password }}"
+    force_basic_auth: true
+    validate_certs: "{{ harbor_validate_certs }}"
+    return_content: true
+  register: existing_instance
+
+- name: Build preheat instance payload
+  ansible.builtin.set_fact:
+    instance_body:
+      name: "{{ preheat_instance.name }}"
+      description: "{{ preheat_instance.description }}"
+      vendor: "dragonfly"
+      endpoint: "{{ dragonfly_manager_endpoint }}"
+      auth_mode: "OAUTH"
+      auth_info:
+        token: "{{ dragonfly_pat }}"
+      enabled: "{{ preheat_instance.enabled }}"
+      default: "{{ preheat_instance.default }}"
+      insecure: "{{ preheat_instance.insecure }}"
+  no_log: true
+
+- name: Create preheat instance
+  ansible.builtin.uri:
+    url: "{{ harbor_api }}/p2p/preheat/instances"
+    method: POST
+    user: "{{ harbor_username }}"
+    password: "{{ harbor_password }}"
+    force_basic_auth: true
+    validate_certs: "{{ harbor_validate_certs }}"
+    body_format: json
+    body: "{{ instance_body }}"
+    status_code: [201]
+  when: existing_instance.json | default([]) | length == 0
+  changed_when: true
+  no_log: true
+
+- name: Update preheat instance
+  ansible.builtin.uri:
+    url: "{{ harbor_api }}/p2p/preheat/instances/{{ preheat_instance.name | urlencode }}"
+    method: PUT
+    user: "{{ harbor_username }}"
+    password: "{{ harbor_password }}"
+    force_basic_auth: true
+    validate_certs: "{{ harbor_validate_certs }}"
+    body_format: json
+    body: "{{ instance_body | combine({'id': existing_instance.json[0].id}) }}"
+    status_code: [200]
+  when: existing_instance.json | default([]) | length > 0
+  # Harbor never returns the token, so changes can't be diffed; report
+  # changed only when visible fields differ.
+  changed_when: >-
+    existing_instance.json[0].endpoint != dragonfly_manager_endpoint or
+    existing_instance.json[0].enabled != preheat_instance.enabled or
+    existing_instance.json[0].default != preheat_instance.default or
+    existing_instance.json[0].insecure != preheat_instance.insecure
+  no_log: true
+
+- name: Read back preheat instance
+  ansible.builtin.uri:
+    url: "{{ harbor_api }}/p2p/preheat/instances/{{ preheat_instance.name | urlencode }}"
+    user: "{{ harbor_username }}"
+    password: "{{ harbor_password }}"
+    force_basic_auth: true
+    validate_certs: "{{ harbor_validate_certs }}"
+    return_content: true
+  register: instance
+
+- name: Show preheat instance status
+  ansible.builtin.debug:
+    msg: >-
+      Instance '{{ instance.json.name }}' (id {{ instance.json.id }})
+      -> {{ instance.json.endpoint }}
+      status={{ instance.json.status | default('unknown') }}
+      (check Administration -> Distributions in Harbor; it must be Healthy)
+
+#------------------------------------------------------------------------
+# Preheat policies (Project -> P2P Preheat)
+#------------------------------------------------------------------------
+- name: Configure preheat policies
+  ansible.builtin.include_tasks:
+    file: harbor-preheat-policy.yml    # resolved from this role's tasks/ dir
+  loop: "{{ preheat_policies }}"
+  loop_control:
+    loop_var: policy
+    label: "{{ policy.project }}/{{ policy.name }}"

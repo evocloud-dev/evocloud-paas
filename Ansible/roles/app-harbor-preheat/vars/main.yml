@@ -1,0 +1,40 @@
+---
+# ---- Harbor -----------------------------------------------------------
+harbor_url: "https://harbor.{{ DOMAIN_TLD }}"
+harbor_username: "admin"
+harbor_password: "{{ vault_harbor_admin_password }}"
+harbor_validate_certs: true
+
+# ---- Dragonfly Manager (as reachable FROM Harbor core) -----------------
+# In-cluster REST endpoint of the Manager (REST port is 8080).
+dragonfly_manager_endpoint: "http://dragonfly-manager.dragonfly.svc.cluster.local:8080"
+dragonfly_pat: "{{ vault_dragonfly_preheat_token }}"
+
+# ---- Harbor provider instance -----------------------------------------
+preheat_instance:
+  name: "dragonfly"
+  description: "Dragonfly P2P (managed by Ansible)"
+  default: true
+  enabled: true
+  insecure: false        # true = skip TLS verification to the Manager
+
+# ---- Preheat policies (one entry per project/policy) -------------------
+# trigger.type: manual | scheduled | event_based
+#   scheduled needs a 6-field cron, e.g. "0 0 2 * * *" (02:00 daily)
+#   event_based preheats on every push that matches the filters
+# scope: single_peer (preheat to one seed peer) | all_peers
+preheat_policies:
+  - project: "library"
+    name: "dragonfly-preheat"
+    description: "Preheat pushed images into Dragonfly"
+    enabled: true
+    scope: "single_peer"
+    repository: "**"
+    tag: "**"
+    trigger:
+      type: "event_based"
+      cron: ""
+    # Dragonfly scheduler cluster IDs to preheat; empty = all clusters.
+    cluster_ids: []
+
+harbor_api: "{{ harbor_url | regex_replace('/$', '') }}/api/v2.0"
