@@ -1,0 +1,102 @@
+---
+# Get (or create) the Dragonfly personal access token Harbor uses for preheat.
+# Sets the fact: dragonfly_pat
+#
+# Flow (Dragonfly Manager REST API):
+#   1. POST /api/v1/users/signin                  -> JWT for the root user
+#   2. GET  /api/v1/personal-access-tokens        -> reuse the named token if
+#                                                    it's active and not expired
+#   3. DELETE /api/v1/personal-access-tokens/:id  -> only if it has expired
+#   4. POST /api/v1/personal-access-tokens        -> create it when missing
+#
+# The Manager returns the token value on list/get, so reruns reuse the same
+# token instead of minting a new one every time.
+
+- name: Sign in to Dragonfly Manager
+  ansible.builtin.uri:
+    url: "{{ dragonfly_manager_api }}/users/signin"
+    method: POST
+    body_format: json
+    body:
+      name: "{{ dragonfly_admin_username }}"
+      password: "{{ dragonfly_admin_password }}"
+    validate_certs: "{{ dragonfly_validate_certs }}"
+    return_content: true
+    status_code: [200]
+  register: dragonfly_signin
+  no_log: true
+
+- name: List Dragonfly personal access tokens
+  ansible.builtin.uri:
+    url: "{{ dragonfly_manager_api }}/personal-access-tokens?user_id={{ dragonfly_admin_user_id }}&per_page=1000"
+    headers:
+      Authorization: "Bearer {{ dragonfly_signin.json.token }}"
+    validate_certs: "{{ dragonfly_validate_certs }}"
+    return_content: true
+  register: dragonfly_pats
+  no_log: true
+
+- name: Find existing preheat token
+  ansible.builtin.set_fact:
+    dragonfly_existing_pat: >-
+      {{ dragonfly_pats.json
+         | selectattr('name', 'equalto', dragonfly_pat_name)
+         | list | first | default({}) }}
+    # Compare as "YYYY-MM-DDTHH:MM:SS" (UTC) so the string compare is valid.
+    dragonfly_now_utc: "{{ now(utc=true).strftime('%Y-%m-%dT%H:%M:%S') }}"
+  no_log: true
+
+- name: Decide whether the existing token is usable
+  ansible.builtin.set_fact:
+    dragonfly_pat_usable: >-
+      {{ (dragonfly_existing_pat | length > 0)
+         and (dragonfly_existing_pat.state | default('') == 'active')
+         and ((dragonfly_existing_pat.expired_at | default(''))[:19] > dragonfly_now_utc) }}
+
+- name: Remove expired or inactive preheat token
+  ansible.builtin.uri:
+    url: "{{ dragonfly_manager_api }}/personal-access-tokens/{{ dragonfly_existing_pat.id }}"
+    method: DELETE
+    headers:
+      Authorization: "Bearer {{ dragonfly_signin.json.token }}"
+    validate_certs: "{{ dragonfly_validate_certs }}"
+    status_code: [200, 204]
+  when:
+    - dragonfly_existing_pat | length > 0
+    - not dragonfly_pat_usable | bool
+  changed_when: true
+  no_log: true
+
+- name: Create preheat token
+  ansible.builtin.uri:
+    url: "{{ dragonfly_manager_api }}/personal-access-tokens"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ dragonfly_signin.json.token }}"
+    body_format: json
+    body:
+      name: "{{ dragonfly_pat_name }}"
+      bio: "Harbor P2P preheat (managed by Ansible)"
+      scopes: "{{ dragonfly_pat_scopes }}"
+      expired_at: "{{ '%Y-%m-%dT%H:%M:%SZ' | strftime(now(utc=true).timestamp() + dragonfly_pat_lifetime_days * 86400, utc=true) }}"
+      user_id: "{{ dragonfly_admin_user_id | int }}"
+    validate_certs: "{{ dragonfly_validate_certs }}"
+    return_content: true
+    status_code: [200, 201]
+  register: dragonfly_new_pat
+  when: not dragonfly_pat_usable | bool
+  changed_when: true
+  no_log: true
+
+- name: Set dragonfly_pat
+  ansible.builtin.set_fact:
+    dragonfly_pat: >-
+      {{ dragonfly_existing_pat.token if (dragonfly_pat_usable | bool)
+         else dragonfly_new_pat.json.token }}
+  no_log: true
+
+- name: Show which token is in use
+  ansible.builtin.debug:
+    msg: >-
+      Using Dragonfly token '{{ dragonfly_pat_name }}'
+      ({{ 'existing' if (dragonfly_pat_usable | bool) else 'newly created' }})
