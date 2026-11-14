@@ -3,7 +3,7 @@
 harbor_url: "https://harbor.{{ domain_tld }}"
 harbor_api: "{{ harbor_url }}/api/v2.0"
 harbor_username: "admin"
-harbor_password: "{{ cred_store.harbor_admin_passwd }}"
+harbor_password: "{{ creds_store.harbor_admin_passwd }}"
 harbor_validate_certs: true
 
 # ---- Dragonfly Manager (as reachable FROM Harbor core) -----------------
@@ -17,7 +17,7 @@ dragonfly_manager_url: "https://dragonfly.{{ domain_tld }}"
 dragonfly_manager_api: "{{ dragonfly_manager_url }}/api/v1"
 dragonfly_validate_certs: true
 dragonfly_admin_username: "root"
-dragonfly_admin_password: "{{ cred_store.dragonfly_admin_passwd }}"
+dragonfly_admin_password: "{{ creds_store.dragonfly_admin_passwd }}"
 dragonfly_admin_user_id: 1                # root is always user 1
 
 # ---- Dragonfly preheat token -------------------------------------------
