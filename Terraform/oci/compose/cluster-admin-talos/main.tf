@@ -1561,6 +1561,16 @@ data "talos_machine_configuration" "talos_worker" {
         }
       }
     }),
+    # Dragonfly P2P: send pulls from every registry through the local
+    # dragonfly-client (DaemonSet, hostNetwork). If the client isn't running,
+    # containerd falls back to the real registry.
+    yamlencode({
+      apiVersion   = "v1alpha1"
+      kind         = "RegistryMirrorConfig"
+      name         = "*"
+      endpoints    = [{ url = "http://127.0.0.1:4001" }]
+      skipFallback = false
+    }),
   ]
 }
 

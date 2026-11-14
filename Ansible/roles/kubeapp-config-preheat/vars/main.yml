@@ -1,0 +1,61 @@
+---
+# ---- Harbor -----------------------------------------------------------
+harbor_url: "https://harbor.{{ domain_tld }}"
+harbor_api: "{{ harbor_url }}/api/v2.0"
+harbor_username: "admin"
+harbor_password: "{{ cred_store.harbor_admin_passwd }}"
+harbor_validate_certs: true
+
+# ---- Dragonfly Manager (as reachable FROM Harbor core) -----------------
+# In-cluster REST endpoint of the Manager (REST port is 8080).
+dragonfly_manager_endpoint: "http://dragonfly-manager.dragonfly.svc.cluster.local:8080"
+
+# ---- Dragonfly Manager API (as reachable FROM the Ansible host) --------
+# Used to sign in and get/create the preheat token. Goes through the
+# dragonfly-https HTTPRoute, since the Service isn't reachable from here.
+dragonfly_manager_url: "https://dragonfly.{{ domain_tld }}"
+dragonfly_manager_api: "{{ dragonfly_manager_url }}/api/v1"
+dragonfly_validate_certs: true
+dragonfly_admin_username: "root"
+dragonfly_admin_password: "{{ cred_store.dragonfly_admin_passwd }}"
+dragonfly_admin_user_id: 1                # root is always user 1
+
+# ---- Dragonfly preheat token -------------------------------------------
+# true  = get or create the token through the Manager API (tasks/dragonfly-token.yml)
+# false = use vault_dragonfly_preheat_token as-is
+dragonfly_pat_auto: true
+dragonfly_pat_name: "harbor-preheat"
+
+# Harbor calls /oapi/v1/jobs (needs "job"); "cluster" is the Manager's default
+# pair. Current Manager versions have no separate "preheat" scope.
+dragonfly_pat_scopes: ["job", "cluster"]
+dragonfly_pat_lifetime_days: 1          # an expired token is replaced on the next run
+dragonfly_pat: "{{ vault_dragonfly_preheat_token | default('') }}"
+
+# ---- Harbor provider instance -----------------------------------------
+preheat_instance:
+  name: "dragonfly"
+  description: "Dragonfly P2P (managed by Ansible)"
+  default: true
+  enabled: true
+  insecure: false        # true = skip TLS verification to the Manager
+
+# ---- Preheat policies (one entry per project/policy) -------------------
+# trigger.type: manual | scheduled | event_based
+#   scheduled needs a 6-field cron, e.g. "0 0 2 * * *" (02:00 daily)
+#   event_based preheats on every push that matches the filters
+# scope: single_peer (preheat to one seed peer) | all_peers
+preheat_policies:
+  - project: "library"
+    name: "dragonfly-preheat"
+    description: "Preheat pushed images into Dragonfly"
+    enabled: true
+    scope: "single_peer"
+    repository: "**"
+    tag: "**"
+    trigger:
+      type: "event_based"
+      cron: ""
+    # Dragonfly scheduler cluster IDs to preheat; empty = all clusters.
+    cluster_ids: []
+
