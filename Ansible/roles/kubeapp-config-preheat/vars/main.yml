@@ -1,8 +1,9 @@
 ---
 # ---- Harbor -----------------------------------------------------------
-harbor_url: "https://harbor.{{ DOMAIN_TLD }}"
+harbor_url: "https://harbor.{{ domain_tld }}"
+harbor_api: "{{ harbor_url }}/api/v2.0"
 harbor_username: "admin"
-harbor_password: "{{ vault_harbor_admin_password }}"
+harbor_password: "{{ cred_store.harbor_admin_passwd }}"
 harbor_validate_certs: true
 
 # ---- Dragonfly Manager (as reachable FROM Harbor core) -----------------
@@ -12,11 +13,11 @@ dragonfly_manager_endpoint: "http://dragonfly-manager.dragonfly.svc.cluster.loca
 # ---- Dragonfly Manager API (as reachable FROM the Ansible host) --------
 # Used to sign in and get/create the preheat token. Goes through the
 # dragonfly-https HTTPRoute, since the Service isn't reachable from here.
-dragonfly_manager_url: "https://dragonfly.{{ DOMAIN_TLD }}"
-dragonfly_manager_api: "{{ dragonfly_manager_url | regex_replace('/$', '') }}/api/v1"
+dragonfly_manager_url: "https://dragonfly.{{ domain_tld }}"
+dragonfly_manager_api: "{{ dragonfly_manager_url }}/api/v1"
 dragonfly_validate_certs: true
 dragonfly_admin_username: "root"
-dragonfly_admin_password: "{{ vault_dragonfly_root_password }}"
+dragonfly_admin_password: "{{ cred_store.dragonfly_admin_passwd }}"
 dragonfly_admin_user_id: 1                # root is always user 1
 
 # ---- Dragonfly preheat token -------------------------------------------
@@ -28,7 +29,7 @@ dragonfly_pat_name: "harbor-preheat"
 # Harbor calls /oapi/v1/jobs (needs "job"); "cluster" is the Manager's default
 # pair. Current Manager versions have no separate "preheat" scope.
 dragonfly_pat_scopes: ["job", "cluster"]
-dragonfly_pat_lifetime_days: 365          # an expired token is replaced on the next run
+dragonfly_pat_lifetime_days: 1          # an expired token is replaced on the next run
 dragonfly_pat: "{{ vault_dragonfly_preheat_token | default('') }}"
 
 # ---- Harbor provider instance -----------------------------------------
@@ -58,4 +59,3 @@ preheat_policies:
     # Dragonfly scheduler cluster IDs to preheat; empty = all clusters.
     cluster_ids: []
 
-harbor_api: "{{ harbor_url | regex_replace('/$', '') }}/api/v2.0"
