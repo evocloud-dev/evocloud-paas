@@ -3,6 +3,7 @@
 #DEPLOYING Cloudnative-PG Operator
 ############################################
 #Reference: https://github.com/cloudnative-pg/charts/tree/main/charts/cloudnative-pg
+#           https://cloudnative-pg.io/docs/devel/cncf-projects/external-secrets/#example-automated-password-management-with-external-secrets
 
 # https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
 apiVersion: fluxcd.controlplane.io/v1
@@ -93,12 +94,13 @@ spec:
             podMonitorEnabled: true
 
     ##############################################################################
-    # Secret generator
+    # Password generator config
     ##############################################################################
+    #https://cloudnative-pg.io/docs/devel/cncf-projects/external-secrets/#creating-the-password-generator
     - apiVersion: generators.external-secrets.io/v1alpha1
       kind: ClusterGenerator
       metadata:
-        name: cnpg-pass-generator
+        name: cnpg-password-generator
       spec:
         kind: Password
         generator:
@@ -106,7 +108,7 @@ spec:
             length: 42
             digits: 5
             symbols: 5
-            symbolCharacters: "-_$"
+            symbolCharacters: "-_$@"
             noUpper: false
             allowRepeat: true
 

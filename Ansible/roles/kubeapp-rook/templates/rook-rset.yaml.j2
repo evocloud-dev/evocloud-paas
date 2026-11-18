@@ -1,6 +1,7 @@
 ############################################
 #DEPLOYING ROOK STORAGE SOLUTION
 ############################################
+# Reference: https://docs.siderolabs.com/kubernetes-guides/csi/ceph-with-rook
 
 ---
 # https://kubernetes-schemas.pages.dev/fluxcd.controlplane.io/resourceset_v1.json
@@ -21,12 +22,20 @@ spec:
       namespace: flux-system
       ready: true
   resources:
+    # Rook Namespace
     - apiVersion: v1
       kind: Namespace
       metadata:
         name: rook-ceph
         labels:
           pod-security.kubernetes.io/enforce: privileged
+          pod-security.kubernetes.io/warn: privileged
+          pod-security.kubernetes.io/audit: privileged
+
+    ##############################################################################
+    # Rook Ceph Operator
+    ##############################################################################
+    # Rook Operator OCI
     - apiVersion: source.toolkit.fluxcd.io/v1
       kind: OCIRepository
       metadata:
@@ -34,12 +43,19 @@ spec:
         namespace: flux-system
       spec:
         interval: 12h
-        url: oci://registry-1.docker.io/rook/rook-ceph
+        url: oci://ghcr.io/rook/rook-ceph
         layerSelector:
           mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
           operation: copy
         ref:
-          semver: "v1.19.x"
+          semver: "1.21.x"
+        verify:
+          provider: cosign
+          matchOIDCIdentity:
+            - issuer: ^https://token\.actions\.githubusercontent\.com$
+              subject: ^https://github\.com/rook/rook.*$
+
+    # Rook Operator HelmRelease
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
       metadata:
@@ -62,10 +78,107 @@ spec:
         driftDetection:
           mode: enabled
         values:
+          logLevel: ERROR
           enableDiscoveryDaemon: true
           discoveryDaemonInterval: 15m
           monitoring:
             enabled: true
+          resources:
+            requests:
+              memory: 128Mi # unchangable
+              cpu: 100m # unchangable
+            limits: {}
+
+    ##############################################################################
+    # Ceph CSI DRIVERS
+    ##############################################################################
+    # Ceph CSI Drivers Helm repository
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: HelmRepository
+      metadata:
+        name: ceph-csi-drivers
+        namespace: flux-system
+      spec:
+        interval: 12h
+        url: https://ceph.github.io/ceph-csi-operator
+
+    # Rook CSI-Drivers HelmRelease
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: ceph-csi-drivers
+        namespace: rook-ceph
+      spec:
+        dependsOn:
+          - name: rook-ceph-operator
+            namespace: rook-ceph
+        #serviceAccountName: flux-operator
+        chart:
+          spec:
+            chart: ceph-csi-drivers
+            sourceRef:
+              kind: HelmRepository
+              name: ceph-csi-drivers
+              namespace: flux-system
+            version: "1.1.x"
+        interval: 30m
+        timeout: 15m0s
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 2
+        driftDetection:
+          mode: enabled
+        values:
+          operatorConfig:
+            namespace: rook-ceph # namespace:operator
+            driverSpecDefaults:
+              imageSet:
+                name: rook-csi-operator-image-set-configmap
+              clusterName: rook-ceph
+              grpcTimeout: 150
+              snapshotPolicy: volumeSnapshot
+              nodePlugin:
+                priorityClassName: system-node-critical
+                updateStrategy:
+                  type: RollingUpdate
+              controllerPlugin:
+                replicas: 2
+                priorityClassName: system-cluster-critical
+                deploymentStrategy:
+                  type: Recreate
+          drivers:
+            rbd:
+              enabled: true
+              name: rook-ceph.rbd.csi.ceph.com # csi-provisioner-name
+              # Set snapshotPolicy to enable snapshot/group snapshot support.
+              # If unset/none, the csi-snapshotter sidecar is not deployed.
+              # Valid values: none, volumeSnapshot, volumeGroupSnapshot.
+              # snapshotPolicy: volumeSnapshot
+              snapshotPolicy: volumeSnapshot
+              grpcTimeout: 150
+              controllerPlugin:
+                replicas: 2
+            cephfs:
+              enabled: true
+              name: rook-ceph.cephfs.csi.ceph.com # csi-provisioner-name
+              snapshotPolicy: volumeSnapshot
+              grpcTimeout: 150
+              controllerPlugin:
+                replicas: 2
+            nfs:
+              enabled: false
+              name: rook-ceph.nfs.csi.ceph.com # csi-provisioner-name
+            nvmeof:
+              enabled: false
+              name: rook-ceph.nvmeof.csi.ceph.com # csi-provisioner-name
+
+    ##############################################################################
+    # Rook Ceph Cluster
+    ##############################################################################
+    # Rook Ceph Cluster OCI
     - apiVersion: source.toolkit.fluxcd.io/v1
       kind: OCIRepository
       metadata:
@@ -73,18 +186,30 @@ spec:
         namespace: flux-system
       spec:
         interval: 12h
-        url: oci://registry-1.docker.io/rook/rook-ceph-cluster
+        url: oci://ghcr.io/rook/rook-ceph-cluster
         layerSelector:
           mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
           operation: copy
         ref:
-          semver: "v1.19.x"
+          semver: "1.21.x"
+        verify:
+          provider: cosign
+          matchOIDCIdentity:
+            - issuer: ^https://token\.actions\.githubusercontent\.com$
+              subject: ^https://github\.com/rook/rook.*$
+
+    # Rook Ceph Cluster HelmRelease
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
       metadata:
         name: rook-ceph-cluster
         namespace: rook-ceph
       spec:
+        dependsOn:
+          - name: rook-ceph-operator
+            namespace: rook-ceph
+          - name: ceph-csi-drivers
+            namespace: rook-ceph
         #serviceAccountName: flux-operator
         chartRef:
           kind: OCIRepository
@@ -101,12 +226,51 @@ spec:
         driftDetection:
           mode: enabled
         values:
+          logLevel: ERROR
           toolbox:
             enabled: true
-          mgr:
-            modules:
-              - name: rook
-                enabled: true
+          cephClusterSpec:
+            security:
+              cephx:
+                allowedCiphers:
+                  - aes256k
+                daemon:
+                  keyRotationPolicy: KeyGeneration
+                  keyGeneration: 2
+                csi:
+                  keyRotationPolicy: KeyGeneration
+                  keyGeneration: 2
+                  keepPriorKeyCountMax: 0
+                  keyType: aes256k # Talos 1.14+ backports the kernel 7.0 aes256k support
+                rbdMirrorPeer:
+                  keyRotationPolicy: KeyGeneration
+                  keyGeneration: 2
+                  keyType: aes256k
+            dashboard:
+              enabled: true
+              urlPrefix: /
+              ssl: false
+              #prometheusEndpoint: http://prometheus-operated.kube-prometheus-stack.svc.cluster.local:9090
           monitoring:
             enabled: true
             createPrometheusRules: true
+          route:
+            dashboard:
+              annotations:
+                forecastle.stakater.com/expose: "true"
+                forecastle.stakater.com/icon: "https://raw.githubusercontent.com/cncf/artwork/refs/heads/main/projects/rook/icon/color/rook-icon-color.svg"
+                forecastle.stakater.com/appName: "Storage Dashboard"
+                forecastle.stakater.com/group: "APIs & Interfaces"
+                forecastle.stakater.com/instance: "Evodashboard"
+                forecastle.stakater.com/properties: "Platform:EvoCloud, Version:1.0.0"
+                forecastle.stakater.com/network-restricted: "true"
+              parentRefs:
+                - name: shared-gtw
+                  namespace: evocloud-ns
+                  sectionName: https-rook
+                  group: gateway.networking.k8s.io
+                  kind: Gateway
+              hosts:
+                name: rook.{{ domain_tld }}
+                path: "/"
+                pathType: PathPrefix
