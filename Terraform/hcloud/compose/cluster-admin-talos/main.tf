@@ -319,7 +319,7 @@ data "talos_machine_configuration" "talos_controlplane" {
           hcloud_load_balancer_network.this.ip,
         ]
         kubelet = {
-          image = "ghcr.io/evocloud-dev/oci-fips/kubelet-fips:${var.kubernetes_version}-amd64"
+          #image = "ghcr.io/evocloud-dev/oci-fips/kubelet-fips:${var.kubernetes_version}-amd64"
           extraArgs = {
             cloud-provider = "external"
             rotate-server-certificates = true
@@ -520,7 +520,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                         - |
                           helm upgrade --install --namespace kube-system talos-cloud-controller-manager oci://ghcr.io/siderolabs/charts/talos-cloud-controller-manager -f https://raw.githubusercontent.com/evocloud-dev/evocloud-k8s-manifests/refs/heads/main/talos-ccm-gcp.yaml
                           helm upgrade --install cilium oci://quay.io/cilium/charts/cilium \
-                          --version 1.20.2 \
+                          --version 1.20.4 \
                           --namespace kube-system \
                           --set operator.replicas=2 \
                           --set k8sServiceHost=localhost \
@@ -614,7 +614,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                           helm upgrade --install flux-operator oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator \
                             --namespace flux-system \
                             --create-namespace \
-                            --version 0.61.0 \
+                            --version 0.62.1 \
                             --wait
                     restartPolicy: OnFailure
                     serviceAccount: flux-install
@@ -696,7 +696,7 @@ data "talos_machine_configuration" "talos_controlplane" {
                         mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
                         operation: copy
                       ref:
-                        semver: "0.61.x"
+                        semver: "0.62.x"
                   - apiVersion: helm.toolkit.fluxcd.io/v2
                     kind: HelmRelease
                     metadata:
@@ -853,7 +853,7 @@ data "talos_machine_configuration" "talos_worker" {
           ]
         }
         kubelet = {
-          image = "ghcr.io/evocloud-dev/oci-fips/kubelet-fips:${var.kubernetes_version}-amd64"
+          #image = "ghcr.io/evocloud-dev/oci-fips/kubelet-fips:${var.kubernetes_version}-amd64"
           extraArgs = {
             cloud-provider = "external"
             rotate-server-certificates = true

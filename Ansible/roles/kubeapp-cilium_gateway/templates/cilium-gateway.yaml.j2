@@ -198,3 +198,50 @@ spec:
           - name: https-harbor-tls
             kind: Secret            #https://github.com/cert-manager/cert-manager/issues/5610
             namespace: evocloud-ns
+
+    ###############################################
+    #EvoCloud Dragonfly P2P Endpoint
+    ###############################################
+    - name: http-dragonfly
+      hostname: dragonfly.{{ domain_tld }}
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https-dragonfly
+      hostname: dragonfly.{{ domain_tld }}
+      port: 443
+      protocol: HTTPS
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate #Passthrough mode is not supported yet.
+        certificateRefs:
+          - name: https-dragonfly-tls
+            kind: Secret            #https://github.com/cert-manager/cert-manager/issues/5610
+            namespace: evocloud-ns
+    ###############################################
+    #EvoCloud Rook Storage Endpoint
+    ###############################################
+    - name: http-rook
+      hostname: rook.{{ domain_tld }}
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https-rook
+      hostname: rook.{{ domain_tld }}
+      port: 443
+      protocol: HTTPS
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate #Passthrough mode is not supported yet.
+        certificateRefs:
+          - name: https-rook-tls
+            kind: Secret            #https://github.com/cert-manager/cert-manager/issues/5610
+            namespace: evocloud-ns

@@ -46,7 +46,7 @@ spec:
           mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
           operation: copy
         ref:
-          semver: "0.29.*"
+          semver: "0.65.*"
 
     #https://github.com/fluxcd-community/flux2-schemas/blob/main/ocirepository-source-v1.json
     - apiVersion: source.toolkit.fluxcd.io/v1
@@ -61,7 +61,7 @@ spec:
           mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
           operation: copy
         ref:
-          semver: "0.29.*"
+          semver: "0.65.*"
 
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease

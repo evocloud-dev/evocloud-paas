@@ -27,4 +27,241 @@ spec:
     #Requirement for external-secrets
     #Requirement for promstack
   resources:
+    ###############################################################################
+    # Prerequesites
+    ###############################################################################
+    # Namespace
     - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: cnpg-cluster
+        labels:
+          pod-security.kubernetes.io/enforce: restricted
+          pod-security.kubernetes.io/audit: restricted
+          pod-security.kubernetes.io/warn: restricted
+
+    ##############################################################################
+    # CNPG Cluster Definition
+    ##############################################################################
+    #Cloudnative PG Cluster
+    - apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      metadata:
+        name: cnpg-cluster
+      spec:
+        instances: 3
+        # Instance pods + Jobs: instance manager and barman sidecar use the apiserver
+        primaryUpdateStrategy: unsupervised
+        primaryUpdateMethod: switchover
+        enablePDB: true
+        #affinity:
+        #  podAntiAffinityType: preferred
+        #  nodeSelector:
+        #    storage.openebs.io/hostpath: "true"
+        imageCatalogRef:
+          apiGroup: postgresql.cnpg.io
+          kind: ClusterImageCatalog
+          major: 18
+          name: postgresql-minimal-trixie-extensions
+        storage:
+          size: 20Gi
+        # `kubectl cnpg psql` uses the local socket (peer auth)
+        enableSuperuserAccess: false
+        certificates:
+          serverAltDNSNames:
+            - pg18-pooler-rw
+            - pg18-pooler-rw.cloudnative-pg
+            - pg18-pooler-rw.cloudnative-pg.svc
+            - pg18-pooler-rw.cloudnative-pg.svc.cluster.local
+            - pg18-pooler-session-rw
+            - pg18-pooler-session-rw.cloudnative-pg
+            - pg18-pooler-session-rw.cloudnative-pg.svc
+            - pg18-pooler-session-rw.cloudnative-pg.svc.cluster.local
+        # Resolved to pod IPs for the $${podselector:NAME} pg_hba addresses
+        # Split by pooler name so neither set can use the other's rules.
+        podSelectorRefs:
+          - name: poolers
+            selector:
+              matchLabels:
+                cnpg.io/cluster: cnpg-cluster
+                cnpg.io/podRole: pooler
+              matchExpressions:
+                - key: cnpg.io/poolerName
+                  operator: In
+                  values:
+                    - pg18-pooler-rw
+                    - pg18-pooler-session-rw
+          - name: mtls-poolers
+            selector:
+              matchLabels:
+                cnpg.io/cluster: cnpg-cluster
+                cnpg.io/podRole: pooler
+              matchExpressions:
+                - key: cnpg.io/poolerName
+                  operator: In
+                  values:
+                    - pg18-pooler-mtls-rw
+                    - pg18-pooler-mtls-session-rw
+        postgresql:
+          # Only pooler pods, only TLS, each role only to the database named after it:
+          # - mTLS poolers: cert as pgbouncer_mtls (auth_query in `postgres`), acting
+          #   for +cert_apps members via the "mtls" ident map. No passwords.
+          # - password poolers: SCRAM plus the pooler's client cert (verify-ca: its
+          #   CN is the auth user, not the role).
+          pg_hba:
+            - hostssl postgres pgbouncer_mtls $${podselector:mtls-poolers} cert
+            - hostssl sameuser +cert_apps $${podselector:mtls-poolers} cert map=mtls
+            - hostssl sameuser all $${podselector:poolers} scram-sha-256 clientcert=verify-ca
+            # Read-only roles on another app's database (resource-bundle cnpg.readers).
+            - hostssl blocky blocky-grafana $${podselector:mtls-poolers} cert map=mtls
+            - hostssl blocky blocky-ui $${podselector:mtls-poolers} cert map=mtls
+            - host all all all reject
+          pg_ident:
+            - mtls pgbouncer_mtls +cert_apps
+          synchronous:
+            method: any
+            number: 1
+            dataDurability: preferred
+            failoverQuorum: true
+          shared_preload_libraries:
+            - vchord.so
+          extensions:
+            - name: pgvector
+            - name: vchord
+            - name: postgis
+          parameters:
+            shared_buffers: 1GB
+            work_mem: 16MB
+            maintenance_work_mem: 256MB
+            effective_cache_size: 3GB
+            wal_buffers: 32MB
+            checkpoint_timeout: 10min
+            max_wal_size: 8GB
+            min_wal_size: 2GB
+            max_slot_wal_keep_size: 20GB
+            checkpoint_completion_target: "0.9"
+            wal_keep_size: 8GB
+            wal_sender_timeout: 60s
+            wal_receiver_timeout: 60s
+            max_connections: "400"
+            log_min_duration_statement: "500"
+            log_checkpoints: "on"
+            log_autovacuum_min_duration: "250"
+            log_temp_files: 128MB
+            log_lock_waits: "on"
+            log_connections: "on"
+            log_disconnections: "on"
+            autovacuum_vacuum_cost_limit: "2000"
+            autovacuum_max_workers: "4"
+            autovacuum_naptime: 20s
+        plugins:
+          - name: barman-cloud.cloudnative-pg.io
+            enabled: true
+            isWALArchiver: true
+            parameters:
+              barmanObjectName: cnpg-cluster
+              serverName: cnpg-cluster
+
+    ##############################################################################
+    # CNPG Connection Poolers
+    ##############################################################################
+    #Connection Poolers
+    - apiVersion: postgresql.cnpg.io/v1
+      kind: Pooler
+      metadata:
+        name: cnpg-pooler-rw
+      spec:
+        cluster:
+          name: cnpg-cluster
+        instances: 2
+        template:
+          # One pod per node so a single drain never takes the whole pooler down
+          spec:
+            containers: [ ]
+            topologySpreadConstraints:
+              - maxSkew: 1
+                topologyKey: kubernetes.io/hostname
+                whenUnsatisfiable: DoNotSchedule
+                nodeTaintsPolicy: Honor
+                labelSelector:
+                  matchLabels:
+                    cnpg.io/poolerName: cnpg-pooler-rw #???Come here and make it match
+                matchLabelKeys:
+                  - pod-template-hash
+        type: rw
+        pgbouncer:
+          imageCatalogRef:
+            apiGroup: postgresql.cnpg.io
+            kind: ClusterImageCatalog
+            name: postgresql-minimal-trixie-extensions
+            key: pgbouncer
+          poolMode: transaction
+          parameters:
+            default_pool_size: "30"
+            min_pool_size: "5"
+            reserve_pool_size: "10"
+            reserve_pool_timeout: "5"
+            max_client_conn: "1000"
+            listen_backlog: "1024"
+            query_wait_timeout: "120"
+            idle_transaction_timeout: "60"
+            server_idle_timeout: "180"
+            max_prepared_statements: "200"
+            # Clients must use TLS; pooler -> Postgres verifies pg18-rw's cert and name.
+            client_tls_sslmode: require
+            server_tls_sslmode: verify-full
+            server_tls_protocols: tlsv1.3
+          # TLS + SCRAM only, each role to its own database.
+          pg_hba:
+            - hostssl sameuser all all scram-sha-256
+            - host all all all reject
+
+    ## Session-mode pooler for apps that need session semantics (immich, dawarich, pocket-id).
+    - apiVersion: postgresql.cnpg.io/v1
+      kind: Pooler
+      metadata:
+        name: cnpg-pooler-session-rw
+      spec:
+        cluster:
+          name: cnpg-cluster
+        instances: 2
+        template:
+          # One pod per node so a single drain never takes the whole pooler down
+          spec:
+            containers: [ ]
+            topologySpreadConstraints:
+              - maxSkew: 1
+                topologyKey: kubernetes.io/hostname
+                whenUnsatisfiable: DoNotSchedule
+                nodeTaintsPolicy: Honor
+                labelSelector:
+                  matchLabels:
+                    cnpg.io/poolerName: cnpg-pooler-session-rw #???Come here and make it match
+                matchLabelKeys:
+                  - pod-template-hash
+        type: rw
+        pgbouncer:
+          imageCatalogRef:
+            apiGroup: postgresql.cnpg.io
+            kind: ClusterImageCatalog
+            name: postgresql-minimal-trixie-extensions
+            key: pgbouncer
+          poolMode: session
+          parameters:
+            default_pool_size: "25"
+            min_pool_size: "2"
+            reserve_pool_size: "5"
+            reserve_pool_timeout: "5"
+            max_client_conn: "500"
+            listen_backlog: "1024"
+            query_wait_timeout: "120"
+            server_idle_timeout: "180"
+            # Clients must use TLS; pooler -> Postgres verifies pg18-rw's cert and name.
+            client_tls_sslmode: require
+            server_tls_sslmode: verify-full
+            server_tls_protocols: tlsv1.3
+          # Ahead of the operator's `host all all 0.0.0.0/0 md5` fallback, which the
+          # reject makes unreachable: TLS + SCRAM only, each role to its own database.
+          pg_hba:
+            - hostssl sameuser all all scram-sha-256
+            - host all all all reject
