@@ -41,7 +41,7 @@ spec:
           mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
           operation: copy
         ref:
-          semver: "3.8.*"
+          semver: "3.10.*"
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
       metadata:
@@ -71,26 +71,26 @@ spec:
           backgroundController:
             replicas: 2
             image:
-              tag: "v1.18.1" #Kyverno application version
+              tag: "v1.20.0" #Kyverno application version
           cleanupController:
             replicas: 2
             image:
-              tag: "v1.18.1" #Kyverno application version
+              tag: "v1.20.0" #Kyverno application version
           reportsController:
             replicas: 2
             image:
-              tag: "v1.18.1" #Kyverno application version
+              tag: "v1.20.0" #Kyverno application version
           reportsServer:
             enabled: true
             image:
-              tag: "v1.18.1" #Kyverno application version
+              tag: "v1.20.0" #Kyverno application version
           crds:
             install: true
             reportsServer:
               enabled: true
           test:
             image:
-              tag: "v1.18.1" #Kyverno application version
+              tag: "v1.20.0" #Kyverno application version
           grafana:
             # -- Enable grafana dashboard creation if set to true.
             enabled: false
