@@ -73,16 +73,17 @@
     method: POST
     headers:
       Authorization: "Bearer {{ dragonfly_signin.json.token }}"
+      Content-Type: application/json
     body_format: json
-    body:
-      name: "{{ dragonfly_pat_name }}"
-      bio: "Harbor P2P preheat (managed by Ansible)"
-      scopes: "{{ dragonfly_pat_scopes }}"
-      expired_at: "{{ '%Y-%m-%dT%H:%M:%SZ' | strftime(now(utc=true).timestamp() + dragonfly_pat_lifetime_days * 86400, utc=true) }}"
-      user_id: "{{ dragonfly_admin_user_id | int }}"
-    validate_certs: "{{ dragonfly_validate_certs }}"
-    return_content: true
+    body: "{{ {
+      'name': dragonfly_pat_name,
+      'bio': 'Harbor P2P preheat (managed by Ansible)',
+      'scopes': dragonfly_pat_scopes,
+      'expired_at': '%Y-%m-%dT%H:%M:%SZ' | strftime(now(utc=true).timestamp() + (dragonfly_pat_lifetime_days | int) * 86400, utc=true),
+      'user_id': dragonfly_admin_user_id | int
+    } | to_json }}"
     status_code: [200, 201]
+    validate_certs: "{{ dragonfly_validate_certs }}"
   register: dragonfly_new_pat
   when: not dragonfly_pat_usable | bool
   changed_when: true

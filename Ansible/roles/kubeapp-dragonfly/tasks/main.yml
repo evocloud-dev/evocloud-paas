@@ -17,10 +17,9 @@
 ######################################################
 - name: Staging Kubernetes manifests...
   ansible.builtin.template:
-    src: "{{ item }}.j2"
-    dest: "{{ kubeapp_dir }}/{{ kubeapp_name }}/{{ item }}"
-  loop:
-    - "{{ kubeapp_name }}-rset.yaml"
+    src: "{{ item }}"
+    dest: "{{ kubeapp_dir }}/{{ kubeapp_name }}/{{ item | basename | regex_replace('\\.j2$', '') }}"
+  loop: "{{ query('fileglob', 'templates/*.yaml.j2') }}"
 
 - name: Deploying Kubernetes manifests...
   kubernetes.core.k8s:
