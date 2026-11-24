@@ -133,33 +133,33 @@ spec:
               value: >-
                 -Djgroups.dns.query=kube-keycloak-stack-keycloakx-headless.evocloud-ns.svc.cluster.local
             - name: KC_BOOTSTRAP_ADMIN_USERNAME
-              value: admin
+              value: kcadmin
             - name: KC_BOOTSTRAP_ADMIN_PASSWORD
-              value: admin123
+              value: {{ creds_store.kc_bootstrap_passwd }}
             - name: KC_PROXY
               value: "edge"
             - name: KC_HOSTNAME
-              value: "sso.evocloud.gov"
+              value: "sso.{{ domain_tld}}"
             - name: KC_HOSTNAME_STRICT_HTTPS
               value: "true"
           dbchecker:
             enabled: true
           database:
             vendor: postgres
-            hostname: kube-keycloak-postgresql.evocloud-ns.svc.cluster.local
+            hostname: postgresql-keycloak.evocloud-ns.svc.cluster.local
             port: 5432
             database: keycloakdb
             username: keycloak
-            password: keycloakpass
+            password: {{ creds_store.keycloakdb_passwd }}
           autoscaling:
             enabled: true
             minReplicas: 1
             maxReplicas: 10
-          httpRoute:
-            enabled: true
-            parentRefs:
-              - name: shared-gtw
-                namespace: evocloud-ns
-                sectionName: https-sso-tls
-            hostnames:
-              - sso.evocloud.gov
+          #httpRoute:
+          #  enabled: true
+          #  parentRefs:
+          #    - name: shared-gtw
+          #      namespace: evocloud-ns
+          #      sectionName: https-sso-tls
+          #  hostnames:
+          #    - sso.{{ domain_tld}}
