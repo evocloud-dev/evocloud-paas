@@ -10,7 +10,7 @@
     path: "{{ item }}"
     state: directory
   loop:
-    - "{{ keycloak_kubeapp_dir }}"
+    - "{{ kubeapp_dir }}/{{ kubeapp_name }}"
 
 ######################################################
 #Deploying Keycloak Resources
@@ -27,7 +27,7 @@
     state: present
     src: "{{ item }}"
   loop:
-    - "{{ keycloak_kubeapp_dir }}/keycloak-rset.yaml"
+    - "{{ kubeapp_dir }}/{{ kubeapp_name }}/{{ kubeapp_name }}-rset.yaml"
   register: keycloak_deploy_result
   until: keycloak_deploy_result is succeeded
   retries: 10
