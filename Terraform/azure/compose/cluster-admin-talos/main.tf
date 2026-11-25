@@ -11,6 +11,17 @@ locals {
     certificates: |-
       ${replace(data.local_file.evoidp_ca.content, "\n", "\n  ")}
   EOF
+
+  # Dragonfly P2P: send pulls from every registry through the local
+  # dragonfly-client (DaemonSet, hostNetwork). If the client isn't running,
+  # containerd falls back to the real registry.
+  dragonfly_p2p =   <<-EOT
+    apiVersion   = "v1alpha1"
+    kind         = "RegistryMirrorConfig"
+    name         = "*"
+    endpoints    = [{ url = "http://127.0.0.1:4001" }]
+    skipFallback = false
+  EOT
 }
 
 data "azurerm_image" "evok8s-image" {
@@ -1698,6 +1709,7 @@ data "talos_machine_configuration" "talos_worker" {
       }
     }),
     local.trusted_roots_patch,
+    local.dragonfly_p2p,
   ]
 }
 

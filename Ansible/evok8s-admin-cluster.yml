@@ -16,3 +16,4 @@
     - kubeapp-promstack
     - kubeapp-headlamp
     - kubeapp-harbor
+    - kubeapp-dragonfly

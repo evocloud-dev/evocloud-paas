@@ -28,6 +28,14 @@ locals {
       ]
     }
   })
+
+  dragonfly_p2p =   yamlencode({
+    apiVersion   = "v1alpha1"
+    kind         = "RegistryMirrorConfig"
+    name         = "*"
+    endpoints    = [{ url = "http://127.0.0.1:4001" }]
+    skipFallback = false
+  })
 }
 
 data "hcloud_image" "evok8s" {
@@ -837,6 +845,13 @@ data "talos_machine_configuration" "talos_worker" {
           "net.ipv4.tcp_slow_start_after_idle" = "0"
           "user.max_user_namespaces"           = "11255"     # User Namespaces
         }
+        registries = {
+          mirrors = {
+            "docker.io" = {
+              endpoints = ["https://registry-1.docker.io"]
+            }
+          }
+        }
         network = {
           nameservers = [var.idam_server_ip, var.idam_replica_ip, var.HCLOUD_METADATA_NS]
           interfaces = [
@@ -902,6 +917,7 @@ data "talos_machine_configuration" "talos_worker" {
     }),
     local.talos_containerd_config,
     local.trusted_roots_patch,
+    local.dragonfly_p2p,
   ]
 }
 

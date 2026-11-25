@@ -1,0 +1,84 @@
+---
+# Included once per entry in preheat_policies (loop_var: policy).
+# Expects: harbor_api, harbor_username, harbor_password,
+#          harbor_validate_certs, instance (registered provider instance).
+
+- name: "[{{ policy.project }}] Get project"
+  ansible.builtin.uri:
+    url: "{{ harbor_api }}/projects/{{ policy.project | urlencode }}"
+    user: "{{ harbor_username }}"
+    password: "{{ harbor_password }}"
+    force_basic_auth: true
+    validate_certs: "{{ harbor_validate_certs }}"
+    return_content: true
+  register: project
+
+- name: "[{{ policy.project }}] Look up existing policy {{ policy.name }}"
+  ansible.builtin.uri:
+    url: "{{ harbor_api }}/projects/{{ policy.project | urlencode }}/preheat/policies/{{ policy.name | urlencode }}"
+    user: "{{ harbor_username }}"
+    password: "{{ harbor_password }}"
+    force_basic_auth: true
+    validate_certs: "{{ harbor_validate_certs }}"
+    return_content: true
+    status_code: [200, 404]
+  register: existing_policy
+
+- name: "[{{ policy.project }}] Build policy payload"
+  ansible.builtin.set_fact:
+    policy_body: >-
+      {{
+        {
+          'name': policy.name,
+          'description': policy.description | default(''),
+          'project_id': project.json.project_id,
+          'provider_id': instance.json.id,
+          'enabled': policy.enabled | default(true),
+          'scope': policy.scope | default('single_peer'),
+          'filters': [
+            {'type': 'repository', 'value': policy.repository | default('**')},
+            {'type': 'tag', 'value': policy.tag | default('**')}
+          ] | to_json,
+          'trigger': {
+            'type': policy.trigger.type | default('manual'),
+            'trigger_setting': {'cron': policy.trigger.cron | default('')}
+          } | to_json
+        }
+        | combine(
+            {'extra_attrs': {'cluster_ids': policy.cluster_ids}}
+            if (policy.cluster_ids | default([]) | length > 0) else {}
+          )
+      }}
+
+- name: "[{{ policy.project }}] Create policy {{ policy.name }}"
+  ansible.builtin.uri:
+    url: "{{ harbor_api }}/projects/{{ policy.project | urlencode }}/preheat/policies"
+    method: POST
+    user: "{{ harbor_username }}"
+    password: "{{ harbor_password }}"
+    force_basic_auth: true
+    validate_certs: "{{ harbor_validate_certs }}"
+    body_format: json
+    body: "{{ policy_body }}"
+    status_code: [201]
+  when: existing_policy.status == 404
+  changed_when: true
+
+- name: "[{{ policy.project }}] Update policy {{ policy.name }}"
+  ansible.builtin.uri:
+    url: "{{ harbor_api }}/projects/{{ policy.project | urlencode }}/preheat/policies/{{ policy.name | urlencode }}"
+    method: PUT
+    user: "{{ harbor_username }}"
+    password: "{{ harbor_password }}"
+    force_basic_auth: true
+    validate_certs: "{{ harbor_validate_certs }}"
+    body_format: json
+    body: "{{ policy_body | combine({'id': existing_policy.json.id}) }}"
+    status_code: [200]
+  when: existing_policy.status == 200
+  changed_when: >-
+    existing_policy.json.provider_id != policy_body.provider_id or
+    existing_policy.json.enabled != policy_body.enabled or
+    (existing_policy.json.scope | default('')) != policy_body.scope or
+    (existing_policy.json.filters | from_json) != (policy_body.filters | from_json) or
+    (existing_policy.json.trigger | from_json) != (policy_body.trigger | from_json)
